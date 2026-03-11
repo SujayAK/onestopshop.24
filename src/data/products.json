@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "name": "Classic Leather Tote",
+    "price": 89.00,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=600",
+    "description": "A timeless leather tote bag for everyday use.",
+    "details": {
+      "Material": "100% Genuine Leather",
+      "Dimensions": "15\" x 12\" x 5\"",
+      "Care": "Wipe with a damp cloth"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Silk Floral Scarf",
+    "price": 35.00,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1584030373081-f37b7bb4fa8e?q=80&w=600",
+    "description": "Elegant silk scarf with a vibrant floral pattern.",
+    "details": {
+      "Material": "100% Mulberry Silk",
+      "Dimensions": "35\" x 35\"",
+      "Care": "Hand wash only"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Minimalist Gold Hoops",
+    "price": 45.00,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1535633302704-b02f4faad767?q=80&w=600",
+    "description": "Simple and sophisticated gold-plated hoop earrings.",
+    "details": {
+      "Material": "18k Gold Plated Brass",
+      "Dimensions": "1.5\" Diameter",
+      "Care": "Avoid contact with water and perfume"
+    }
+  }
+]
