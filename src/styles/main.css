@@ -150,9 +150,10 @@ header.main-header {
 
 .logo-text {
   font-family: var(--font-heading);
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+  color: var(--text-primary);
 }
 
 .logo-img {

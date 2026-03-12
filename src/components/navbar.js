@@ -7,7 +7,7 @@ export function Navbar() {
       <div class="container nav-container">
         <a href="#/" class="logo-link" style="display: flex; align-items: center; gap: 10px;">
           <img src="/onestopshop24-logo.svg" alt="OneStop Shop 24" class="logo-img">
-          <span class="logo-text" style="font-size: 1.2rem; display: none;">ONESTOPSHOP.24</span>
+          <span class="logo-text">ONESTOPSHOP.24</span>
         </a>
         <nav>
           <ul class="nav-links" id="nav-links">
