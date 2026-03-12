@@ -6,7 +6,7 @@ export function HomePage() {
       <img src="${product.image}" alt="${product.name}" class="product-image">
       <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">${product.category}</p>
       <h3>${product.name}</h3>
-      <p style="font-weight: 700; color: var(--accent-gold);">$${product.price.toFixed(2)}</p>
+      <p style="font-weight: 700; color: var(--accent-pink);">$${product.price.toFixed(2)}</p>
       <a href="#/product/${product.id}" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View Details</a>
     </div>
   `).join('');
@@ -43,14 +43,14 @@ export function HomePage() {
       </div>
     </section>
 
-    <section class="section" style="background: var(--white);">
+    <section class="section" style="background: var(--bg-primary);">
       <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem;">
           <div>
-            <p style="color: var(--accent-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">Our Favorites</p>
+            <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">Our Favorites</p>
             <h2 style="margin-bottom: 0;">Best Sellers</h2>
           </div>
-          <a href="#/shop" style="font-weight: 600; border-bottom: 2px solid var(--accent-gold);">View All Products</a>
+          <a href="#/shop" style="font-weight: 600; border-bottom: 2px solid var(--accent-pink);">View All Products</a>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
           ${featuredProducts}
@@ -60,28 +60,55 @@ export function HomePage() {
 
     <section class="section" style="background: var(--bg-secondary);">
       <div class="container" style="text-align: center;">
-        <p style="color: var(--accent-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">Why Choose Us</p>
+        <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">Why Choose Us</p>
         <h2>The OneStop Experience</h2>
         <div class="trust-grid">
           <div class="trust-card">
-            <i class="fas fa-gem" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <i class="fas fa-gem" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
             <h4>Curated Quality</h4>
             <p>Each piece in our boutique is handpicked for its quality, durability, and timeless style.</p>
           </div>
           <div class="trust-card">
-            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
             <h4>Secure Shopping</h4>
             <p>Shop with confidence. We use industry-standard encryption to protect your data.</p>
           </div>
           <div class="trust-card">
-            <i class="fas fa-camera" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <i class="fas fa-camera" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
             <h4>Real Photography</h4>
             <p>What you see is what you get. We use real product photos to ensure transparency.</p>
           </div>
           <div class="trust-card">
-            <i class="fab fa-instagram" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <i class="fab fa-instagram" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
             <h4>Community Loved</h4>
             <p>Join thousands of happy customers who trust OneStop for their fashion needs.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="testimonial-section">
+      <div class="container">
+        <h2 style="text-align: center; margin-bottom: 3rem;">What Our Customers Say</h2>
+        <div class="testimonial-container">
+          <div class="testimonial-wrapper" id="testimonial-wrapper">
+            <div class="testimonial-slide">
+              <div class="testimonial-content">"Absolutely love the quality of the bags! The colors are just as vibrant as they look in the photos."</div>
+              <div class="testimonial-author">- Sarah J.</div>
+            </div>
+            <div class="testimonial-slide">
+              <div class="testimonial-content">"Fast shipping and the packaging was so cute. Definitely my new favorite shop for accessories."</div>
+              <div class="testimonial-author">- Emily R.</div>
+            </div>
+            <div class="testimonial-slide">
+              <div class="testimonial-content">"The attention to detail in every piece is amazing. Highly recommend OneStop Shop 24!"</div>
+              <div class="testimonial-author">- Michelle L.</div>
+            </div>
+          </div>
+          <div class="testimonial-dots" id="testimonial-dots">
+            <span class="dot active" data-index="0"></span>
+            <span class="dot" data-index="1"></span>
+            <span class="dot" data-index="2"></span>
           </div>
         </div>
       </div>

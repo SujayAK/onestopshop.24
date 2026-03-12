@@ -1,13 +1,14 @@
 :root {
-  /* Color Palette - Modern Boutique Elegance (Elegant Neutral) */
-  --bg-primary: #F8F5F1;
-  --bg-secondary: #EFE6DC;
-  --text-primary: #1E1E1E;
-  --text-secondary: #4A4A4A;
-  --accent-gold: #C79A63;
-  --accent-gold-dark: #B08651;
-  --accent-rose: #D17B93;
-  --border-color: #E8DDD3;
+  /* Color Palette - Vibrant Boutique (Based on Logo) */
+  --bg-primary: #FFF0F5; /* Lavender Blush (Soft Pinkish) */
+  --bg-secondary: #FDE2F3; /* Slightly deeper pinkish for variety */
+  --text-primary: #4A4A4A;
+  --text-secondary: #757575;
+  --accent-pink: #FF69B4; /* Hot Pink (Matches bag) */
+  --accent-blue: #70D1E8; /* Light blue from logo */
+  --accent-purple: #9B7CC3; /* Purple from border/icons */
+  --accent-yellow: #FFD93D; /* Yellow from bows */
+  --border-color: #F8D7F1;
   --white: #FFFFFF;
   
   /* Typography */
@@ -93,8 +94,8 @@ button {
 }
 
 .btn:hover {
-  background-color: var(--accent-gold);
-  border-color: var(--accent-gold);
+  background-color: var(--accent-pink);
+  border-color: var(--accent-pink);
   color: var(--white);
 }
 
@@ -135,7 +136,7 @@ header.main-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 240, 245, 0.95); /* Using bg-primary color with opacity */
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
   padding: var(--spacing-sm) 0;
@@ -154,6 +155,67 @@ header.main-header {
   letter-spacing: 2px;
 }
 
+.logo-img {
+  height: 60px;
+  width: auto;
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.hamburger span {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background-color: var(--text-primary);
+  transition: var(--transition-smooth);
+}
+
+/* Hamburger Open State */
+.hamburger.active span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+.hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+.hamburger.active span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 70%;
+    height: 100vh;
+    background-color: var(--bg-primary);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: var(--transition-smooth);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+    z-index: 1000;
+  }
+
+  .nav-links.active {
+    right: 0;
+  }
+
+  .nav-icons {
+    margin-right: 1rem;
+  }
+}
+
 .nav-links {
   display: flex;
   gap: var(--spacing-md);
@@ -167,7 +229,7 @@ header.main-header {
 }
 
 .nav-links a:hover {
-  color: var(--accent-gold);
+  color: var(--accent-pink);
 }
 
 .nav-icons {
@@ -182,7 +244,7 @@ header.main-header {
 
 /* Product Card Improvements */
 .product-card {
-  background: var(--white);
+  background: var(--bg-primary);
   border: 1px solid var(--border-color);
   padding: 1.5rem;
   text-align: center;
@@ -194,7 +256,7 @@ header.main-header {
 .product-card:hover {
   transform: translateY(-10px);
   box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  border-color: var(--accent-gold);
+  border-color: var(--accent-pink);
 }
 
 .product-image {
@@ -276,7 +338,7 @@ header.main-header {
 
 .trust-card i {
   font-size: 2rem;
-  color: var(--accent-gold);
+  color: var(--accent-purple);
   margin-bottom: var(--spacing-sm);
 }
 
@@ -288,7 +350,7 @@ header.main-header {
 }
 
 .breadcrumbs a:hover {
-  color: var(--accent-gold);
+  color: var(--accent-pink);
 }
 
 /* Footer styles */
@@ -319,7 +381,7 @@ footer.main-footer {
 }
 
 .footer-column ul li a:hover {
-  color: var(--accent-gold);
+  color: var(--accent-pink);
 }
 
 .footer-bottom {
@@ -335,7 +397,58 @@ footer.main-footer {
   .hero-content h1 {
     font-size: 2.5rem;
   }
-  .nav-links {
-    display: none;
-  }
+}
+
+/* Testimonial Slider */
+.testimonial-section {
+  padding: var(--spacing-lg) 0;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+}
+
+.testimonial-container {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.testimonial-wrapper {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.testimonial-slide {
+  min-width: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.testimonial-content {
+  font-style: italic;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.testimonial-author {
+  font-weight: 700;
+  color: var(--accent-purple);
+}
+
+.testimonial-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ddd;
+  cursor: pointer;
+}
+
+.dot.active {
+  background-color: var(--accent-pink);
 }

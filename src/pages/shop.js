@@ -6,7 +6,7 @@ export function ShopPage() {
       <img src="${product.image}" alt="${product.name}" class="product-image">
       <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">${product.category}</p>
       <h3>${product.name}</h3>
-      <p style="font-weight: 700; color: var(--accent-gold);">$${product.price.toFixed(2)}</p>
+      <p style="font-weight: 700; color: var(--accent-pink);">$${product.price.toFixed(2)}</p>
       <a href="#/product/${product.id}" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View Details</a>
     </div>
   `).join('');
@@ -20,7 +20,7 @@ export function ShopPage() {
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
         <h1 style="margin-bottom: 0;">Our Collection</h1>
         <div style="display: flex; gap: 1rem;">
-          <select style="padding: 10px; border: 1px solid var(--border-color); background: var(--white); font-family: inherit;">
+          <select style="padding: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); font-family: inherit;">
             <option>Sort by: Latest</option>
             <option>Price: Low to High</option>
             <option>Price: High to Low</option>

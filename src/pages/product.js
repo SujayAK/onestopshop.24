@@ -38,18 +38,18 @@ export function ProductPage(id) {
           </div>
         </div>
 
-        <div class="product-info" style="background: var(--white); padding: var(--spacing-md); border: 1px solid var(--border-color);">
-          <p style="color: var(--accent-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 0.5rem;">${product.category}</p>
+        <div class="product-info" style="background: var(--bg-primary); padding: var(--spacing-md); border: 1px solid var(--border-color);">
+          <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 0.5rem;">${product.category}</p>
           <h1 style="margin-bottom: 1rem;">${product.name}</h1>
           <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
             <h2 style="margin-bottom: 0; color: var(--text-primary);">$${product.price.toFixed(2)}</h2>
-            <span style="color: var(--accent-gold); font-size: 0.9rem; font-weight: 600;">(In Stock)</span>
+            <span style="color: var(--accent-pink); font-size: 0.9rem; font-weight: 600;">(In Stock)</span>
           </div>
           
           <p style="margin-bottom: 2rem; color: var(--text-secondary); line-height: 1.8;">${product.description}</p>
           
           <div style="margin-bottom: 2rem;">
-            <h4 style="margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; border-bottom: 2px solid var(--accent-gold); display: inline-block;">Product Details</h4>
+            <h4 style="margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; border-bottom: 2px solid var(--accent-pink); display: inline-block;">Product Details</h4>
             <div style="margin-top: 0.5rem;">
               ${detailsHtml}
             </div>
@@ -62,15 +62,15 @@ export function ProductPage(id) {
 
           <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-              <i class="fas fa-shipping-fast" style="color: var(--accent-gold);"></i>
+              <i class="fas fa-shipping-fast" style="color: var(--accent-purple);"></i>
               <span style="font-size: 0.85rem; font-weight: 600;">Fast & Secure Shipping</span>
             </div>
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-              <i class="fas fa-shield-alt" style="color: var(--accent-gold);"></i>
+              <i class="fas fa-shield-alt" style="color: var(--accent-purple);"></i>
               <span style="font-size: 0.85rem; font-weight: 600;">100% Secure Checkout</span>
             </div>
             <div style="display: flex; align-items: center; gap: 1rem;">
-              <i class="fas fa-camera" style="color: var(--accent-gold);"></i>
+              <i class="fas fa-camera" style="color: var(--accent-purple);"></i>
               <span style="font-size: 0.85rem; font-weight: 600;">Real Product Photos Guaranteed</span>
             </div>
           </div>

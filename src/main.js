@@ -22,6 +22,59 @@ function renderPage(content) {
   
   // Scroll to top on every navigation
   window.scrollTo(0, 0);
+
+  // Initialize components after render
+  initNavbar();
+  initTestimonialSlider();
+}
+
+function initNavbar() {
+  const hamburger = document.getElementById('hamburger');
+  const navLinks = document.getElementById('nav-links');
+  
+  if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      navLinks.classList.toggle('active');
+    });
+
+    // Close menu when clicking on a link
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navLinks.classList.remove('active');
+      });
+    });
+  }
+}
+
+function initTestimonialSlider() {
+  const wrapper = document.getElementById('testimonial-wrapper');
+  const dots = document.querySelectorAll('.dot');
+  
+  if (wrapper && dots.length > 0) {
+    let currentIndex = 0;
+
+    const updateSlider = (index) => {
+      wrapper.style.transform = `translateX(-${index * 100}%)`;
+      dots.forEach(dot => dot.classList.remove('active'));
+      dots[index].classList.add('active');
+      currentIndex = index;
+    };
+
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const index = parseInt(dot.getAttribute('data-index'));
+        updateSlider(index);
+      });
+    });
+
+    // Auto slide
+    setInterval(() => {
+      let nextIndex = (currentIndex + 1) % dots.length;
+      updateSlider(nextIndex);
+    }, 5000);
+  }
 }
 
 function navigate() {
@@ -95,7 +148,7 @@ function navigate() {
           <p style="margin-bottom: 2rem;">We offer worldwide shipping. Orders are processed within 1-3 business days. Delivery times vary by location but typically range from 5-10 business days.</p>
           
           <h2 style="margin-bottom: 1.5rem;">Returns & Exchanges</h2>
-          <div style="background: var(--bg-secondary); padding: 2rem; border-left: 4px solid var(--accent-gold); margin-bottom: 2rem;">
+          <div style="background: var(--bg-secondary); padding: 2rem; border-left: 4px solid var(--accent-pink); margin-bottom: 2rem;">
              <p style="font-weight: 600; margin-bottom: 1rem;">Please review product details carefully before placing your order.</p>
              <p>Our current policy does not support returns or exchanges unless the item is defective. We provide detailed descriptions and real photos to help you shop with confidence.</p>
           </div>
@@ -107,7 +160,7 @@ function navigate() {
     const pageName = hash.substring(2).charAt(0).toUpperCase() + hash.substring(3);
     renderPage(`
       <div class="container section" style="text-align: center; min-height: 50vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-        <i class="fas fa-tools" style="font-size: 4rem; color: var(--accent-gold); margin-bottom: 2rem;"></i>
+        <i class="fas fa-tools" style="font-size: 4rem; color: var(--accent-pink); margin-bottom: 2rem;"></i>
         <h1>${pageName} Feature Coming Soon</h1>
         <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem;">We are currently working on the ${pageName} experience to make it perfect for you. Stay tuned!</p>
         <a href="#/shop" class="btn">Continue Shopping</a>
