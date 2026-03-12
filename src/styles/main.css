@@ -136,7 +136,7 @@ header.main-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 240, 245, 0.95); /* Using bg-primary color with opacity */
+  background: rgba(255, 255, 255, 0.95); /* Whitish background matching logo */
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
   padding: var(--spacing-sm) 0;
