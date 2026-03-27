@@ -10,6 +10,7 @@ import { PaymentSuccessPage, initPaymentSuccessPage } from './pages/payment-succ
 import { PaymentFailedPage, initPaymentFailedPage } from './pages/payment-failed.js';
 import { LoginPage, initLoginPage } from './pages/login.js';
 import { SignupPage, initSignupPage } from './pages/signup.js';
+import { ProfilePage, initProfilePage } from './pages/profile.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
@@ -80,6 +81,45 @@ function initProductAccessGuard() {
   });
 
   productGuardAttached = true;
+}
+
+function getWishlistIds() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    return Array.isArray(stored) ? stored : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function setWishlistIds(ids) {
+  localStorage.setItem('wishlist', JSON.stringify(ids));
+}
+
+function initWishlistButtons() {
+  document.querySelectorAll('.wishlist-toggle').forEach(button => {
+    const productId = Number(button.getAttribute('data-product-id'));
+    const wished = getWishlistIds().includes(productId);
+    button.textContent = wished ? 'In Wishlist' : 'Add to Wishlist';
+    button.classList.toggle('is-active', wished);
+  });
+
+  document.querySelectorAll('.wishlist-toggle').forEach(button => {
+    button.addEventListener('click', event => {
+      const target = event.currentTarget;
+      const productId = Number(target.getAttribute('data-product-id'));
+      const wishlist = getWishlistIds();
+      const exists = wishlist.includes(productId);
+
+      const next = exists ? wishlist.filter(id => id !== productId) : [...wishlist, productId];
+      setWishlistIds(next);
+
+      document.querySelectorAll(`.wishlist-toggle[data-product-id="${productId}"]`).forEach(toggle => {
+        toggle.textContent = next.includes(productId) ? 'In Wishlist' : 'Add to Wishlist';
+        toggle.classList.toggle('is-active', next.includes(productId));
+      });
+    });
+  });
 }
 
 function initMotionSystem() {
@@ -182,6 +222,7 @@ function renderPage(content) {
   initNavbar();
   initTestimonialSlider();
   initMotionSystem();
+  initWishlistButtons();
 
   // Listen for cart updates
   window.addEventListener('cartUpdated', updateCartBadge);
@@ -251,6 +292,14 @@ function navigate() {
   
   if (hash === '#/' || hash === '') {
     renderPage(HomePage());
+  } else if (hash.startsWith('#/profile')) {
+    if (!isAuthenticated()) {
+      window.location.hash = '#/login';
+      return;
+    }
+    const requestedTab = hash.includes('?tab=') ? hash.split('?tab=').pop() : 'overview';
+    renderPage(ProfilePage(requestedTab));
+    initProfilePage(requestedTab);
   } else if (hash === '#/login') {
     renderPage(LoginPage());
     initLoginPage();
@@ -349,7 +398,10 @@ function navigate() {
         </div>
       </div>
     `);
-  } else if (hash === '#/search' || hash === '#/wishlist') {
+  } else if (hash === '#/wishlist') {
+    window.location.hash = '#/profile?tab=wishlist';
+    return;
+  } else if (hash === '#/search') {
     const pageName = hash.substring(2).charAt(0).toUpperCase() + hash.substring(3);
     renderPage(`
       <div class="container section" style="text-align: center; min-height: 50vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
