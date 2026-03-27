@@ -380,7 +380,7 @@ header.main-header.is-scrolled {
   letter-spacing: 1px;
   color: #000000;
   text-transform: lowercase;
-  animation: slideInLeft 0.5s ease-out 0.1s both;
+  animation: none;
   transition: var(--transition-smooth);
 }
 
@@ -393,7 +393,7 @@ header.main-header.is-scrolled {
 .logo-img {
   height: 60px;
   width: auto;
-  animation: slideInLeft 0.5s ease-out;
+  animation: none;
   transition: var(--transition-smooth);
 }
 
