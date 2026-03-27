@@ -101,7 +101,7 @@ export function HomePage() {
               <div class="testimonial-author">- Emily R.</div>
             </div>
             <div class="testimonial-slide">
-              <div class="testimonial-content">"The attention to detail in every piece is amazing. Highly recommend OneStop Shop 24!"</div>
+              <div class="testimonial-content">"The attention to detail in every piece is amazing. Highly recommend onestopshop!"</div>
               <div class="testimonial-author">- Michelle L.</div>
             </div>
           </div>
@@ -117,14 +117,14 @@ export function HomePage() {
     <section class="section">
       <div class="container" style="text-align: center;">
         <h2>Trusted by our Instagram community</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 3rem;">Tag us @onestopshop.24 to be featured</p>
+        <p style="color: var(--text-secondary); margin-bottom: 3rem;">Tag us @onestopshop to be featured</p>
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
           <div style="aspect-ratio: 1/1; background: #ddd;"></div>
           <div style="aspect-ratio: 1/1; background: #eee;"></div>
           <div style="aspect-ratio: 1/1; background: #ddd;"></div>
           <div style="aspect-ratio: 1/1; background: #eee;"></div>
         </div>
-        <a href="https://www.instagram.com/onestopshop.24" target="_blank" class="btn btn-outline" style="margin-top: 3rem;">Follow Us on Instagram</a>
+        <a href="https://www.instagram.com/onestopshop" target="_blank" class="btn btn-outline" style="margin-top: 3rem;">Follow Us on Instagram</a>
       </div>
     </section>
   `;

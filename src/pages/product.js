@@ -88,7 +88,8 @@ export function ProductPage(id) {
         </div>
       </div>
     </div>
- 
+  `;
+}
 
 export function initProductPage(productId) {
   const addToCartBtn = document.getElementById('add-to-cart-btn');
@@ -107,5 +108,4 @@ export function initProductPage(productId) {
       }
     });
   }
-} `;
 }

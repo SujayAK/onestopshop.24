@@ -1,7 +1,19 @@
 // Cart Management System
 class Cart {
   constructor() {
-    this.items = JSON.parse(localStorage.getItem('cart')) || [];
+    this.items = [];
+
+    // Recover gracefully if stored cart JSON is invalid.
+    try {
+      const storedCart = localStorage.getItem('cart');
+      this.items = storedCart ? JSON.parse(storedCart) : [];
+      if (!Array.isArray(this.items)) {
+        this.items = [];
+      }
+    } catch (_error) {
+      this.items = [];
+      localStorage.removeItem('cart');
+    }
   }
 
   addItem(product, quantity = 1) {

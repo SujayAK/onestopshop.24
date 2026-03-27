@@ -7,7 +7,9 @@ import { ProductPage, initProductPage } from './pages/product.js';
 import { CartPage, initCartPage } from './pages/cart.js';
 import { CheckoutPage, initCheckoutPage } from './pages/checkout.js';
 import { PaymentSuccessPage, initPaymentSuccessPage } from './pages/payment-success.js';
-import { PaymentFailedPage } from './pages/payment-failed.js';
+import { PaymentFailedPage, initPaymentFailedPage } from './pages/payment-failed.js';
+import { LoginPage, initLoginPage } from './pages/login.js';
+import { SignupPage, initSignupPage } from './pages/signup.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
@@ -15,14 +17,33 @@ const app = document.getElementById('app');
 function renderPage(content) {
   const header = Navbar();
   const footer = Footer();
+  const whatsappNumber = '1234567890';
+  const whatsappMessage = encodeURIComponent('Hi onestopshop, I need help with my order.');
   
   // Create container if not exists or clear it
   app.innerHTML = `
+    <div class="animated-bg">
+      <div class="floating-shape shape-1"></div>
+      <div class="floating-shape shape-2"></div>
+      <div class="floating-shape shape-3"></div>
+      <div class="floating-shape shape-4"></div>
+      <div class="floating-shape shape-5"></div>
+    </div>
     ${header}
     <main id="main-content" class="fade-in">
       ${content}
     </main>
     ${footer}
+    <a
+      href="https://wa.me/${whatsappNumber}?text=${whatsappMessage}"
+      class="whatsapp-floater"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Chat on WhatsApp"
+      title="Chat on WhatsApp"
+    >
+      <i class="fab fa-whatsapp"></i>
+    </a>
   `;
   
   // Scroll to top on every navigation
@@ -100,6 +121,12 @@ function navigate() {
   
   if (hash === '#/' || hash === '') {
     renderPage(HomePage());
+  } else if (hash === '#/login') {
+    renderPage(LoginPage());
+    initLoginPage();
+  } else if (hash === '#/signup') {
+    renderPage(SignupPage());
+    initSignupPage();
   } else if (hash.startsWith('#/shop')) {
     renderPage(ShopPage());
   } else if (hash.startsWith('#/product/')) {
@@ -115,14 +142,16 @@ function navigate() {
   } else if (hash === '#/payment-success') {
     renderPage(PaymentSuccessPage());
     initPaymentSuccessPage();
+  } else if (hash === '#/about') {
   } else if (hash === '#/payment-failed') {
     renderPage(PaymentFailedPage());
+    initPaymentFailedPage();
   } else if (hash === '#/about') {
     renderPage(`
       <div class="container section">
         <h1 style="text-align: center; margin-bottom: 3rem;">About OneStop</h1>
         <div style="max-width: 800px; margin: 0 auto; line-height: 2;">
-          <p style="margin-bottom: 2rem;">Welcome to <strong>OneStop Shop 24</strong>, your curated destination for the finest fashion, bags, and accessories. We believe that style should be effortless, elegant, and accessible.</p>
+          <p style="margin-bottom: 2rem;">Welcome to <strong>onestopshop</strong>, your curated destination for the finest fashion, bags, and accessories. We believe that style should be effortless, elegant, and accessible.</p>
           <p style="margin-bottom: 2rem;">Our boutique was born out of a passion for high-quality craftsmanship and timeless design. Every product in our collection is handpicked to ensure it meets our high standards of quality and style.</p>
           <h2 style="margin-top: 3rem;">Our Commitment to You</h2>
           <p style="margin-bottom: 2rem;">We know that shopping online requires trust. That's why we prioritize transparency, real product photography, and secure checkout processes. We want you to shop with the confidence that what you see is exactly what you will receive.</p>
@@ -148,7 +177,7 @@ function navigate() {
             </div>
             <div style="margin-bottom: 1rem;">
               <strong>Instagram:</strong><br>
-              @onestopshop.24
+              @onestopshop
             </div>
           </div>
           <form style="display: grid; gap: 1.5rem;">

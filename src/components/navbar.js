@@ -6,8 +6,8 @@ export function Navbar() {
     <header class="main-header">
       <div class="container nav-container">
         <a href="#/" class="logo-link" style="display: flex; align-items: center; gap: 10px;">
-          <img src="/logo_updated.png" alt="OneStop Shop 24" class="logo-img">
-          <span class="logo-text">ONESTOPSHOP.24</span>
+          <img src="/logo_updated.png" alt="onestopshop" class="logo-img">
+          <span class="logo-text">ONESTOPSHOP</span>
         </a>
         <nav>
           <ul class="nav-links" id="nav-links">
@@ -20,6 +20,7 @@ export function Navbar() {
         <div class="nav-icons">
           <a href="#/search" class="icon-link" title="Search"><i class="fas fa-search"></i></a>
           <a href="#/wishlist" class="icon-link" title="Wishlist"><i class="far fa-heart"></i></a>
+          <a href="#/login" class="icon-link" title="Sign In"><i class="fas fa-user"></i></a>
           <a href="#/cart" class="icon-link cart-link" title="Cart" style="position: relative;">
             <i class="fas fa-shopping-bag"></i>
             <span id="cart-badge" style="position: absolute; top: -8px; right: -8px; background: var(--accent-pink); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">0</span>

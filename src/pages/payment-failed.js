@@ -1,3 +1,5 @@
+import { updateOrder } from '../utils/supabase.js';
+
 export function PaymentFailedPage() {
   const lastError = JSON.parse(localStorage.getItem('lastPaymentError') || '{}');
 
@@ -51,3 +53,18 @@ export function PaymentFailedPage() {
     </div>
   `;
 }
+
+  export function initPaymentFailedPage() {
+    const currentOrder = JSON.parse(sessionStorage.getItem('currentOrder') || '{}');
+  
+    // Update order status to failed in Supabase
+    if (currentOrder.orderDBId) {
+      updateOrder(currentOrder.orderDBId, {
+        status: 'failed',
+        payment_status: 'failed',
+        updated_at: new Date()
+      }).catch(error => {
+        console.error('Error updating order in Supabase:', error);
+      });
+    }
+  }

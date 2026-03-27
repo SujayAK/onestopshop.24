@@ -1,7 +1,10 @@
 // Razorpay Payment Gateway Integration
 export class RazorpayPayment {
   constructor(config = {}) {
-    this.keyId = config.keyId || process.env.VITE_RAZORPAY_KEY_ID;
+    this.keyId =
+      config.keyId ||
+      import.meta.env.VITE_RAZORPAY_KEY_ID ||
+      '';
     this.successUrl = config.successUrl || '#/payment-success';
     this.failureUrl = config.failureUrl || '#/payment-failed';
   }
@@ -30,7 +33,7 @@ export class RazorpayPayment {
         key: this.keyId || 'rzp_test_1DP5mmOlF5G5ag', // Test key - replace with actual
         amount: Math.round(orderDetails.amount * 100), // Amount in paise
         currency: orderDetails.currency || 'INR',
-        name: orderDetails.storeName || 'OneStop Shop 24',
+        name: orderDetails.storeName || 'onestopshop',
         description: orderDetails.description || 'Purchase products',
         order_id: orderDetails.orderId, // Order ID from backend (optional)
         image: '/logo_updated.png', // Your logo

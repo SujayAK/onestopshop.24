@@ -1,0 +1,531 @@
+================================================================================
+                    ONESTOPSHOP - BACKEND SETUP GUIDE
+                           Complete Instructions
+================================================================================
+
+TABLE OF CONTENTS
+1. Architecture Overview
+2. Prerequisites & Setup
+3. Database Design
+4. Backend Project Structure
+5. API Endpoints Reference
+6. Authentication Flow
+7. Environment Configuration
+8. Deployment Instructions
+9. Troubleshooting
+
+================================================================================
+1. ARCHITECTURE OVERVIEW
+================================================================================
+
+TECH STACK:
+- Runtime: Node.js (14+ recommended, 16 LTS ideal)
+- Framework: Express.js (REST API)
+- Database: PostgreSQL 12+
+- Cache: Redis (optional but recommended)
+- Authentication: JWT + httpOnly Cookies
+- File Storage: AWS S3 / Cloudflare R2 / Local (for dev)
+- Task Queue: Bull (optional, for async jobs)
+
+FLOW:
+Frontend (SPA) → Backend API (Node/Express) → PostgreSQL Database
+                                           ↓
+                                    Stripe/Razorpay
+                                           ↓
+                                    AWS S3 (Media)
+
+================================================================================
+2. PREREQUISITES & SETUP
+================================================================================
+
+STEP 1: Install Node.js
+- Download from https://nodejs.org/
+- Install LTS version (16.x or 18.x)
+- Verify: node --version && npm --version
+
+STEP 2: Install PostgreSQL
+- Download from https://www.postgresql.org/download/
+- Create superuser: postgres (default)
+- Create database: onestopshop_db
+- Connection string: postgresql://user:password@localhost:5432/onestopshop_db
+
+STEP 3: Install Redis (Optional)
+- Download from https://redis.io/download
+- Default port: 6379
+- Used for caching and rate limiting
+
+STEP 4: Create Backend Project Structure
+```
+mkdir onestopshop-backend
+cd onestopshop-backend
+npm init -y
+npm install express dotenv cors pg jsonwebtoken bcryptjs nodemailer axios multer
+npm install --save-dev nodemon
+```
+
+================================================================================
+3. DATABASE DESIGN
+================================================================================
+
+USERS TABLE
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  fname VARCHAR(100) NOT NULL,
+  lname VARCHAR(100) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  phone VARCHAR(20),
+  address TEXT,
+  city VARCHAR(100),
+  postal_code VARCHAR(20),
+  country VARCHAR(100),
+  avatar_url VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_verified BOOLEAN DEFAULT FALSE,
+  verification_token VARCHAR(255),
+  verification_token_expires TIMESTAMP
+);
+```
+
+PRODUCTS TABLE
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(100),
+  price DECIMAL(10, 2) NOT NULL,
+  stock_quantity INT DEFAULT 0,
+  image_url VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+MEDIA TABLE (For Images/Videos)
+```sql
+CREATE TABLE media (
+  id SERIAL PRIMARY KEY,
+  product_id INT REFERENCES products(id) ON DELETE CASCADE,
+  media_type VARCHAR(20), -- 'image' or 'video'
+  original_url VARCHAR(255),
+  optimized_url VARCHAR(255), -- CDN URL
+  thumbnail_url VARCHAR(255),
+  width INT,
+  height INT,
+  duration INT, -- For videos in seconds
+  sort_order INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+ORDERS TABLE
+```sql
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  order_number VARCHAR(50) UNIQUE,
+  total_amount DECIMAL(10, 2),
+  tax_amount DECIMAL(10, 2),
+  status VARCHAR(50) DEFAULT 'pending', -- pending, confirmed, shipped, delivered, cancelled
+  payment_status VARCHAR(50) DEFAULT 'pending', -- pending, completed, failed
+  payment_method VARCHAR(50), -- razorpay, stripe, etc
+  razorpay_order_id VARCHAR(255),
+  razorpay_payment_id VARCHAR(255),
+  shipping_address TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+COUPON TABLE
+```sql
+CREATE TABLE coupons (
+  id SERIAL PRIMARY KEY,
+  code VARCHAR(50) UNIQUE NOT NULL,
+  discount_type VARCHAR(20), -- 'percentage' or 'fixed'
+  discount_value DECIMAL(10, 2),
+  start_date TIMESTAMP,
+  end_date TIMESTAMP,
+  max_uses INT,
+  max_uses_per_user INT,
+  min_cart_value DECIMAL(10, 2),
+  applicable_categories VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+COUPON_REDEMPTIONS TABLE
+```sql
+CREATE TABLE coupon_redemptions (
+  id SERIAL PRIMARY KEY,
+  coupon_id INT REFERENCES coupons(id),
+  user_id INT REFERENCES users(id),
+  order_id INT REFERENCES orders(id),
+  redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+================================================================================
+4. BACKEND PROJECT STRUCTURE
+================================================================================
+
+onestopshop-backend/
+├── config/
+│   └── database.js          # PostgreSQL connection config
+├── controllers/
+│   ├── authController.js    # Login, signup, logout
+│   ├── productController.js # Product CRUD
+│   ├── orderController.js   # Order management
+│   ├── couponController.js  # Coupon validation
+│   └── mediaController.js   # Media upload handling
+├── routes/
+│   ├── auth.js
+│   ├── products.js
+│   ├── orders.js
+│   ├── coupons.js
+│   └── media.js
+├── middleware/
+│   ├── auth.js              # JWT verification
+│   ├── errorHandler.js
+│   └── rateLimiter.js
+├── utils/
+│   ├── sendEmail.js
+│   ├── uploadToS3.js
+│   ├── generateToken.js
+│   └── validators.js
+├── .env                     # Environment variables
+├── .env.example             # Example env file
+├── package.json
+└── server.js                # Main server entry point
+
+================================================================================
+5. API ENDPOINTS REFERENCE
+================================================================================
+
+AUTH ENDPOINTS
+------------------
+POST /api/auth/signup
+  Body: { fname, lname, email, password }
+  Response: { accessToken, user: { id, email, fname } }
+
+POST /api/auth/login
+  Body: { email, password }
+  Response: { accessToken, user }
+  Cookies: refreshToken (httpOnly)
+
+POST /api/auth/logout
+  Response: 200 OK
+
+POST /api/auth/refresh
+  Cookies: refreshToken
+  Response: { accessToken }
+
+POST /api/auth/forgot-password
+  Body: { email }
+  Response: 200 OK (sends email with reset link)
+
+PRODUCT ENDPOINTS
+------------------
+GET /api/products
+  Query: ?category=bags&sort=price&page=1
+  Response: { products: [], total, limit, page }
+
+GET /api/products/{id}
+  Response: { product, media: [] }
+
+POST /api/products (Admin only)
+  Body: { name, description, category, price, stock_quantity }
+  Response: { product }
+
+COUPON ENDPOINTS
+------------------
+POST /api/coupons/validate
+  Body: { code, cartTotal, userId }
+  Response: { valid: true, discount: 100, finalTotal: 900 }
+
+ORDER ENDPOINTS
+------------------
+POST /api/orders
+  Body: { items[], shippingAddress, couponCode? }
+  Response: { orderId, razorpayOrderId, amount }
+
+POST /api/orders/verify-payment
+  Body: { razorpayOrderId, razorpayPaymentId, razorpaySignature }
+  Response: { success: true, order }
+
+GET /api/orders (User gets own orders)
+  Response: { orders: [] }
+
+MEDIA ENDPOINTS
+------------------
+POST /api/media/upload-signed-url
+  Body: { fileName, fileType, productId }
+  Response: { uploadUrl, fileKey }
+
+POST /api/media/confirm-upload
+  Body: { fileKey, productId, mediaType }
+  Response: { media }
+
+================================================================================
+6. AUTHENTICATION FLOW
+================================================================================
+
+SIGNUP FLOW:
+1. User submits signup form (frontend)
+2. Frontend validates password strength & format
+3. Frontend POSTs to /api/auth/signup
+4. Backend:
+   - Validates input
+   - Checks if email exists
+   - Hashes password with bcrypt (rounds: 12)
+   - Creates user record
+   - Generates verification token
+   - Sends verification email
+5. Returns accessToken (in body) + refreshToken (httpOnly cookie)
+6. Frontend stores accessToken in sessionStorage
+
+LOGIN FLOW:
+1. User submits login form
+2. Frontend POSTs to /api/auth/login
+3. Backend:
+   - Finds user by email
+   - Compares password with stored hash
+   - If match: generates tokens
+   - Sets refreshToken as httpOnly secure cookie
+4. Returns accessToken + user data
+
+TOKEN REFRESH:
+1. AccessToken expires after 15 minutes
+2. Frontend detects 401 response
+3. Frontend POSTs to /api/auth/refresh
+4. Backend validates refreshToken from cookie
+5. Issues new accessToken
+6. Frontend retries original request
+
+LOGOUT:
+1. Frontend clears sessionStorage
+2. Frontend POSTs to /api/auth/logout
+3. Backend invalidates refreshToken (optional: blacklist in Redis)
+
+================================================================================
+6. ENVIRONMENT CONFIGURATION
+================================================================================
+
+Create .env file in backend root:
+```
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=onestopshop_db
+DB_USER=postgres
+DB_PASSWORD=your_password
+
+# Server
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# JWT
+JWT_ACCESS_SECRET=your_access_token_secret_min_32_chars
+JWT_REFRESH_SECRET=your_refresh_token_secret_min_32_chars
+JWT_ACCESS_EXPIRY=15m
+JWT_REFRESH_EXPIRY=7d
+
+# Email (Gmail example)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+
+# AWS S3 (Optional)
+AWS_ACCESS_KEY_ID=your_key
+AWS_SECRET_ACCESS_KEY=your_secret
+AWS_S3_BUCKET=onestopshop-media
+AWS_REGION=us-east-1
+
+# Razorpay
+RAZORPAY_KEY_ID=your_key
+RAZORPAY_KEY_SECRET=your_secret
+
+# Redis (Optional)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+================================================================================
+7. SAMPLE SERVER.JS SETUP
+================================================================================
+
+```javascript
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const db = require('./config/database');
+
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true
+}));
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/products', require('./routes/products'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/coupons', require('./routes/coupons'));
+app.use('/api/media', require('./routes/media'));
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({ 
+    message: err.message,
+    error: process.env.NODE_ENV === 'production' ? {} : err 
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+================================================================================
+8. DEPLOYMENT INSTRUCTIONS
+================================================================================
+
+DEPLOY TO HEROKU:
+1. Install Heroku CLI: https://devcenter.heroku.com/articles/heroku-cli
+2. heroku login
+3. heroku create onestopshop-backend
+4. heroku addons:create heroku-postgresql:hobby-dev
+5. heroku config:set JWT_ACCESS_SECRET=your_secret
+6. git push heroku main
+7. heroku logs --tail
+
+DEPLOY TO AWS EC2:
+1. Launch Ubuntu 20.04 instance
+2. SSH into instance
+3. Install Node.js:
+   curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+4. Install PostgreSQL:
+   sudo apt-get install postgresql
+5. Clone repo, install dependencies, set env vars
+6. Use PM2 to manage process:
+   npm install -g pm2
+   pm2 start server.js --name onestopshop
+   pm2 startup
+   pm2 save
+
+DEPLOY TO RAILWAY / RENDER:
+- Both have one-click deployment with free PostgreSQL
+- Connect GitHub repo
+- Set environment variables in dashboard
+- Deploy automatically
+
+================================================================================
+9. TROUBLESHOOTING
+================================================================================
+
+COMMON ISSUES:
+
+1. "Cannot connect to database"
+   - Check DB credentials in .env
+   - Verify PostgreSQL is running: psql -U postgres
+   - Check firewall/security groups allowing port 5432
+
+2. "CORS error from frontend"
+   - Ensure FRONTEND_URL in .env matches frontend domain
+   - Check credentials: true in cors() config
+   - Verify httpOnly cookies are being sent
+
+3. "JWT token expired"
+   - This is normal; frontend should call /api/auth/refresh
+   - Check JWT_ACCESS_EXPIRY is reasonable (15m recommended)
+
+4. "Email not sending"
+   - Gmail: Use App Passwords, not account password
+   - Check SMTP credentials in .env
+   - Verify firewall allows port 587
+
+5. "File upload failing"
+   - Check S3 credentials and bucket exists
+   - Verify bucket CORS configuration
+   - Check file size limits in multer config
+
+================================================================================
+                            QUICK START CHECKLIST
+================================================================================
+
+[ ] Install Node.js and PostgreSQL
+[ ] Create backend project structure
+[ ] Set up database and tables
+[ ] Create .env file with all variables
+[ ] Implement auth routes with JWT
+[ ] Set up CORS with frontend URL
+[ ] Test login/signup endpoints with Postman
+[ ] Implement product routes
+[ ] Set up coupon validation logic
+[ ] Configure S3 / media upload
+[ ] Implement order and payment verification
+[ ] Add error handling middleware
+[ ] Set up logging
+[ ] Deploy to staging environment
+[ ] Test full flow end-to-end
+[ ] Deploy to production
+
+================================================================================
+                            USEFUL COMMANDS
+================================================================================
+
+Backend Development:
+- npm install              # Install dependencies
+- nodemon server.js        # Run with auto-reload
+- npm start                # Run production
+
+Database Setup:
+- psql -U postgres         # Connect to PostgreSQL
+- CREATE DATABASE onestopshop_db;
+- \c onestopshop_db        # Switch database
+- \d users                 # Describe table
+
+API Testing:
+- curl -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" -d '{"email":"test@test.com","password":"password"}'
+- Use Postman app for easier testing
+
+Deployment:
+- git push heroku main     # Deploy to Heroku
+- heroku logs --tail       # View server logs
+
+================================================================================
+                            NEXT STEPS
+================================================================================
+
+1. Set up database with all tables from section 3
+2. Implement auth routes (controllers/routes/middleware)
+3. Test all endpoints with Postman before frontend integration
+4. Configure CORS to match frontend domain
+5. Set up email service for verification/password reset
+6. Implement coupon validation logic
+7. Set up payment gateway integration (Razorpay/Stripe)
+8. Add logging and monitoring
+9. Deploy to production
+
+Questions? Refer to:
+- Express.js docs: https://expressjs.com
+- PostgreSQL docs: https://www.postgresql.org/docs
+- JWT guide: https://jwt.io/introduction
+- Razorpay docs: https://razorpay.com/docs/api
+
+================================================================================
+                        END OF BACKEND SETUP GUIDE
+================================================================================

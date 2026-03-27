@@ -1,4 +1,5 @@
 import { cart } from '../utils/cart.js';
+import { updateOrder } from '../utils/supabase.js';
 
 export function PaymentSuccessPage() {
   const lastPayment = JSON.parse(localStorage.getItem('lastPayment') || '{}');
@@ -70,7 +71,23 @@ export function PaymentSuccessPage() {
 }
 
 export function initPaymentSuccessPage() {
+  const currentOrder = JSON.parse(sessionStorage.getItem('currentOrder') || '{}');
+  
+  // Update order status in Supabase
+  if (currentOrder.orderDBId) {
+    updateOrder(currentOrder.orderDBId, {
+      status: 'confirmed',
+      payment_status: 'completed',
+      razorpay_payment_id: currentOrder.razorpayPaymentId || '',
+      razorpay_order_id: currentOrder.razorpayOrderId || '',
+      updated_at: new Date()
+    }).catch(error => {
+      console.error('Error updating order in Supabase:', error);
+    });
+  }
+
   // Clear cart after successful payment
   cart.clear();
+  sessionStorage.removeItem('currentOrder');
   localStorage.removeItem('currentOrder');
 }

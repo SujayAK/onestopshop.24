@@ -1,5 +1,6 @@
 import { cart } from '../utils/cart.js';
 import { razorpayPayment } from '../utils/razorpay.js';
+import { createOrder, getCurrentUser, validateCoupon, redeemCoupon } from '../utils/supabase.js';
 
 export function CheckoutPage() {
   const items = cart.getItems();
@@ -137,6 +138,15 @@ export function initCheckoutPage() {
         return;
       }
 
+      // Check if user is logged in
+      const userStr = sessionStorage.getItem('user');
+      if (!userStr) {
+        alert('Please log in to complete your purchase');
+        window.location.hash = '#/login';
+        return;
+      }
+
+      const user = JSON.parse(userStr);
       const name = document.getElementById('customer-name').value;
       const email = document.getElementById('customer-email').value;
       const phone = document.getElementById('customer-phone').value;
@@ -145,44 +155,76 @@ export function initCheckoutPage() {
       const postal = document.getElementById('customer-postal').value;
 
       const items = cart.getItems();
-      const total = cart.getTotal() * 1.1; // Include tax
+      const subtotal = cart.getTotal();
+      const tax = subtotal * 0.1;
+      const total = subtotal + tax;
 
-      // Generate order ID
-      const orderId = 'ORD-' + Date.now();
-
-      // Prepare order details
-      const orderDetails = {
-        orderId: orderId,
-        amount: total,
-        currency: 'INR',
-        storeName: 'OneStop Shop 24',
-        description: 'Purchase from OneStop Shop 24',
-        customerName: name,
-        customerEmail: email,
-        customerPhone: phone,
-        products: items.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        customData: {
-          address: address,
-          city: city,
-          postal: postal
-        }
+      // Prepare shipping address
+      const shippingAddress = {
+        name,
+        email,
+        phone,
+        address,
+        city,
+        postal_code: postal
       };
 
-      // Store order details
-      localStorage.setItem('currentOrder', JSON.stringify(orderDetails));
-
-      // Initiate Razorpay payment
       try {
         proceedBtn.disabled = true;
+        proceedBtn.textContent = 'Creating Order...';
+
+        // Create order in Supabase
+        const orderResult = await createOrder(
+          user.id,
+          items,
+          total,
+          shippingAddress
+        );
+
+        if (!orderResult.success) {
+          alert('Failed to create order: ' + orderResult.error);
+          proceedBtn.disabled = false;
+          proceedBtn.textContent = 'Proceed to Payment';
+          return;
+        }
+
+        const orderId = orderResult.data.id;
+
+        // Prepare Razorpay payment details
+        const paymentDetails = {
+          orderId: orderId,
+          orderDBId: orderId,
+          amount: Math.round(total * 100), // Razorpay expects amount in paise
+          currency: 'INR',
+          storeName: 'onestopshop',
+          description: 'Purchase from onestopshop',
+          customerName: name,
+          customerEmail: email,
+          customerPhone: phone,
+          products: items.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          customData: {
+            address: address,
+            city: city,
+            postal: postal,
+            user_id: user.id
+          }
+        };
+
+        // Store order details for payment verification
+        sessionStorage.setItem('currentOrder', JSON.stringify(paymentDetails));
+
         proceedBtn.textContent = 'Loading Payment...';
-        await razorpayPayment.initiatePayment(orderDetails);
+        
+        // Initiate Razorpay payment
+        await razorpayPayment.initiatePayment(paymentDetails);
       } catch (error) {
-        alert('Error initiating payment: ' + error.message);
+        console.error('Checkout error:', error);
+        alert('Error processing checkout: ' + error.message);
         proceedBtn.disabled = false;
         proceedBtn.textContent = 'Proceed to Payment';
       }
