@@ -387,6 +387,7 @@ header.main-header.is-scrolled {
 .logo-text:hover {
   color: #000000;
   animation: none;
+  transform: none;
 }
 
 .logo-img {
@@ -397,7 +398,9 @@ header.main-header.is-scrolled {
 }
 
 .logo-img:hover {
-  animation: bounce 0.6s ease-in-out;
+  animation: none;
+  transform: none;
+  filter: brightness(1.03);
 }
 
 .icon-link {
