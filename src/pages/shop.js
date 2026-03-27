@@ -6,7 +6,7 @@ export function ShopPage() {
       <img src="${product.image}" alt="${product.name}" class="product-image">
       <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">${product.category}</p>
       <h3>${product.name}</h3>
-      <p style="font-weight: 700; color: var(--accent-pink);">$${product.price.toFixed(2)}</p>
+      <p style="font-weight: 700; color: var(--accent-pink);">₹${product.price.toFixed(2)}</p>
       <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}" style="margin-top: 0.75rem; width: 100%;">Add to Wishlist</button>
       <a href="#/product/${product.id}" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View Details</a>
     </div>

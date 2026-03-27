@@ -43,7 +43,7 @@ export function ProductPage(id) {
           <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 0.5rem;">${product.category}</p>
           <h1 style="margin-bottom: 1rem;">${product.name}</h1>
           <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-            <h2 style="margin-bottom: 0; color: var(--text-primary);">$${product.price.toFixed(2)}</h2>
+            <h2 style="margin-bottom: 0; color: var(--text-primary);">₹${product.price.toFixed(2)}</h2>
             <span style="color: var(--accent-pink); font-size: 0.9rem; font-weight: 600;">(In Stock)</span>
           </div>
           

@@ -21,7 +21,7 @@ export function CartPage() {
       <div>
         <h3 style="margin-bottom: 0.5rem;">${item.name}</h3>
         <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">${item.category}</p>
-        <p style="color: var(--accent-pink); font-weight: 700;">$${item.price.toFixed(2)}</p>
+        <p style="color: var(--accent-pink); font-weight: 700;">₹${item.price.toFixed(2)}</p>
       </div>
 
       <div style="text-align: right;">
@@ -30,7 +30,7 @@ export function CartPage() {
           <span style="min-width: 30px; text-align: center;">${item.quantity}</span>
           <button class="qty-increase" data-product-id="${item.id}" style="padding: 5px 10px; border: 1px solid var(--border-color); background: var(--bg-primary); cursor: pointer;">+</button>
         </div>
-        <p style="font-weight: 700; margin-bottom: 1rem;">$${(item.price * item.quantity).toFixed(2)}</p>
+        <p style="font-weight: 700; margin-bottom: 1rem;">₹${(item.price * item.quantity).toFixed(2)}</p>
         <button class="btn-remove" data-product-id="${item.id}" style="background: none; border: none; color: var(--accent-pink); cursor: pointer; text-decoration: underline;">Remove</button>
       </div>
     </div>
@@ -55,23 +55,23 @@ export function CartPage() {
           <div style="margin-bottom: 1.5rem;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
               <span>Subtotal:</span>
-              <span>$${total.toFixed(2)}</span>
+              <span>₹${total.toFixed(2)}</span>
             </div>
             
             <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
               <span>Shipping:</span>
-              <span>$0.00</span>
+              <span>₹0.00</span>
             </div>
             
             <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
               <span>Tax (10%):</span>
-              <span>$${(total * 0.1).toFixed(2)}</span>
+              <span>₹${(total * 0.1).toFixed(2)}</span>
             </div>
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; font-weight: 700; font-size: 1.2rem;">
             <span>Total:</span>
-            <span>$${(total * 1.1).toFixed(2)}</span>
+            <span>₹${(total * 1.1).toFixed(2)}</span>
           </div>
 
           <button class="btn" id="checkout-btn" style="width: 100%; margin-bottom: 1rem;">Proceed to Checkout</button>

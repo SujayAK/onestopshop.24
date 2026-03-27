@@ -5,7 +5,7 @@ export function Navbar() {
 
   return `
     <div class="announcement-bar">
-      <span id="announcement-text">FREE SHIPPING ON ORDERS OVER $100 • NEW ARRIVALS JUST LANDED</span>
+      <span id="announcement-text">FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED</span>
     </div>
     <header class="main-header">
       <div class="container nav-container">

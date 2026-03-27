@@ -24,18 +24,5 @@
       "Dimensions": "35\" x 35\"",
       "Care": "Hand wash only"
     }
-  },
-  {
-    "id": 3,
-    "name": "Minimalist Gold Hoops",
-    "price": 45.00,
-    "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1535633302704-b02f4faad767?q=80&w=600",
-    "description": "Simple and sophisticated gold-plated hoop earrings.",
-    "details": {
-      "Material": "18k Gold Plated Brass",
-      "Dimensions": "1.5\" Diameter",
-      "Care": "Avoid contact with water and perfume"
-    }
   }
 ]

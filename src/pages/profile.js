@@ -58,7 +58,7 @@ function renderWishlistCards() {
               <div class="profile-product-info">
                 <p class="profile-product-category">${product.category}</p>
                 <h4>${product.name}</h4>
-                <p class="profile-product-price">$${product.price.toFixed(2)}</p>
+                <p class="profile-product-price">₹${product.price.toFixed(2)}</p>
                 <div class="profile-product-actions">
                   <a href="#/product/${product.id}" class="btn btn-outline">View</a>
                   <button class="btn-remove-wishlist" data-product-id="${product.id}">Remove</button>
@@ -270,7 +270,7 @@ function renderPurchasedProductsFromOrders(orders) {
               <div class="profile-product-info">
                 <p class="profile-product-category">Order #${item.orderId}</p>
                 <h4>${item.name}</h4>
-                <p class="profile-product-price">$${Number(item.price).toFixed(2)} × ${item.quantity}</p>
+                <p class="profile-product-price">₹${Number(item.price).toFixed(2)} × ${item.quantity}</p>
                 <p class="profile-order-meta">Status: <span class="profile-order-status">${formatOrderStatus(item.status)}</span></p>
                 <p class="profile-order-meta">Purchased: ${new Date(item.date).toLocaleDateString()}</p>
               </div>

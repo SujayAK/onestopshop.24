@@ -20,7 +20,7 @@ export function CheckoutPage() {
   const itemsSummary = items.map(item => `
     <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
       <span>${item.name} x${item.quantity}</span>
-      <span>$${(item.price * item.quantity).toFixed(2)}</span>
+      <span>₹${(item.price * item.quantity).toFixed(2)}</span>
     </div>
   `).join('');
 
@@ -95,17 +95,17 @@ export function CheckoutPage() {
             <div style="border-top: 2px solid var(--border-color); padding-top: 1.5rem;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; color: var(--text-secondary);">
                 <span>Subtotal:</span>
-                <span>$${subtotal.toFixed(2)}</span>
+                <span>₹${subtotal.toFixed(2)}</span>
               </div>
 
               <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; color: var(--text-secondary);">
                 <span>Tax (10%):</span>
-                <span>$${tax.toFixed(2)}</span>
+                <span>₹${tax.toFixed(2)}</span>
               </div>
 
               <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; color: var(--accent-pink);">
                 <span>Total Amount:</span>
-                <span>$${total.toFixed(2)}</span>
+                <span>₹${total.toFixed(2)}</span>
               </div>
             </div>
 

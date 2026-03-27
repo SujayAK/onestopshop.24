@@ -33,7 +33,7 @@ export function PaymentSuccessPage() {
 
           <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <span style="font-weight: 600;">Amount:</span>
-            <span style="color: var(--accent-pink); font-weight: 700;">$${(currentOrder.amount || 0).toFixed(2)}</span>
+            <span style="color: var(--accent-pink); font-weight: 700;">₹${(currentOrder.amount || 0).toFixed(2)}</span>
           </div>
 
           <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">

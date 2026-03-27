@@ -15,7 +15,7 @@ import { getAnnouncementBarMessage } from './utils/supabase.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
-const DEFAULT_ANNOUNCEMENT_MESSAGE = 'FREE SHIPPING ON ORDERS OVER $100 • NEW ARRIVALS JUST LANDED';
+const DEFAULT_ANNOUNCEMENT_MESSAGE = 'FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED';
 let scrollHandlerAttached = false;
 let productGuardAttached = false;
 
