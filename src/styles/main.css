@@ -738,13 +738,12 @@ header.main-header.is-scrolled {
   background-clip: text;
   text-shadow: 0 3px 15px rgba(255, 105, 180, 0.2);
   animation: slideInLeft 0.8s ease-out, textGradientShift 5s linear infinite, headlineBob 4.5s ease-in-out infinite;
-  transition: background 0.3s ease, text-shadow 0.3s ease;
+  transition: filter 0.3s ease, text-shadow 0.3s ease;
 }
 
 .hero-content h1:hover {
-  background: linear-gradient(120deg, #000000, #2f2f2f, #000000);
-  background-size: 100% 100%;
-  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  filter: hue-rotate(45deg) saturate(1.2);
+  text-shadow: 0 6px 18px rgba(111, 90, 204, 0.28);
 }
 
 .hero-content p {
