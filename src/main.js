@@ -3,7 +3,12 @@ import { Navbar } from './components/navbar.js';
 import { Footer } from './components/footer.js';
 import { HomePage } from './pages/home.js';
 import { ShopPage } from './pages/shop.js';
-import { ProductPage } from './pages/product.js';
+import { ProductPage, initProductPage } from './pages/product.js';
+import { CartPage, initCartPage } from './pages/cart.js';
+import { CheckoutPage, initCheckoutPage } from './pages/checkout.js';
+import { PaymentSuccessPage, initPaymentSuccessPage } from './pages/payment-success.js';
+import { PaymentFailedPage } from './pages/payment-failed.js';
+import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
 
@@ -26,6 +31,9 @@ function renderPage(content) {
   // Initialize components after render
   initNavbar();
   initTestimonialSlider();
+
+  // Listen for cart updates
+  window.addEventListener('cartUpdated', updateCartBadge);
 }
 
 function initNavbar() {
@@ -45,6 +53,16 @@ function initNavbar() {
         navLinks.classList.remove('active');
       });
     });
+  }
+
+  // Update cart badge
+  updateCartBadge();
+}
+
+function updateCartBadge() {
+  const badge = document.getElementById('cart-badge');
+  if (badge) {
+    badge.textContent = cart.getItemCount();
   }
 }
 
@@ -87,6 +105,18 @@ function navigate() {
   } else if (hash.startsWith('#/product/')) {
     const id = hash.split('/').pop();
     renderPage(ProductPage(id));
+    initProductPage(id);
+  } else if (hash === '#/cart') {
+    renderPage(CartPage());
+    initCartPage();
+  } else if (hash === '#/checkout') {
+    renderPage(CheckoutPage());
+    initCheckoutPage();
+  } else if (hash === '#/payment-success') {
+    renderPage(PaymentSuccessPage());
+    initPaymentSuccessPage();
+  } else if (hash === '#/payment-failed') {
+    renderPage(PaymentFailedPage());
   } else if (hash === '#/about') {
     renderPage(`
       <div class="container section">
@@ -156,7 +186,7 @@ function navigate() {
         </div>
       </div>
     `);
-  } else if (hash === '#/search' || hash === '#/wishlist' || hash === '#/cart') {
+  } else if (hash === '#/search' || hash === '#/wishlist') {
     const pageName = hash.substring(2).charAt(0).toUpperCase() + hash.substring(3);
     renderPage(`
       <div class="container section" style="text-align: center; min-height: 50vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">

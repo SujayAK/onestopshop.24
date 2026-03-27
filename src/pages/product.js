@@ -1,4 +1,5 @@
 import products from '../data/products.json';
+import { cart } from '../utils/cart.js';
 
 export function ProductPage(id) {
   const product = products.find(p => p.id === parseInt(id));
@@ -56,8 +57,8 @@ export function ProductPage(id) {
           </div>
 
           <div style="display: grid; grid-template-columns: 100px 1fr; gap: 1rem; margin-bottom: 2rem;">
-             <input type="number" value="1" min="1" style="padding: 12px; border: 1px solid var(--border-color); text-align: center; font-family: inherit;">
-             <button class="btn" style="width: 100%;">Add to Cart</button>
+             <input type="number" id="product-qty" value="1" min="1" style="padding: 12px; border: 1px solid var(--border-color); text-align: center; font-family: inherit;">
+             <button id="add-to-cart-btn" class="btn" style="width: 100%;">Add to Cart</button>
           </div>
 
           <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 4px;">
@@ -87,5 +88,24 @@ export function ProductPage(id) {
         </div>
       </div>
     </div>
-  `;
+ 
+
+export function initProductPage(productId) {
+  const addToCartBtn = document.getElementById('add-to-cart-btn');
+  const qtyInput = document.getElementById('product-qty');
+
+  if (addToCartBtn) {
+    addToCartBtn.addEventListener('click', () => {
+      const product = products.find(p => p.id === parseInt(productId));
+      const quantity = parseInt(qtyInput.value) || 1;
+
+      if (product) {
+        cart.addItem(product, quantity);
+        alert('Product added to cart!');
+        // Optionally navigate to cart
+        // window.location.hash = '#/cart';
+      }
+    });
+  }
+} `;
 }

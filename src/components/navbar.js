@@ -20,7 +20,10 @@ export function Navbar() {
         <div class="nav-icons">
           <a href="#/search" class="icon-link" title="Search"><i class="fas fa-search"></i></a>
           <a href="#/wishlist" class="icon-link" title="Wishlist"><i class="far fa-heart"></i></a>
-          <a href="#/cart" class="icon-link" title="Cart"><i class="fas fa-shopping-bag"></i> (0)</a>
+          <a href="#/cart" class="icon-link cart-link" title="Cart" style="position: relative;">
+            <i class="fas fa-shopping-bag"></i>
+            <span id="cart-badge" style="position: absolute; top: -8px; right: -8px; background: var(--accent-pink); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">0</span>
+          </a>
           <div class="hamburger" id="hamburger">
             <span></span>
             <span></span>
