@@ -144,12 +144,26 @@ CREATE TABLE IF NOT EXISTS media (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Store settings (used for dynamic announcement bar text)
+CREATE TABLE IF NOT EXISTS store_settings (
+   id BIGSERIAL PRIMARY KEY,
+   key VARCHAR(120) NOT NULL UNIQUE,
+   value TEXT,
+   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Default announcement bar message (editable from Supabase table editor)
+INSERT INTO store_settings (key, value)
+VALUES ('announcement_bar_text', 'FREE SHIPPING ON ORDERS OVER $100 • NEW ARRIVALS JUST LANDED')
+ON CONFLICT (key) DO NOTHING;
+
 -- Create indexes for better performance
 CREATE INDEX idx_products_category ON products(category);
 CREATE INDEX idx_products_active ON products(active);
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_coupons_code ON coupons(code);
+CREATE INDEX idx_store_settings_key ON store_settings(key);
 
 ---
 
@@ -297,6 +311,19 @@ TRACK PAYMENTS:
 1. Go to "orders" table
 2. Check payment_status: "pending", "completed", "failed"
 3. View razorpay_payment_id and razorpay_order_id for reference
+
+MANAGE ANNOUNCEMENT BAR TEXT (Backend Controlled):
+1. Go to "Table Editor"
+2. Click "store_settings" table
+3. Find row where key = announcement_bar_text
+4. Edit the value column with any message you want
+5. Click Save
+6. Refresh website and the new announcement appears automatically
+
+Example values:
+- FREE SHIPPING ON ORDERS OVER $100 • NEW ARRIVALS JUST LANDED
+- FESTIVE SALE LIVE • EXTRA 15% OFF WITH CODE FESTIVE15
+- EXPRESS DELIVERY AVAILABLE IN SELECT CITIES
 
 ====================================================================
 PART 10: COMMON ISSUES & SOLUTIONS
