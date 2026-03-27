@@ -14,6 +14,73 @@ import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
 let scrollHandlerAttached = false;
+let productGuardAttached = false;
+
+function isAuthenticated() {
+  try {
+    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+    return Boolean(user && user.id);
+  } catch (_error) {
+    return false;
+  }
+}
+
+function closeAuthGateModal() {
+  const overlay = document.getElementById('auth-gate-overlay');
+  if (overlay) {
+    overlay.remove();
+  }
+  document.body.classList.remove('auth-gate-open');
+}
+
+function showAuthGateModal(targetHash = '#/login') {
+  closeAuthGateModal();
+  document.body.classList.add('auth-gate-open');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'auth-gate-overlay';
+  overlay.className = 'auth-gate-overlay';
+  overlay.innerHTML = `
+    <div class="auth-gate-modal" role="dialog" aria-modal="true" aria-labelledby="auth-gate-title">
+      <button type="button" class="auth-gate-close" aria-label="Close">&times;</button>
+      <h2 id="auth-gate-title">Sign In Required</h2>
+      <p>Please sign in or create an account to view product details and continue shopping securely.</p>
+      <div class="auth-gate-actions">
+        <a class="btn" href="#/login">Sign In</a>
+        <a class="btn btn-outline" href="#/signup">Create Account</a>
+      </div>
+      <button type="button" class="auth-gate-continue">Continue Browsing</button>
+    </div>
+  `;
+
+  overlay.querySelector('.auth-gate-close').addEventListener('click', closeAuthGateModal);
+  overlay.querySelector('.auth-gate-continue').addEventListener('click', closeAuthGateModal);
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay) {
+      closeAuthGateModal();
+    }
+  });
+
+  document.body.appendChild(overlay);
+}
+
+function initProductAccessGuard() {
+  if (productGuardAttached) {
+    return;
+  }
+
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href^="#/product/"]');
+    if (!link || isAuthenticated()) {
+      return;
+    }
+
+    event.preventDefault();
+    showAuthGateModal(link.getAttribute('href'));
+  });
+
+  productGuardAttached = true;
+}
 
 function initMotionSystem() {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -84,6 +151,12 @@ function renderPage(content) {
       <div class="floating-shape shape-3"></div>
       <div class="floating-shape shape-4"></div>
       <div class="floating-shape shape-5"></div>
+    </div>
+    <div class="sticker-layer" aria-hidden="true">
+      <div class="sticker sticker-star"><i class="fas fa-star"></i></div>
+      <div class="sticker sticker-heart"><i class="fas fa-heart"></i></div>
+      <div class="sticker sticker-spark"><i class="fas fa-magic"></i></div>
+      <div class="sticker sticker-bolt"><i class="fas fa-bolt"></i></div>
     </div>
     ${header}
     <main id="main-content" class="fade-in">
@@ -187,6 +260,11 @@ function navigate() {
   } else if (hash.startsWith('#/shop')) {
     renderPage(ShopPage());
   } else if (hash.startsWith('#/product/')) {
+    if (!isAuthenticated()) {
+      renderPage(ShopPage());
+      showAuthGateModal(hash);
+      return;
+    }
     const id = hash.split('/').pop();
     renderPage(ProductPage(id));
     initProductPage(id);
@@ -286,5 +364,6 @@ function navigate() {
   }
 }
 
+initProductAccessGuard();
 window.addEventListener('hashchange', navigate);
 window.addEventListener('load', navigate);
