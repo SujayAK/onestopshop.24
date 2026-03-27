@@ -326,3 +326,27 @@ export async function deleteFile(bucket, filePath) {
     return { success: false, error: error.message }
   }
 }
+
+// Store settings
+export async function getAnnouncementBarMessage() {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, data: null }
+    }
+
+    const { data, error } = await supabase
+      .from('store_settings')
+      .select('value')
+      .eq('key', 'announcement_bar_text')
+      .maybeSingle()
+
+    if (error) {
+      return { success: false, data: null }
+    }
+
+    return { success: true, data: data?.value || null }
+  } catch (error) {
+    console.error('Get announcement message error:', error.message)
+    return { success: false, data: null }
+  }
+}

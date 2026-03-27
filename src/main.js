@@ -11,9 +11,11 @@ import { PaymentFailedPage, initPaymentFailedPage } from './pages/payment-failed
 import { LoginPage, initLoginPage } from './pages/login.js';
 import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
+import { getAnnouncementBarMessage } from './utils/supabase.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
+const DEFAULT_ANNOUNCEMENT_MESSAGE = 'FREE SHIPPING ON ORDERS OVER $100 • NEW ARRIVALS JUST LANDED';
 let scrollHandlerAttached = false;
 let productGuardAttached = false;
 
@@ -249,6 +251,21 @@ function initNavbar() {
 
   // Update cart badge
   updateCartBadge();
+  initAnnouncementBar();
+}
+
+async function initAnnouncementBar() {
+  const announcementText = document.getElementById('announcement-text');
+  if (!announcementText) {
+    return;
+  }
+
+  announcementText.textContent = DEFAULT_ANNOUNCEMENT_MESSAGE;
+
+  const result = await getAnnouncementBarMessage();
+  if (result.success && result.data) {
+    announcementText.textContent = result.data;
+  }
 }
 
 function updateCartBadge() {
