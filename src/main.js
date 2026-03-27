@@ -13,6 +13,62 @@ import { SignupPage, initSignupPage } from './pages/signup.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
+let scrollHandlerAttached = false;
+
+function initMotionSystem() {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reducedMotion) {
+    return;
+  }
+
+  const revealTargets = document.querySelectorAll(
+    '.hero-content, .hero-image, .category-card, .product-card, .trust-card, .testimonial-card, .auth-card, .section h1, .section h2'
+  );
+
+  revealTargets.forEach((element, index) => {
+    element.classList.add('reveal');
+    if (element.matches('.hero-content, .section h1, .section h2')) {
+      element.classList.add('reveal-up');
+    } else if (element.matches('.hero-image')) {
+      element.classList.add('reveal-right');
+    } else {
+      element.classList.add('reveal-scale');
+    }
+    element.style.transitionDelay = `${Math.min(index * 30, 240)}ms`;
+  });
+
+  const observer = new IntersectionObserver(
+    entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+  );
+
+  revealTargets.forEach(target => observer.observe(target));
+
+  const header = document.querySelector('.main-header');
+  const updateHeaderState = () => {
+    if (!header) {
+      return;
+    }
+    if (window.scrollY > 24) {
+      header.classList.add('is-scrolled');
+    } else {
+      header.classList.remove('is-scrolled');
+    }
+  };
+
+  updateHeaderState();
+  if (!scrollHandlerAttached) {
+    window.addEventListener('scroll', updateHeaderState, { passive: true });
+    scrollHandlerAttached = true;
+  }
+}
 
 function renderPage(content) {
   const header = Navbar();
@@ -52,6 +108,7 @@ function renderPage(content) {
   // Initialize components after render
   initNavbar();
   initTestimonialSlider();
+  initMotionSystem();
 
   // Listen for cart updates
   window.addEventListener('cartUpdated', updateCartBadge);
@@ -142,7 +199,6 @@ function navigate() {
   } else if (hash === '#/payment-success') {
     renderPage(PaymentSuccessPage());
     initPaymentSuccessPage();
-  } else if (hash === '#/about') {
   } else if (hash === '#/payment-failed') {
     renderPage(PaymentFailedPage());
     initPaymentFailedPage();

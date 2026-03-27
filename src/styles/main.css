@@ -237,6 +237,29 @@ button {
   animation: fadeIn 0.6s ease forwards;
 }
 
+.reveal {
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-up {
+  transform: translateY(18px);
+}
+
+.reveal-right {
+  transform: translateX(18px);
+}
+
+.reveal-scale {
+  transform: scale(0.98);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
 header.main-header {
   position: sticky;
   top: 0;
@@ -247,6 +270,12 @@ header.main-header {
   padding: var(--spacing-sm) 0;
   animation: slideInLeft 0.6s ease-out;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+header.main-header.is-scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom-color: rgba(248, 215, 241, 0.65);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
 }
 
 /* Navigation Container */
@@ -328,6 +357,37 @@ header.main-header {
 .icon-link:hover {
   color: var(--accent-pink);
   transform: scale(1.15);
+}
+
+.product-card,
+.category-card,
+.trust-card,
+.auth-card {
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.product-card:hover,
+.category-card:hover,
+.trust-card:hover,
+.auth-card:hover {
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal,
+  .reveal-up,
+  .reveal-right,
+  .reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 .hamburger {
