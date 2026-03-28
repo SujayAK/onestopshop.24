@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host --port 5175",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -13,6 +13,7 @@
     "vite": "^5.1.6"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.1"
+    "@supabase/supabase-js": "^2.100.1",
+    "three": "^0.176.0"
   }
 }

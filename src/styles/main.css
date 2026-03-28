@@ -59,6 +59,33 @@ body::before {
   z-index: 0;
 }
 
+.webgl-background-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -3;
+  overflow: hidden;
+}
+
+.webgl-background-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0.96;
+  filter: saturate(1.05) contrast(1.02);
+}
+
+.webgl-background-layer.is-fallback {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 105, 180, 0.15) 0%, transparent 56%),
+    radial-gradient(circle at 82% 75%, rgba(112, 209, 232, 0.16) 0%, transparent 52%),
+    radial-gradient(circle at 54% 42%, rgba(155, 124, 195, 0.11) 0%, transparent 46%);
+}
+
+body.webgl-fallback .animated-bg {
+  opacity: 0.82;
+}
+
 h1, h2, h3, h4 {
   font-family: var(--font-heading);
   font-weight: 700;
@@ -249,6 +276,21 @@ button {
   50% { transform: translateY(-3px); }
 }
 
+@keyframes spinScene {
+  0% { transform: rotateX(62deg) rotateZ(0deg); }
+  100% { transform: rotateX(62deg) rotateZ(360deg); }
+}
+
+@keyframes depthFloat {
+  0%, 100% { transform: translate3d(0, 0, 0) rotateY(0deg); }
+  50% { transform: translate3d(0, -16px, 24px) rotateY(10deg); }
+}
+
+@keyframes cardDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg); }
+  50% { transform: translate3d(8px, -14px, 26px) rotateX(7deg) rotateY(10deg); }
+}
+
 .fade-in {
   animation: fadeIn 0.6s ease forwards;
 }
@@ -274,6 +316,126 @@ button {
 .reveal.is-visible {
   opacity: 1;
   transform: none;
+}
+
+.three-d-background {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  overflow: hidden;
+  --ring-opacity: 0.62;
+  --ring-b-opacity: 0.46;
+  --ring-duration: 28s;
+  --ring-b-duration: 36s;
+  --card-opacity: 0.92;
+  --card-duration: 8.8s;
+  --card-shadow: 0 16px 28px rgba(90, 58, 99, 0.12);
+}
+
+.three-d-background.intensity-subtle {
+  --ring-opacity: 0.45;
+  --ring-b-opacity: 0.34;
+  --ring-duration: 36s;
+  --ring-b-duration: 44s;
+  --card-opacity: 0.78;
+  --card-duration: 10.8s;
+  --card-shadow: 0 10px 22px rgba(90, 58, 99, 0.09);
+}
+
+.three-d-background.intensity-medium {
+  --ring-opacity: 0.62;
+  --ring-b-opacity: 0.46;
+  --ring-duration: 28s;
+  --ring-b-duration: 36s;
+  --card-opacity: 0.92;
+  --card-duration: 8.8s;
+  --card-shadow: 0 16px 28px rgba(90, 58, 99, 0.12);
+}
+
+.three-d-background.intensity-bold {
+  --ring-opacity: 0.78;
+  --ring-b-opacity: 0.62;
+  --ring-duration: 22s;
+  --ring-b-duration: 30s;
+  --card-opacity: 1;
+  --card-duration: 7.2s;
+  --card-shadow: 0 20px 34px rgba(90, 58, 99, 0.16);
+}
+
+.three-d-ring {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 105, 180, 0.25);
+  box-shadow: 0 0 30px rgba(112, 209, 232, 0.1), inset 0 0 50px rgba(155, 124, 195, 0.12);
+  transform-style: preserve-3d;
+  animation: spinScene var(--ring-duration) linear infinite;
+  opacity: var(--ring-opacity);
+}
+
+.ring-a {
+  top: -140px;
+  right: -80px;
+}
+
+.ring-b {
+  bottom: -170px;
+  left: -100px;
+  width: 500px;
+  height: 500px;
+  animation-direction: reverse;
+  animation-duration: var(--ring-b-duration);
+  opacity: var(--ring-b-opacity);
+}
+
+.three-d-card {
+  position: absolute;
+  width: 140px;
+  height: 120px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(49, 36, 58, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 240, 247, 0.55));
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(5px);
+  transform-style: preserve-3d;
+  opacity: var(--card-opacity);
+  animation: cardDrift var(--card-duration) ease-in-out infinite;
+}
+
+.three-d-card i {
+  font-size: 1.35rem;
+  color: var(--accent-purple);
+}
+
+.card-bag {
+  top: 18%;
+  right: 14%;
+}
+
+.card-accessory {
+  bottom: 17%;
+  left: 12%;
+  animation-delay: 1.5s;
+}
+
+.card-offer {
+  top: 50%;
+  right: 3%;
+  animation-delay: 2.7s;
 }
 
 .sticker-layer {
@@ -470,6 +632,15 @@ header.main-header.is-scrolled {
   .logo-text {
     animation: none !important;
   }
+
+  .three-d-ring,
+  .three-d-card {
+    animation: none !important;
+  }
+
+  .webgl-background-canvas {
+    filter: saturate(1);
+  }
 }
 
 .hamburger {
@@ -525,6 +696,43 @@ header.main-header.is-scrolled {
 
   .nav-icons {
     margin-right: 1rem;
+  }
+
+  .three-d-background {
+    --ring-duration: calc(var(--ring-duration) + 8s);
+    --ring-b-duration: calc(var(--ring-b-duration) + 10s);
+    --card-duration: calc(var(--card-duration) + 2.2s);
+  }
+
+  .three-d-background.intensity-bold {
+    --ring-opacity: 0.62;
+    --ring-b-opacity: 0.48;
+    --card-opacity: 0.9;
+  }
+
+  .three-d-ring {
+    width: 300px;
+    height: 300px;
+    opacity: 0.7;
+  }
+
+  .ring-b {
+    width: 340px;
+    height: 340px;
+  }
+
+  .three-d-card {
+    width: 110px;
+    height: 94px;
+    font-size: 0.68rem;
+  }
+
+  .three-d-card i {
+    font-size: 1rem;
+  }
+
+  .webgl-background-canvas {
+    opacity: 0.86;
   }
 }
 
