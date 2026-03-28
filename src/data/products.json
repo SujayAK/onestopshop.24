@@ -5,7 +5,7 @@
     "price": 89.00,
     "category": "Bags",
     "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=600",
-    "description": "A timeless leather tote bag for everyday use.",
+    "description": "A timeless leather tote bag for everyday use and work.",
     "details": {
       "Material": "100% Genuine Leather",
       "Dimensions": "15\" x 12\" x 5\"",
@@ -23,6 +23,238 @@
       "Material": "100% Mulberry Silk",
       "Dimensions": "35\" x 35\"",
       "Care": "Hand wash only"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Premium Backpack",
+    "price": 129.99,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
+    "description": "Durable and spacious backpack with multiple compartments, perfect for travel and daily commute.",
+    "details": {
+      "Material": "Water-resistant Nylon",
+      "Capacity": "30L",
+      "Care": "Hand wash recommended"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Crossbody Messenger Bag",
+    "price": 95.00,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
+    "description": "Stylish crossbody bag with adjustable strap, ideal for urban exploration.",
+    "details": {
+      "Material": "Canvas & Leather",
+      "Dimensions": "12\" x 10\" x 4\"",
+      "Care": "Spot clean with damp cloth"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Luxury Handbag",
+    "price": 249.99,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=600",
+    "description": "Exquisite designer handbag crafted from premium leather with gold accents.",
+    "details": {
+      "Material": "Italian Leather",
+      "Dimensions": "14\" x 10\" x 5\"",
+      "Care": "Professional cleaning recommended"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Minimalist Crossbody",
+    "price": 65.00,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=600",
+    "description": "Sleek minimalist crossbody bag for essentials with premium leather finish.",
+    "details": {
+      "Material": "Genuine Leather",
+      "Dimensions": "8\" x 6\" x 2\"",
+      "Care": "Wipe clean with cloth"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Travel Duffel Bag",
+    "price": 159.00,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600",
+    "description": "Spacious travel duffel with multiple pockets and TSA-approved design.",
+    "details": {
+      "Material": "Ballistic Nylon",
+      "Capacity": "50L",
+      "Care": "Machine washable"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Leather Clutch",
+    "price": 45.00,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600",
+    "description": "Compact leather clutch perfect for evening events and formal occasions.",
+    "details": {
+      "Material": "Genuine Leather",
+      "Dimensions": "10\" x 5\" x 1\"",
+      "Care": "Wipe with soft cloth"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Canvas Weekend Bag",
+    "price": 79.00,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
+    "description": "Practical canvas weekender with leather handles for short trips.",
+    "details": {
+      "Material": "Heavy-duty Canvas",
+      "Capacity": "25L",
+      "Care": "Spot clean"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Designer Satchel",
+    "price": 189.99,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=600",
+    "description": "Sophisticated satchel combining classic style with modern functionality.",
+    "details": {
+      "Material": "Premium Leather",
+      "Dimensions": "13\" x 11\" x 5\"",
+      "Care": "Professional maintenance"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Woven Straw Tote",
+    "price": 55.00,
+    "category": "Bags",
+    "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=600",
+    "description": "Natural woven straw tote, perfect for beach and casual outings.",
+    "details": {
+      "Material": "Sea Grass",
+      "Dimensions": "16\" x 14\" x 6\"",
+      "Care": "Brush off debris"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Leather Wallet",
+    "price": 25.00,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1627123834957-4466880c0d94?q=80&w=600",
+    "description": "Premium RFID-protected leather wallet with multiple card slots.",
+    "details": {
+      "Material": "Full-grain Leather",
+      "Compartments": "8 card slots + coin pocket",
+      "Care": "Condition regularly"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Designer Sunglasses",
+    "price": 145.00,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=600",
+    "description": "UV-protected designer sunglasses with premium lens technology.",
+    "details": {
+      "Material": "Metal & Glass",
+      "Protection": "UV 400",
+      "Care": "Store in protective case"
+    }
+  },
+  {
+    "id": 14,
+    "name": "Leather Belt",
+    "price": 39.99,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=600",
+    "description": "Classic leather belt with adjustable buckle and multiple notches.",
+    "details": {
+      "Material": "Genuine Leather",
+      "Width": "1.5\"",
+      "Care": "Wipe clean"
+    }
+  },
+  {
+    "id": 15,
+    "name": "Cashmere Wrap",
+    "price": 120.00,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1609932113189-6890e1797371?q=80&w=600",
+    "description": "Luxurious cashmere wrap, soft and warm for any season.",
+    "details": {
+      "Material": "100% Cashmere",
+      "Dimensions": "60\" x 40\"",
+      "Care": "Dry clean only"
+    }
+  },
+  {
+    "id": 16,
+    "name": "Wool Beanie",
+    "price": 29.99,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1589327826919-4ef09b277eed?q=80&w=600",
+    "description": "Warm and comfortable wool beanie, perfect for winter.",
+    "details": {
+      "Material": "100% Merino Wool",
+      "Care": "Hand wash"
+    }
+  },
+  {
+    "id": 17,
+    "name": "Cotton Gloves",
+    "price": 19.99,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1523521845212-cbe660dbde88?q=80&w=600",
+    "description": "Breathable cotton gloves for everyday wear.",
+    "details": {
+      "Material": "100% Cotton",
+      "Care": "Machine wash cold"
+    }
+  },
+  {
+    "id": 18,
+    "name": "Statement Necklace",
+    "price": 85.00,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=600",
+    "description": "Eye-catching statement necklace with premium finish.",
+    "details": {
+      "Material": "Gold Plated",
+      "Dimensions": "20\" + 2\" Extension",
+      "Care": "Store in dry place"
+    }
+  },
+  {
+    "id": 19,
+    "name": "Vintage Watch",
+    "price": 199.99,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1523170335684-f1b0248e7f4f?q=80&w=600",
+    "description": "Classic vintage-inspired watch with leather strap.",
+    "details": {
+      "Material": "Stainless Steel",
+      "Waterproof": "30m",
+      "Care": "Water resistant"
+    }
+  },
+  {
+    "id": 20,
+    "name": "Silk Tie",
+    "price": 49.99,
+    "category": "Accessories",
+    "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600",
+    "description": "Premium silk tie with classic patterns and vibrant colors.",
+    "details": {
+      "Material": "100% Silk",
+      "Dimensions": "3.5\" Wide x 57\" Long",
+      "Care": "Dry clean"
     }
   }
 ]
