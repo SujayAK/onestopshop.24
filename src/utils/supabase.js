@@ -113,6 +113,7 @@ export async function getProductsCatalog(options = {}) {
       limit = 20,
       offset = 0,
       category,
+      subcategory,
       search,
       minPrice,
       maxPrice,
@@ -131,6 +132,10 @@ export async function getProductsCatalog(options = {}) {
 
     if (category) {
       query = query.eq('category', category)
+    }
+
+    if (subcategory) {
+      query = query.eq('subcategory', subcategory)
     }
 
     if (search) {
@@ -163,6 +168,27 @@ export async function getProductsCatalog(options = {}) {
     return { success: true, data: data || [] }
   } catch (error) {
     console.error('Get products catalog error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+export async function getInventoryTaxonomy() {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    const { data, error } = await supabase
+      .from('inventory_taxonomy')
+      .select('category, subcategory, sort_order, active')
+      .eq('active', true)
+      .order('category', { ascending: true })
+      .order('sort_order', { ascending: true })
+
+    if (error) throw error
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Get inventory taxonomy error:', error.message)
     return { success: false, error: error.message, data: [] }
   }
 }

@@ -1,260 +1,296 @@
 [
   {
     "id": 1,
-    "name": "Classic Leather Tote",
-    "price": 89.00,
+    "name": "Luna Shoulder Bag",
+    "price": 89.0,
     "category": "Bags",
+    "subcategory": "Shoulder Bags",
     "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=600",
-    "description": "A timeless leather tote bag for everyday use and work.",
+    "description": "A timeless shoulder bag for daily use.",
     "details": {
-      "Material": "100% Genuine Leather",
-      "Dimensions": "15\" x 12\" x 5\"",
-      "Care": "Wipe with a damp cloth"
+      "Material": "Genuine Leather",
+      "Dimensions": "13 x 10 x 4 in",
+      "Care": "Wipe with dry cloth"
     }
   },
   {
     "id": 2,
-    "name": "Silk Floral Scarf",
-    "price": 35.00,
-    "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1584030373081-f37b7bb4fa8e?q=80&w=600",
-    "description": "Elegant silk scarf with a vibrant floral pattern.",
-    "details": {
-      "Material": "100% Mulberry Silk",
-      "Dimensions": "35\" x 35\"",
-      "Care": "Hand wash only"
-    }
-  },
-  {
-    "id": 3,
-    "name": "Premium Backpack",
-    "price": 129.99,
+    "name": "Harbor Tote",
+    "price": 95.0,
     "category": "Bags",
-    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
-    "description": "Durable and spacious backpack with multiple compartments, perfect for travel and daily commute.",
-    "details": {
-      "Material": "Water-resistant Nylon",
-      "Capacity": "30L",
-      "Care": "Hand wash recommended"
-    }
-  },
-  {
-    "id": 4,
-    "name": "Crossbody Messenger Bag",
-    "price": 95.00,
-    "category": "Bags",
-    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
-    "description": "Stylish crossbody bag with adjustable strap, ideal for urban exploration.",
-    "details": {
-      "Material": "Canvas & Leather",
-      "Dimensions": "12\" x 10\" x 4\"",
-      "Care": "Spot clean with damp cloth"
-    }
-  },
-  {
-    "id": 5,
-    "name": "Luxury Handbag",
-    "price": 249.99,
-    "category": "Bags",
+    "subcategory": "Tote Bags",
     "image": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=600",
-    "description": "Exquisite designer handbag crafted from premium leather with gold accents.",
+    "description": "Roomy tote for work, shopping, and travel.",
     "details": {
-      "Material": "Italian Leather",
-      "Dimensions": "14\" x 10\" x 5\"",
-      "Care": "Professional cleaning recommended"
-    }
-  },
-  {
-    "id": 6,
-    "name": "Minimalist Crossbody",
-    "price": 65.00,
-    "category": "Bags",
-    "image": "https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=600",
-    "description": "Sleek minimalist crossbody bag for essentials with premium leather finish.",
-    "details": {
-      "Material": "Genuine Leather",
-      "Dimensions": "8\" x 6\" x 2\"",
-      "Care": "Wipe clean with cloth"
-    }
-  },
-  {
-    "id": 7,
-    "name": "Travel Duffel Bag",
-    "price": 159.00,
-    "category": "Bags",
-    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600",
-    "description": "Spacious travel duffel with multiple pockets and TSA-approved design.",
-    "details": {
-      "Material": "Ballistic Nylon",
-      "Capacity": "50L",
-      "Care": "Machine washable"
-    }
-  },
-  {
-    "id": 8,
-    "name": "Leather Clutch",
-    "price": 45.00,
-    "category": "Bags",
-    "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600",
-    "description": "Compact leather clutch perfect for evening events and formal occasions.",
-    "details": {
-      "Material": "Genuine Leather",
-      "Dimensions": "10\" x 5\" x 1\"",
-      "Care": "Wipe with soft cloth"
-    }
-  },
-  {
-    "id": 9,
-    "name": "Canvas Weekend Bag",
-    "price": 79.00,
-    "category": "Bags",
-    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
-    "description": "Practical canvas weekender with leather handles for short trips.",
-    "details": {
-      "Material": "Heavy-duty Canvas",
-      "Capacity": "25L",
+      "Material": "Canvas",
+      "Dimensions": "16 x 12 x 5 in",
       "Care": "Spot clean"
     }
   },
   {
-    "id": 10,
-    "name": "Designer Satchel",
-    "price": 189.99,
+    "id": 3,
+    "name": "Metro Sling",
+    "price": 65.0,
     "category": "Bags",
+    "subcategory": "Sling Bags",
     "image": "https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=600",
-    "description": "Sophisticated satchel combining classic style with modern functionality.",
+    "description": "Compact sling with quick access pockets.",
     "details": {
-      "Material": "Premium Leather",
-      "Dimensions": "13\" x 11\" x 5\"",
-      "Care": "Professional maintenance"
-    }
-  },
-  {
-    "id": 11,
-    "name": "Woven Straw Tote",
-    "price": 55.00,
-    "category": "Bags",
-    "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=600",
-    "description": "Natural woven straw tote, perfect for beach and casual outings.",
-    "details": {
-      "Material": "Sea Grass",
-      "Dimensions": "16\" x 14\" x 6\"",
-      "Care": "Brush off debris"
-    }
-  },
-  {
-    "id": 12,
-    "name": "Leather Wallet",
-    "price": 25.00,
-    "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1627123834957-4466880c0d94?q=80&w=600",
-    "description": "Premium RFID-protected leather wallet with multiple card slots.",
-    "details": {
-      "Material": "Full-grain Leather",
-      "Compartments": "8 card slots + coin pocket",
-      "Care": "Condition regularly"
-    }
-  },
-  {
-    "id": 13,
-    "name": "Designer Sunglasses",
-    "price": 145.00,
-    "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=600",
-    "description": "UV-protected designer sunglasses with premium lens technology.",
-    "details": {
-      "Material": "Metal & Glass",
-      "Protection": "UV 400",
-      "Care": "Store in protective case"
-    }
-  },
-  {
-    "id": 14,
-    "name": "Leather Belt",
-    "price": 39.99,
-    "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=600",
-    "description": "Classic leather belt with adjustable buckle and multiple notches.",
-    "details": {
-      "Material": "Genuine Leather",
-      "Width": "1.5\"",
+      "Material": "PU Leather",
+      "Dimensions": "9 x 7 x 2 in",
       "Care": "Wipe clean"
     }
   },
   {
-    "id": 15,
-    "name": "Cashmere Wrap",
-    "price": 120.00,
-    "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1609932113189-6890e1797371?q=80&w=600",
-    "description": "Luxurious cashmere wrap, soft and warm for any season.",
+    "id": 4,
+    "name": "Festive Potli",
+    "price": 45.0,
+    "category": "Bags",
+    "subcategory": "Ethnic Bags",
+    "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600",
+    "description": "Ethnic drawstring bag for celebrations.",
     "details": {
-      "Material": "100% Cashmere",
-      "Dimensions": "60\" x 40\"",
-      "Care": "Dry clean only"
+      "Material": "Embroidered Fabric",
+      "Dimensions": "8 x 8 in",
+      "Care": "Dry clean"
     }
   },
   {
-    "id": 16,
-    "name": "Wool Beanie",
-    "price": 29.99,
-    "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1589327826919-4ef09b277eed?q=80&w=600",
-    "description": "Warm and comfortable wool beanie, perfect for winter.",
+    "id": 5,
+    "name": "Weekend Duffle",
+    "price": 159.0,
+    "category": "Bags",
+    "subcategory": "Duffle Bags",
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600",
+    "description": "Duffle bag for short trips and gym sessions.",
     "details": {
-      "Material": "100% Merino Wool",
+      "Material": "Ballistic Nylon",
+      "Capacity": "45L",
       "Care": "Hand wash"
     }
   },
   {
-    "id": 17,
-    "name": "Cotton Gloves",
+    "id": 6,
+    "name": "Essential Wallet",
+    "price": 25.0,
+    "category": "Bags",
+    "subcategory": "Wallets",
+    "image": "https://images.unsplash.com/photo-1627123834957-4466880c0d94?q=80&w=600",
+    "description": "Slim wallet with RFID protection.",
+    "details": {
+      "Material": "Leather",
+      "Compartments": "8 card slots",
+      "Care": "Condition monthly"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Office Tablet Carry",
+    "price": 79.0,
+    "category": "Bags",
+    "subcategory": "Tablet Bags",
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
+    "description": "Padded tablet bag with organizer slots.",
+    "details": {
+      "Material": "Nylon",
+      "Dimensions": "11 x 9 x 2 in",
+      "Care": "Spot clean"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Classic Shoulder Satchel",
+    "price": 110.0,
+    "category": "Bags",
+    "subcategory": "Shoulder Bags",
+    "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=600",
+    "description": "Structured shoulder satchel with metal hardware.",
+    "details": {
+      "Material": "Leather",
+      "Dimensions": "14 x 10 x 4 in",
+      "Care": "Wipe with damp cloth"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Beach Tote",
+    "price": 55.0,
+    "category": "Bags",
+    "subcategory": "Tote Bags",
+    "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=600",
+    "description": "Lightweight tote for beach and daily errands.",
+    "details": {
+      "Material": "Woven Straw",
+      "Dimensions": "17 x 13 x 6 in",
+      "Care": "Brush clean"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Travel Duffle Pro",
+    "price": 189.99,
+    "category": "Bags",
+    "subcategory": "Duffle Bags",
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600",
+    "description": "Premium duffle with shoe compartment and shoulder strap.",
+    "details": {
+      "Material": "Nylon and Leather",
+      "Capacity": "55L",
+      "Care": "Wipe clean"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Satin Hair Bow",
+    "price": 12.99,
+    "category": "Accessories",
+    "subcategory": "Hair Bows",
+    "image": "https://images.unsplash.com/photo-1609932113189-6890e1797371?q=80&w=600",
+    "description": "Soft satin hair bow in multiple shades.",
+    "details": {
+      "Material": "Satin",
+      "Size": "Medium",
+      "Care": "Hand wash"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Press-On Nail Set",
     "price": 19.99,
     "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1523521845212-cbe660dbde88?q=80&w=600",
-    "description": "Breathable cotton gloves for everyday wear.",
+    "subcategory": "Nails",
+    "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=600",
+    "description": "Reusable press-on nail kit with adhesive tabs.",
     "details": {
-      "Material": "100% Cotton",
-      "Care": "Machine wash cold"
+      "Material": "Acrylic",
+      "Count": "24 pieces",
+      "Care": "Store dry"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Pearl Drop Earrings",
+    "price": 29.99,
+    "category": "Accessories",
+    "subcategory": "Earrings",
+    "image": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=600",
+    "description": "Elegant pearl earrings for festive and casual wear.",
+    "details": {
+      "Material": "Alloy + Pearl",
+      "Length": "2.2 in",
+      "Care": "Keep dry"
+    }
+  },
+  {
+    "id": 14,
+    "name": "Charm Bracelet",
+    "price": 24.99,
+    "category": "Accessories",
+    "subcategory": "Bracelets",
+    "image": "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=600",
+    "description": "Adjustable bracelet with mini charms.",
+    "details": {
+      "Material": "Stainless Steel",
+      "Size": "Adjustable",
+      "Care": "Avoid perfume"
+    }
+  },
+  {
+    "id": 15,
+    "name": "Layered Necklace",
+    "price": 34.99,
+    "category": "Accessories",
+    "subcategory": "Necklace",
+    "image": "https://images.unsplash.com/photo-1611652022419-a9419f74343d?q=80&w=600",
+    "description": "Minimal layered necklace with polished finish.",
+    "details": {
+      "Material": "Gold-tone Alloy",
+      "Length": "18 in + extender",
+      "Care": "Store dry"
+    }
+  },
+  {
+    "id": 16,
+    "name": "Heart Bag Charm",
+    "price": 14.99,
+    "category": "Accessories",
+    "subcategory": "Bag Charms",
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600",
+    "description": "Cute bag charm to style handbags and backpacks.",
+    "details": {
+      "Material": "Metal + Resin",
+      "Length": "4 in",
+      "Care": "Wipe clean"
+    }
+  },
+  {
+    "id": 17,
+    "name": "UV Shield Sunglasses",
+    "price": 49.99,
+    "category": "Accessories",
+    "subcategory": "Sunglasses",
+    "image": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=600",
+    "description": "UV400 sunglasses with lightweight frame.",
+    "details": {
+      "Material": "Polycarbonate",
+      "Protection": "UV400",
+      "Care": "Use case"
     }
   },
   {
     "id": 18,
-    "name": "Statement Necklace",
-    "price": 85.00,
+    "name": "Matte Hair Claw Clip",
+    "price": 9.99,
     "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=600",
-    "description": "Eye-catching statement necklace with premium finish.",
+    "subcategory": "Hair Claw Clips",
+    "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=600",
+    "description": "Strong hold hair claw clip for everyday styling.",
     "details": {
-      "Material": "Gold Plated",
-      "Dimensions": "20\" + 2\" Extension",
-      "Care": "Store in dry place"
+      "Material": "Resin",
+      "Size": "Large",
+      "Care": "Keep dry"
     }
   },
   {
     "id": 19,
-    "name": "Vintage Watch",
-    "price": 199.99,
+    "name": "Printed Silk Scarf",
+    "price": 35.0,
     "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1523170335684-f1b0248e7f4f?q=80&w=600",
-    "description": "Classic vintage-inspired watch with leather strap.",
+    "subcategory": "Scarfs",
+    "image": "https://images.unsplash.com/photo-1584030373081-f37b7bb4fa8e?q=80&w=600",
+    "description": "Light silk scarf with statement prints.",
     "details": {
-      "Material": "Stainless Steel",
-      "Waterproof": "30m",
-      "Care": "Water resistant"
+      "Material": "Silk Blend",
+      "Dimensions": "35 x 35 in",
+      "Care": "Hand wash"
     }
   },
   {
     "id": 20,
-    "name": "Silk Tie",
-    "price": 49.99,
+    "name": "Pastel Phone Cover",
+    "price": 15.99,
     "category": "Accessories",
-    "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600",
-    "description": "Premium silk tie with classic patterns and vibrant colors.",
+    "subcategory": "Phone Covers",
+    "image": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=600",
+    "description": "Shock-absorbing phone cover with matte finish.",
     "details": {
-      "Material": "100% Silk",
-      "Dimensions": "3.5\" Wide x 57\" Long",
-      "Care": "Dry clean"
+      "Material": "TPU",
+      "Compatibility": "Multiple models",
+      "Care": "Wipe clean"
+    }
+  },
+  {
+    "id": 21,
+    "name": "Travel Pouch Organizer",
+    "price": 22.99,
+    "category": "Accessories",
+    "subcategory": "Travel Pouch",
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
+    "description": "Compact travel pouch for cables, makeup, and essentials.",
+    "details": {
+      "Material": "Water-resistant Fabric",
+      "Dimensions": "9 x 6 x 3 in",
+      "Care": "Hand wash"
     }
   }
 ]
