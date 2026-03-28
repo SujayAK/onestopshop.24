@@ -555,6 +555,9 @@ function navigate() {
       </div>
     `);
   } else if (hash === '#/contact') {
+    const storeEmail = import.meta.env.VITE_STORE_EMAIL || 'contact@onestopshop.com';
+    const supportPhone = import.meta.env.VITE_SUPPORT_PHONE || '+1 (234) 567-890';
+    
     renderPage(`
       <div class="container section">
         <h1 style="text-align: center; margin-bottom: 3rem;">Contact Us</h1>
@@ -564,11 +567,11 @@ function navigate() {
             <p style="margin-bottom: 2rem;">Have a question about an order or a product? We're here to help.</p>
             <div style="margin-bottom: 1rem;">
               <strong>Email:</strong><br>
-              support@onestopshop24.com
+              <a href="mailto:${storeEmail}" style="color: var(--accent-pink); text-decoration: none;">${storeEmail}</a>
             </div>
             <div style="margin-bottom: 1rem;">
               <strong>WhatsApp:</strong><br>
-              +1 (234) 567-890
+              ${supportPhone}
             </div>
             <div style="margin-bottom: 1rem;">
               <strong>Instagram:</strong><br>
