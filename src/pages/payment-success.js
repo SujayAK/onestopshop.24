@@ -3,7 +3,9 @@ import { updateOrder } from '../utils/supabase.js';
 
 export function PaymentSuccessPage() {
   const lastPayment = JSON.parse(localStorage.getItem('lastPayment') || '{}');
-  const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || '{}');
+  const currentOrder = JSON.parse(
+    sessionStorage.getItem('currentOrder') || localStorage.getItem('currentOrder') || '{}'
+  );
 
   return `
     <div class="container section" style="max-width: 600px; margin: 4rem auto;">
@@ -71,7 +73,9 @@ export function PaymentSuccessPage() {
 }
 
 export function initPaymentSuccessPage() {
-  const currentOrder = JSON.parse(sessionStorage.getItem('currentOrder') || '{}');
+  const currentOrder = JSON.parse(
+    sessionStorage.getItem('currentOrder') || localStorage.getItem('currentOrder') || '{}'
+  );
   
   // Update order status in Supabase
   if (currentOrder.orderDBId) {

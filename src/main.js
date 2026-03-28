@@ -1,8 +1,8 @@
 import './styles/main.css';
 import { Navbar } from './components/navbar.js';
 import { Footer } from './components/footer.js';
-import { HomePage } from './pages/home.js';
-import { ShopPage } from './pages/shop.js';
+import { HomePage, initHomePage } from './pages/home.js';
+import { ShopPage, initShopPage } from './pages/shop.js';
 import { ProductPage, initProductPage } from './pages/product.js';
 import { CartPage, initCartPage } from './pages/cart.js';
 import { CheckoutPage, initCheckoutPage } from './pages/checkout.js';
@@ -11,7 +11,8 @@ import { PaymentFailedPage, initPaymentFailedPage } from './pages/payment-failed
 import { LoginPage, initLoginPage } from './pages/login.js';
 import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
-import { getAnnouncementBarMessage } from './utils/supabase.js';
+import products from './data/products.json';
+import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates } from './utils/supabase.js';
 import { cart } from './utils/cart.js';
 import { initBackground3D } from './utils/background-3d.js';
 
@@ -19,6 +20,39 @@ const app = document.getElementById('app');
 const DEFAULT_ANNOUNCEMENT_MESSAGE = 'FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED';
 let scrollHandlerAttached = false;
 let productGuardAttached = false;
+let unsubscribeInventorySync = null;
+const productCatalogById = new Map();
+
+function normalizeCatalogProduct(product) {
+  if (!product) {
+    return null;
+  }
+
+  const id = Number(product.id);
+  if (!Number.isFinite(id)) {
+    return null;
+  }
+
+  return {
+    id,
+    name: product.name || 'Product',
+    category: product.category || 'General',
+    price: Number(product.price || 0),
+    image: product.image || product.image_url || 'https://via.placeholder.com/600x600?text=Product',
+    description: product.description || ''
+  };
+}
+
+function registerCatalogProducts(productsList = []) {
+  productsList.forEach(item => {
+    const normalized = normalizeCatalogProduct(item);
+    if (normalized) {
+      productCatalogById.set(normalized.id, normalized);
+    }
+  });
+}
+
+registerCatalogProducts(products);
 
 function isAuthenticated() {
   try {
@@ -73,16 +107,6 @@ function initProductAccessGuard() {
     return;
   }
 
-  document.addEventListener('click', event => {
-    const link = event.target.closest('a[href^="#/product/"]');
-    if (!link || isAuthenticated()) {
-      return;
-    }
-
-    event.preventDefault();
-    showAuthGateModal(link.getAttribute('href'));
-  });
-
   productGuardAttached = true;
 }
 
@@ -108,6 +132,10 @@ function initWishlistButtons() {
   });
 
   document.querySelectorAll('.wishlist-toggle').forEach(button => {
+    if (button.dataset.wishlistBound === 'true') {
+      return;
+    }
+
     button.addEventListener('click', event => {
       const target = event.currentTarget;
       const productId = Number(target.getAttribute('data-product-id'));
@@ -122,6 +150,152 @@ function initWishlistButtons() {
         toggle.classList.toggle('is-active', next.includes(productId));
       });
     });
+
+    button.dataset.wishlistBound = 'true';
+  });
+}
+
+function initAddToCartButtons() {
+  document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+    if (button.dataset.cartBound === 'true') {
+      return;
+    }
+
+    button.addEventListener('click', event => {
+      const target = event.currentTarget;
+      if (target.disabled || target.dataset.stockBlocked === 'true') {
+        return;
+      }
+      const productId = Number(target.getAttribute('data-product-id'));
+      const product = productCatalogById.get(productId);
+
+      if (!product) {
+        return;
+      }
+
+      cart.addItem(product, 1);
+      target.textContent = 'Added';
+      setTimeout(() => {
+        target.textContent = 'Add to Cart';
+      }, 900);
+    });
+
+    button.dataset.cartBound = 'true';
+  });
+}
+
+function getStockPresentation(stock) {
+  if (!Number.isFinite(stock)) {
+    return { label: 'In stock', cssClass: '' };
+  }
+
+  if (stock <= 0) {
+    return { label: 'Out of stock', cssClass: 'stock-out' };
+  }
+
+  if (stock <= 3) {
+    return { label: `Only ${stock} left`, cssClass: 'stock-low' };
+  }
+
+  return { label: 'In stock', cssClass: '' };
+}
+
+function applyInventoryToProductUI(productId, stockValue) {
+  const productIdNum = Number(productId);
+  const stock = Number(stockValue);
+  const safeStock = Number.isFinite(stock) && stock >= 0 ? Math.floor(stock) : null;
+  const presentation = getStockPresentation(safeStock);
+
+  document
+    .querySelectorAll(`[data-stock-label][data-product-id="${productIdNum}"]`)
+    .forEach(label => {
+      label.textContent = presentation.label;
+      label.classList.remove('stock-low', 'stock-out');
+      if (presentation.cssClass) {
+        label.classList.add(presentation.cssClass);
+      }
+    });
+
+  document
+    .querySelectorAll(`.add-to-cart-btn[data-product-id="${productIdNum}"], #add-to-cart-btn[data-product-id="${productIdNum}"]`)
+    .forEach(button => {
+      if (safeStock === 0) {
+        button.disabled = true;
+        button.dataset.stockBlocked = 'true';
+        button.textContent = 'Out of Stock';
+        return;
+      }
+
+      button.disabled = false;
+      button.dataset.stockBlocked = 'false';
+      const defaultLabel = button.dataset.defaultLabel || 'Add to Cart';
+      if (button.textContent === 'Out of Stock') {
+        button.textContent = defaultLabel;
+      }
+    });
+
+  const qtyInput = document.getElementById('product-qty');
+  const qtyButton = document.getElementById('add-to-cart-btn');
+  if (qtyInput && qtyButton && Number(qtyButton.dataset.productId) === productIdNum && Number.isFinite(safeStock)) {
+    qtyInput.max = safeStock > 0 ? String(safeStock) : '1';
+    const current = Number(qtyInput.value);
+    if (safeStock === 0) {
+      qtyInput.value = '1';
+      qtyInput.disabled = true;
+    } else {
+      qtyInput.disabled = false;
+      if (!Number.isFinite(current) || current < 1) {
+        qtyInput.value = '1';
+      } else if (current > safeStock) {
+        qtyInput.value = String(safeStock);
+      }
+    }
+  }
+}
+
+function getVisibleInventoryProductIds() {
+  const ids = new Set();
+  document
+    .querySelectorAll('.add-to-cart-btn[data-product-id], #add-to-cart-btn[data-product-id], [data-stock-label][data-product-id]')
+    .forEach(element => {
+      const id = Number(element.getAttribute('data-product-id'));
+      if (Number.isFinite(id)) {
+        ids.add(id);
+      }
+    });
+  return [...ids];
+}
+
+async function initLiveInventorySync() {
+  if (typeof unsubscribeInventorySync === 'function') {
+    unsubscribeInventorySync();
+    unsubscribeInventorySync = null;
+  }
+
+  const visibleIds = getVisibleInventoryProductIds();
+  if (visibleIds.length === 0) {
+    return;
+  }
+
+  const inventoryResult = await getInventoryByProductIds(visibleIds);
+  if (inventoryResult.success) {
+    const foundIds = new Set();
+    (inventoryResult.data || []).forEach(row => {
+      foundIds.add(Number(row.id));
+      applyInventoryToProductUI(row.id, row.stock);
+    });
+
+    visibleIds
+      .filter(id => !foundIds.has(id))
+      .forEach(id => applyInventoryToProductUI(id, null));
+  }
+
+  unsubscribeInventorySync = subscribeToInventoryUpdates(updatedProduct => {
+    const updatedId = Number(updatedProduct?.id);
+    if (!Number.isFinite(updatedId) || !visibleIds.includes(updatedId)) {
+      return;
+    }
+    applyInventoryToProductUI(updatedId, updatedProduct.stock);
   });
 }
 
@@ -226,6 +400,8 @@ function renderPage(content) {
   initTestimonialSlider();
   initMotionSystem();
   initWishlistButtons();
+  initAddToCartButtons();
+  initLiveInventorySync();
 
   // Listen for cart updates
   window.addEventListener('cartUpdated', updateCartBadge);
@@ -310,6 +486,7 @@ function navigate() {
   
   if (hash === '#/' || hash === '') {
     renderPage(HomePage());
+    initHomePage();
   } else if (hash.startsWith('#/profile')) {
     if (!isAuthenticated()) {
       window.location.hash = '#/login';
@@ -326,12 +503,8 @@ function navigate() {
     initSignupPage();
   } else if (hash.startsWith('#/shop')) {
     renderPage(ShopPage());
+    initShopPage();
   } else if (hash.startsWith('#/product/')) {
-    if (!isAuthenticated()) {
-      renderPage(ShopPage());
-      showAuthGateModal(hash);
-      return;
-    }
     const id = hash.split('/').pop();
     renderPage(ProductPage(id));
     initProductPage(id);
@@ -433,6 +606,13 @@ function navigate() {
     renderPage(`<div class="container section" style="text-align:center;"><h1>404 Page Not Found</h1><a href="#/" class="btn">Back Home</a></div>`);
   }
 }
+
+window.addEventListener('catalogHydrated', event => {
+  registerCatalogProducts(event.detail?.products || []);
+  initWishlistButtons();
+  initAddToCartButtons();
+  initLiveInventorySync();
+});
 
 initProductAccessGuard();
 initBackground3D({ intensity: 'medium' });

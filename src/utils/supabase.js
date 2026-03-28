@@ -103,6 +103,70 @@ export async function getProducts(limit = 20, offset = 0) {
   }
 }
 
+export async function getProductsCatalog(options = {}) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    const {
+      limit = 20,
+      offset = 0,
+      category,
+      search,
+      minPrice,
+      maxPrice,
+      sort = 'newest',
+      onlyActive = true
+    } = options
+
+    let query = supabase
+      .from('products')
+      .select('*')
+      .range(offset, offset + limit - 1)
+
+    if (onlyActive) {
+      query = query.eq('active', true)
+    }
+
+    if (category) {
+      query = query.eq('category', category)
+    }
+
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+    }
+
+    if (Number.isFinite(Number(minPrice))) {
+      query = query.gte('price', Number(minPrice))
+    }
+
+    if (Number.isFinite(Number(maxPrice))) {
+      query = query.lte('price', Number(maxPrice))
+    }
+
+    if (sort === 'price-asc') {
+      query = query.order('price', { ascending: true })
+    } else if (sort === 'price-desc') {
+      query = query.order('price', { ascending: false })
+    } else if (sort === 'name-asc') {
+      query = query.order('name', { ascending: true })
+    } else if (sort === 'name-desc') {
+      query = query.order('name', { ascending: false })
+    } else {
+      query = query.order('created_at', { ascending: false })
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Get products catalog error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
 export async function getProduct(id) {
   try {
     const { data, error } = await supabase
@@ -116,6 +180,60 @@ export async function getProduct(id) {
   } catch (error) {
     console.error('Get product error:', error.message)
     return { success: false, error: error.message, data: null }
+  }
+}
+
+export async function getInventoryByProductIds(productIds = []) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: true, data: [] }
+    }
+
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return { success: true, data: [] }
+    }
+
+    const ids = productIds
+      .map(id => Number(id))
+      .filter(id => Number.isFinite(id))
+
+    if (ids.length === 0) {
+      return { success: true, data: [] }
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, stock, updated_at')
+      .in('id', ids)
+
+    if (error) throw error
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Get inventory error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+export function subscribeToInventoryUpdates(onInventoryChange) {
+  if (!hasSupabaseConfig) {
+    return () => {}
+  }
+
+  const channel = supabase
+    .channel('inventory-updates')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'products' },
+      payload => {
+        if (typeof onInventoryChange === 'function') {
+          onInventoryChange(payload.new)
+        }
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
   }
 }
 
@@ -187,6 +305,64 @@ export async function updateOrder(orderId, updates) {
   } catch (error) {
     console.error('Update order error:', error.message)
     return { success: false, error: error.message, data: null }
+  }
+}
+
+export async function reserveInventory(items = []) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: false }
+    }
+
+    const orderItems = Array.isArray(items)
+      ? items.map(item => ({
+          id: Number(item.id),
+          quantity: Number(item.quantity || 0)
+        }))
+      : []
+
+    if (orderItems.length === 0) {
+      return { success: false, error: 'No inventory items provided', data: false }
+    }
+
+    const { data, error } = await supabase.rpc('reserve_inventory', {
+      order_items: orderItems
+    })
+
+    if (error) throw error
+    return { success: true, data: Boolean(data) }
+  } catch (error) {
+    console.error('Reserve inventory error:', error.message)
+    return { success: false, error: error.message, data: false }
+  }
+}
+
+export async function releaseInventory(items = []) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: false }
+    }
+
+    const orderItems = Array.isArray(items)
+      ? items.map(item => ({
+          id: Number(item.id),
+          quantity: Number(item.quantity || 0)
+        }))
+      : []
+
+    if (orderItems.length === 0) {
+      return { success: false, error: 'No inventory items provided', data: false }
+    }
+
+    const { data, error } = await supabase.rpc('release_inventory', {
+      order_items: orderItems
+    })
+
+    if (error) throw error
+    return { success: true, data: Boolean(data) }
+  } catch (error) {
+    console.error('Release inventory error:', error.message)
+    return { success: false, error: error.message, data: false }
   }
 }
 

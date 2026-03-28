@@ -1,6 +1,6 @@
 import { cart } from '../utils/cart.js';
 import { razorpayPayment } from '../utils/razorpay.js';
-import { createOrder, getCurrentUser, validateCoupon, redeemCoupon } from '../utils/supabase.js';
+import { createOrder, getCurrentUser, validateCoupon, redeemCoupon, getInventoryByProductIds, reserveInventory, releaseInventory } from '../utils/supabase.js';
 
 export function CheckoutPage() {
   const items = cart.getItems();
@@ -173,6 +173,45 @@ export function initCheckoutPage() {
         proceedBtn.disabled = true;
         proceedBtn.textContent = 'Creating Order...';
 
+        // Pre-check inventory to avoid placing orders for out-of-stock quantities.
+        const inventoryResult = await getInventoryByProductIds(items.map(item => item.id));
+        if (!inventoryResult.success) {
+          alert('Could not verify live inventory right now. Please try again.');
+          proceedBtn.disabled = false;
+          proceedBtn.textContent = 'Proceed to Payment';
+          return;
+        }
+
+        const inventoryMap = new Map(
+          (inventoryResult.data || []).map(row => [Number(row.id), Number(row.stock || 0)])
+        );
+
+        const unavailableItem = items.find(item => {
+          const stock = inventoryMap.get(Number(item.id));
+          return typeof stock === 'number' && item.quantity > stock;
+        });
+
+        if (unavailableItem) {
+          alert(`${unavailableItem.name} has only ${inventoryMap.get(Number(unavailableItem.id)) || 0} left in stock. Please update your cart.`);
+          window.location.hash = '#/cart';
+          proceedBtn.disabled = false;
+          proceedBtn.textContent = 'Proceed to Payment';
+          return;
+        }
+
+        proceedBtn.textContent = 'Reserving Inventory...';
+        const reserveResult = await reserveInventory(
+          items.map(item => ({ id: item.id, quantity: item.quantity }))
+        );
+
+        if (!reserveResult.success || !reserveResult.data) {
+          alert('Some items just went out of stock. Please review your cart and try again.');
+          window.location.hash = '#/cart';
+          proceedBtn.disabled = false;
+          proceedBtn.textContent = 'Proceed to Payment';
+          return;
+        }
+
         // Create order in Supabase
         const orderResult = await createOrder(
           user.id,
@@ -182,6 +221,7 @@ export function initCheckoutPage() {
         );
 
         if (!orderResult.success) {
+          await releaseInventory(items.map(item => ({ id: item.id, quantity: item.quantity })));
           alert('Failed to create order: ' + orderResult.error);
           proceedBtn.disabled = false;
           proceedBtn.textContent = 'Proceed to Payment';
@@ -194,7 +234,7 @@ export function initCheckoutPage() {
         const paymentDetails = {
           orderId: orderId,
           orderDBId: orderId,
-          amount: Math.round(total * 100), // Razorpay expects amount in paise
+          amount: total,
           currency: 'INR',
           storeName: 'onestopshop',
           description: 'Purchase from onestopshop',
@@ -212,11 +252,13 @@ export function initCheckoutPage() {
             city: city,
             postal: postal,
             user_id: user.id
-          }
+          },
+          inventoryReserved: true
         };
 
         // Store order details for payment verification
         sessionStorage.setItem('currentOrder', JSON.stringify(paymentDetails));
+        localStorage.setItem('currentOrder', JSON.stringify(paymentDetails));
 
         proceedBtn.textContent = 'Loading Payment...';
         

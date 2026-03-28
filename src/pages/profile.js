@@ -1,5 +1,6 @@
 import products from '../data/products.json'
 import { getOrders, signOut } from '../utils/supabase.js'
+import { cart } from '../utils/cart.js'
 
 function getStoredUser() {
   try {
@@ -61,6 +62,7 @@ function renderWishlistCards() {
                 <p class="profile-product-price">₹${product.price.toFixed(2)}</p>
                 <div class="profile-product-actions">
                   <a href="#/product/${product.id}" class="btn btn-outline">View</a>
+                  <button class="btn btn-outline btn-add-wishlist-to-cart" data-product-id="${product.id}">Add to Cart</button>
                   <button class="btn-remove-wishlist" data-product-id="${product.id}">Remove</button>
                 </div>
               </div>
@@ -230,6 +232,57 @@ function formatOrderStatus(status) {
   return String(status).replace(/_/g, ' ')
 }
 
+function getTimelineSteps(status) {
+  const normalizedStatus = String(status || 'pending').toLowerCase()
+  const isFailed = normalizedStatus === 'failed' || normalizedStatus === 'cancelled'
+
+  const defaultSteps = ['pending', 'confirmed', 'shipped', 'delivered']
+  const stages = isFailed ? ['pending', 'confirmed', normalizedStatus] : defaultSteps
+  const currentIndex = Math.max(stages.indexOf(normalizedStatus), 0)
+
+  return stages.map((step, index) => ({
+    key: step,
+    label: formatOrderStatus(step),
+    done: index <= currentIndex
+  }))
+}
+
+function renderOrdersTimeline(orders) {
+  if (!orders.length) {
+    return ''
+  }
+
+  return `
+    <div class="profile-order-timeline-list">
+      ${orders
+        .map(order => {
+          const orderTotal = Number(order.total_amount || 0).toFixed(2)
+          const steps = getTimelineSteps(order.status)
+          return `
+            <article class="profile-order-timeline-card">
+              <div class="profile-order-timeline-header">
+                <strong>Order #${order.id}</strong>
+                <span>${new Date(order.created_at).toLocaleDateString()}</span>
+                <span>₹${orderTotal}</span>
+              </div>
+              <ol class="profile-order-timeline-steps">
+                ${steps
+                  .map(step => `
+                    <li class="profile-order-timeline-step ${step.done ? 'is-done' : ''}">
+                      <span class="profile-order-step-dot"></span>
+                      <span>${step.label}</span>
+                    </li>
+                  `)
+                  .join('')}
+              </ol>
+            </article>
+          `
+        })
+        .join('')}
+    </div>
+  `
+}
+
 function renderPurchasedProductsFromOrders(orders) {
   if (!orders.length) {
     return `
@@ -309,12 +362,31 @@ async function hydrateOrders() {
 
   const orders = result.data || []
   ordersCount.textContent = String(orders.length)
+  const timelineHtml = renderOrdersTimeline(orders)
   const purchasedHtml = renderPurchasedProductsFromOrders(orders)
-  ordersContainer.innerHTML = purchasedHtml
+  ordersContainer.innerHTML = `${timelineHtml}${purchasedHtml}`
   overviewContainer.innerHTML = purchasedHtml
 }
 
 function bindWishlistActions() {
+  document.querySelectorAll('.btn-add-wishlist-to-cart').forEach(button => {
+    button.addEventListener('click', event => {
+      const productId = Number(event.currentTarget.dataset.productId)
+      const product = products.find(item => item.id === productId)
+      if (!product) {
+        return
+      }
+
+      cart.addItem(product, 1)
+      const target = event.currentTarget
+      const originalLabel = target.textContent
+      target.textContent = 'Added'
+      setTimeout(() => {
+        target.textContent = originalLabel
+      }, 900)
+    })
+  })
+
   document.querySelectorAll('.btn-remove-wishlist').forEach(button => {
     button.addEventListener('click', event => {
       const productId = Number(event.currentTarget.dataset.productId)

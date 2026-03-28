@@ -113,7 +113,17 @@ export class RazorpayPayment {
 
   handlePaymentDismiss(orderDetails) {
     console.warn('Payment dismissed');
+    const errorData = {
+      errorCode: 'PAYMENT_DISMISSED',
+      errorDescription: 'Payment was cancelled by the user.',
+      orderDetails: orderDetails,
+      timestamp: new Date().toISOString(),
+      status: 'failed'
+    };
+
+    localStorage.setItem('lastPaymentError', JSON.stringify(errorData));
     window.dispatchEvent(new CustomEvent('paymentDismissed', { detail: orderDetails }));
+    window.location.hash = '#/payment-failed';
   }
 
   // Verify payment on backend (call from your server)

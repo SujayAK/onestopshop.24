@@ -1,17 +1,34 @@
-import products from '../data/products.json';
+import localProducts from '../data/products.json';
+import { getProductsCatalog } from '../utils/supabase.js';
 
-export function HomePage() {
-  const featuredProducts = products.slice(0, 3).map(product => `
-    <div class="product-card">
+function normalizeProduct(row) {
+  return {
+    id: Number(row.id),
+    name: row.name || 'Product',
+    price: Number(row.price || 0),
+    category: row.category || 'General',
+    image: row.image || row.image_url || 'https://via.placeholder.com/600x600?text=Product',
+    description: row.description || '',
+    stock: Number.isFinite(Number(row.stock)) ? Number(row.stock) : null
+  };
+}
+
+function renderProductCard(product) {
+  return `
+    <div class="product-card" data-product-id="${product.id}">
       <img src="${product.image}" alt="${product.name}" class="product-image">
       <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">${product.category}</p>
       <h3>${product.name}</h3>
       <p style="font-weight: 700; color: var(--accent-pink);">₹${product.price.toFixed(2)}</p>
+      <p class="stock-indicator" data-stock-label data-product-id="${product.id}" style="margin-bottom: 0.5rem;">Checking stock...</p>
+      <button class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart" style="margin-top: 0.75rem; width: 100%;">Add to Cart</button>
       <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}" style="margin-top: 0.75rem; width: 100%;">Add to Wishlist</button>
       <a href="#/product/${product.id}" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View Details</a>
     </div>
-  `).join('');
+  `;
+}
 
+export function HomePage() {
   return `
     <section class="hero">
       <div class="container hero-content" style="text-align: center;">
@@ -53,8 +70,8 @@ export function HomePage() {
           </div>
           <a href="#/shop" style="font-weight: 600; border-bottom: 2px solid var(--accent-pink);">View All Products</a>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-          ${featuredProducts}
+        <div id="home-featured-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+          <div class="profile-loading" style="grid-column: 1 / -1;">Loading featured products...</div>
         </div>
       </div>
     </section>
@@ -129,4 +146,27 @@ export function HomePage() {
       </div>
     </section>
   `;
+}
+
+export async function initHomePage() {
+  const grid = document.getElementById('home-featured-grid');
+  if (!grid) {
+    return;
+  }
+
+  let featured = [];
+  const catalogResult = await getProductsCatalog({ limit: 3, sort: 'newest' });
+  if (catalogResult.success && (catalogResult.data || []).length > 0) {
+    featured = catalogResult.data.map(normalizeProduct).slice(0, 3);
+  } else {
+    featured = localProducts.slice(0, 3).map(normalizeProduct);
+  }
+
+  if (featured.length === 0) {
+    grid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>No products available</h3><p>Please check back soon.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = featured.map(renderProductCard).join('');
+  window.dispatchEvent(new CustomEvent('catalogHydrated', { detail: { products: featured } }));
 }

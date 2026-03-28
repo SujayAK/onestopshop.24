@@ -1,4 +1,4 @@
-import { updateOrder } from '../utils/supabase.js';
+import { releaseInventory, updateOrder } from '../utils/supabase.js';
 
 export function PaymentFailedPage() {
   const lastError = JSON.parse(localStorage.getItem('lastPaymentError') || '{}');
@@ -56,6 +56,14 @@ export function PaymentFailedPage() {
 
   export function initPaymentFailedPage() {
     const currentOrder = JSON.parse(sessionStorage.getItem('currentOrder') || '{}');
+
+    if (currentOrder.inventoryReserved && Array.isArray(currentOrder.products)) {
+      releaseInventory(
+        currentOrder.products.map(item => ({ id: item.id, quantity: item.quantity }))
+      ).catch(error => {
+        console.error('Error releasing inventory in Supabase:', error);
+      });
+    }
   
     // Update order status to failed in Supabase
     if (currentOrder.orderDBId) {
@@ -67,4 +75,7 @@ export function PaymentFailedPage() {
         console.error('Error updating order in Supabase:', error);
       });
     }
+
+    sessionStorage.removeItem('currentOrder');
+    localStorage.removeItem('currentOrder');
   }

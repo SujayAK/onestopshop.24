@@ -318,6 +318,104 @@ In your project folder:
 Online:
 - Supabase Docs: https://supabase.com/docs
 - Supabase Auth Guide: https://supabase.com/docs/guides/auth
+
+====================================================================
+LIVE INVENTORY + AUTO SYNC (RECOMMENDED FOR ORDERS)
+====================================================================
+
+Goal:
+- Show real stock to users
+- Prevent overselling when two users buy at the same time
+- Auto-refresh stock on storefront when inventory changes
+
+STEP A: ENABLE REALTIME FOR PRODUCTS TABLE
+---
+☐ In Supabase dashboard, go to Database > Replication
+☐ Enable replication for `public.products`
+☐ In client code, subscribe to product updates (already added helper in src/utils/supabase.js)
+
+STEP B: SHOW LIVE STOCK BEFORE PAYMENT
+---
+☐ Fetch live stock for all cart products before creating order
+☐ If any cart quantity exceeds stock, block checkout and send user to cart
+☐ This check is already added in src/pages/checkout.js via getInventoryByProductIds()
+
+STEP C: USE ATOMIC INVENTORY RESERVATION (IMPORTANT)
+---
+Client-only stock checks are not enough for concurrency. Use an RPC function.
+
+Run this SQL in Supabase SQL Editor:
+
+CREATE OR REPLACE FUNCTION reserve_inventory(order_items jsonb)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  item jsonb;
+  p_id int;
+  qty int;
+BEGIN
+  -- Lock all involved rows in deterministic order to avoid deadlocks
+  PERFORM 1
+  FROM products
+  WHERE id IN (
+    SELECT (value->>'id')::int
+    FROM jsonb_array_elements(order_items)
+  )
+  ORDER BY id
+  FOR UPDATE;
+
+  -- Validate stock first
+  FOR item IN SELECT * FROM jsonb_array_elements(order_items)
+  LOOP
+    p_id := (item->>'id')::int;
+    qty := (item->>'quantity')::int;
+
+    IF qty <= 0 THEN
+      RAISE EXCEPTION 'Invalid quantity for product %', p_id;
+    END IF;
+
+    IF NOT EXISTS (
+      SELECT 1 FROM products WHERE id = p_id AND stock >= qty
+    ) THEN
+      RETURN false;
+    END IF;
+  END LOOP;
+
+  -- Deduct stock only after validation passes
+  FOR item IN SELECT * FROM jsonb_array_elements(order_items)
+  LOOP
+    p_id := (item->>'id')::int;
+    qty := (item->>'quantity')::int;
+    UPDATE products SET stock = stock - qty WHERE id = p_id;
+  END LOOP;
+
+  RETURN true;
+END;
+$$;
+
+Then in checkout flow:
+☐ Call RPC reserve_inventory(items)
+☐ If false, show out-of-stock message and do not create order
+☐ If true, create order and continue to payment
+
+STEP D: RESTORE STOCK WHEN PAYMENT FAILS/CANCELS
+---
+☐ On payment failure, call another RPC `release_inventory(order_items)` to add stock back
+☐ Mark order status as `payment_failed`
+☐ Add a cron cleanup for stale pending orders (optional)
+
+STEP E: AUTO-REFRESH INVENTORY IN UI
+---
+☐ Use `subscribeToInventoryUpdates` from src/utils/supabase.js
+☐ Update product card stock badges instantly when payload arrives
+☐ Disable Add to Cart button when stock reaches 0
+
+Example front-end behavior:
+- In stock: button enabled, label "Add to Cart"
+- Low stock (<= 3): label "Only X left"
+- Out of stock: button disabled, label "Out of Stock"
 - Supabase Database: https://supabase.com/docs/guides/database
 
 ====================================================================

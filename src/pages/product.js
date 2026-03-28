@@ -44,7 +44,7 @@ export function ProductPage(id) {
           <h1 style="margin-bottom: 1rem;">${product.name}</h1>
           <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
             <h2 style="margin-bottom: 0; color: var(--text-primary);">₹${product.price.toFixed(2)}</h2>
-            <span style="color: var(--accent-pink); font-size: 0.9rem; font-weight: 600;">(In Stock)</span>
+            <span id="product-stock-status" class="stock-indicator" data-stock-label data-product-id="${product.id}" style="color: var(--accent-pink); font-size: 0.9rem; font-weight: 600;">Checking stock...</span>
           </div>
           
           <p style="margin-bottom: 2rem; color: var(--text-secondary); line-height: 1.8;">${product.description}</p>
@@ -58,7 +58,7 @@ export function ProductPage(id) {
 
           <div style="display: grid; grid-template-columns: 100px 1fr; gap: 1rem; margin-bottom: 2rem;">
              <input type="number" id="product-qty" value="1" min="1" style="padding: 12px; border: 1px solid var(--border-color); text-align: center; font-family: inherit;">
-             <button id="add-to-cart-btn" class="btn" style="width: 100%;">Add to Cart</button>
+             <button id="add-to-cart-btn" class="btn" data-product-id="${product.id}" data-default-label="Add to Cart" style="width: 100%;">Add to Cart</button>
           </div>
 
           <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 4px;">
@@ -97,8 +97,9 @@ export function initProductPage(productId) {
 
   if (addToCartBtn) {
     addToCartBtn.addEventListener('click', () => {
-      const product = products.find(p => p.id === parseInt(productId));
-      const quantity = parseInt(qtyInput.value) || 1;
+      const product = products.find(p => p.id === Number(productId));
+      const parsedQuantity = Number(qtyInput?.value);
+      const quantity = Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? Math.floor(parsedQuantity) : 1;
 
       if (product) {
         cart.addItem(product, quantity);

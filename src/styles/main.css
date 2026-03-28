@@ -1551,6 +1551,67 @@ footer.main-footer {
   font-weight: 600;
 }
 
+.profile-order-timeline-list {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.profile-order-timeline-card {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.9rem;
+  background: #fff;
+}
+
+.profile-order-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.86rem;
+}
+
+.profile-order-timeline-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-order-timeline-step {
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.profile-order-timeline-step.is-done {
+  border-style: solid;
+  border-color: rgba(76, 175, 80, 0.32);
+  background: rgba(76, 175, 80, 0.08);
+  color: #2e7d32;
+}
+
+.profile-order-step-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+
+.profile-order-timeline-step.is-done .profile-order-step-dot {
+  background: currentColor;
+}
+
 .profile-product-actions {
   display: flex;
   gap: 0.5rem;
@@ -1569,6 +1630,31 @@ footer.main-footer {
   border-color: var(--accent-pink);
   color: var(--accent-pink);
   background: rgba(255, 105, 180, 0.08);
+}
+
+.stock-indicator {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2f7d32;
+  letter-spacing: 0.3px;
+}
+
+.stock-indicator.stock-low {
+  color: #b26a00;
+}
+
+.stock-indicator.stock-out {
+  color: #b00020;
+}
+
+.add-to-cart-btn:disabled,
+#add-to-cart-btn:disabled {
+  background-color: #d8d8d8;
+  border-color: #d8d8d8;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .profile-settings-list {
@@ -1597,6 +1683,14 @@ footer.main-footer {
 }
 
 @media (max-width: 980px) {
+  #shop-search,
+  #shop-category,
+  #shop-min-price,
+  #shop-max-price,
+  #shop-sort {
+    width: 100%;
+  }
+
   .profile-layout {
     grid-template-columns: 1fr;
   }
@@ -1631,6 +1725,11 @@ footer.main-footer {
 }
 
 @media (max-width: 768px) {
+  #shop-apply-filters,
+  #shop-clear-filters {
+    width: 100%;
+  }
+
   .auth-card {
     padding: 2rem;
   }
