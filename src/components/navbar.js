@@ -4,8 +4,9 @@ export function Navbar() {
   const accountTitle = user && user.id ? 'My Profile' : 'Sign In';
 
   return `
-    <div class="announcement-bar">
+    <div class="announcement-bar" id="announcement-bar">
       <span id="announcement-text">FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED</span>
+      <button id="close-announcement" type="button" aria-label="Close announcement" title="Close">&times;</button>
     </div>
     <header class="main-header">
       <div class="container nav-container">

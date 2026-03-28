@@ -432,16 +432,37 @@ function initNavbar() {
 }
 
 async function initAnnouncementBar() {
+  const announcementBar = document.getElementById('announcement-bar');
   const announcementText = document.getElementById('announcement-text');
-  if (!announcementText) {
+  const closeButton = document.getElementById('close-announcement');
+
+  if (!announcementText || !announcementBar) {
     return;
   }
 
+  // Set default message
   announcementText.textContent = DEFAULT_ANNOUNCEMENT_MESSAGE;
 
+  // Fetch from Supabase
   const result = await getAnnouncementBarMessage();
   if (result.success && result.data) {
     announcementText.textContent = result.data;
+  }
+
+  // Add close button functionality
+  if (closeButton) {
+    closeButton.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      announcementBar.classList.add('hidden');
+      // Store dismissal state in sessionStorage (expires on page refresh)
+      sessionStorage.setItem('announcement_dismissed', 'true');
+    });
+
+    // Check if announcement was dismissed in this session
+    if (sessionStorage.getItem('announcement_dismissed') === 'true') {
+      announcementBar.classList.add('hidden');
+    }
   }
 }
 
