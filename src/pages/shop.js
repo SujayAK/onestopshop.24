@@ -172,17 +172,97 @@ function normalizeProduct(row) {
   };
 }
 
+function formatINR(value) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
+}
+
+function getWishlistIds() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    return Array.isArray(stored) ? stored : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function setWishlistIds(ids) {
+  localStorage.setItem('wishlist', JSON.stringify(ids));
+}
+
+function isProductWished(productId) {
+  return getWishlistIds().includes(Number(productId));
+}
+
+function toggleWishlistProduct(productId) {
+  const id = Number(productId);
+  const wishlist = getWishlistIds();
+  const exists = wishlist.includes(id);
+  const next = exists ? wishlist.filter(item => item !== id) : [...wishlist, id];
+  setWishlistIds(next);
+  return !exists;
+}
+
+function showShopToast(message) {
+  const existing = document.querySelector('.shop-toast');
+  if (existing) {
+    existing.remove();
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'shop-toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  window.setTimeout(() => {
+    toast.classList.add('is-visible');
+  }, 10);
+
+  window.setTimeout(() => {
+    toast.classList.remove('is-visible');
+    window.setTimeout(() => toast.remove(), 260);
+  }, 1300);
+}
+
+function syncWishlistUi(container = document) {
+  container.querySelectorAll('.shop-heart-btn').forEach(button => {
+    const productId = Number(button.getAttribute('data-product-id'));
+    button.classList.toggle('is-active', isProductWished(productId));
+  });
+}
+
 function renderProductCard(product) {
+  const wished = isProductWished(product.id);
+
   return `
-    <div class="product-card" data-product-id="${product.id}">
-      <img src="${product.image}" alt="${escapeHtml(product.name)}" class="product-image">
-      <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">${escapeHtml(product.category)}${product.subcategory ? ` / ${escapeHtml(product.subcategory)}` : ''}</p>
-      <h3>${escapeHtml(product.name)}</h3>
-      <p style="font-weight: 700; color: var(--accent-pink);">Rs ${product.price.toFixed(2)}</p>
-      <p class="stock-indicator" data-stock-label data-product-id="${product.id}" style="margin-bottom: 0.5rem;">Checking stock...</p>
-      <button class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart" style="margin-top: 0.75rem; width: 100%;">Add to Cart</button>
-      <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}" style="margin-top: 0.75rem; width: 100%;">Add to Wishlist</button>
-      <a href="#/product/${product.id}" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View Details</a>
+    <div class="product-card shop-listing-card" data-product-id="${product.id}">
+      <div class="shop-media-wrap">
+        <img src="${product.image}" alt="${escapeHtml(product.name)}" class="product-image">
+        <div class="shop-quick-actions">
+          <button class="shop-heart-btn${wished ? ' is-active' : ''}" data-product-id="${product.id}" aria-label="Toggle wishlist">
+            <i class="fas fa-heart"></i>
+          </button>
+          <button class="shop-icon-btn shop-quick-view-btn" data-product-id="${product.id}" aria-label="Quick view">
+            <i class="fas fa-eye"></i>
+          </button>
+          <button class="shop-icon-btn shop-compare-btn" data-product-id="${product.id}" aria-label="Compare">
+            <i class="fas fa-code-compare"></i>
+          </button>
+        </div>
+      </div>
+      <p class="shop-listing-meta">${escapeHtml(product.category)}${product.subcategory ? ` / ${escapeHtml(product.subcategory)}` : ''}</p>
+      <h3 class="shop-listing-title">${escapeHtml(product.name)}</h3>
+      <p class="shop-listing-price">${formatINR(product.price)}</p>
+      <p class="stock-indicator shop-listing-stock" data-stock-label data-product-id="${product.id}">Checking stock...</p>
+      <div class="shop-listing-actions">
+        <button class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart" style="margin-top: 0.5rem; width: 100%;">Add to Cart</button>
+        <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}" style="margin-top: 0.65rem; width: 100%;">Add to Wishlist</button>
+        <a href="#/product/${product.id}" class="btn btn-outline" style="margin-top: 0.65rem; width: 100%;">View Details</a>
+      </div>
     </div>
   `;
 }
@@ -274,10 +354,16 @@ export function ShopPage() {
       <div class="shop-results-shell">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
           <h2 id="shop-selection-title" style="margin-bottom: 0;">${escapeHtml(getSelectionTitle(categoryValue, subcategoryValue))}</h2>
-          <p id="shop-results-meta" style="color: var(--text-secondary); margin-bottom: 0;">Loading products...</p>
+          <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+            <p id="shop-results-meta" style="color: var(--text-secondary); margin-bottom: 0;">Loading products...</p>
+            <div class="shop-layout-toggle" role="group" aria-label="Product layout toggle">
+              <button id="shop-grid-view" class="shop-layout-btn is-active" type="button" aria-label="Grid view"><i class="fas fa-grip"></i></button>
+              <button id="shop-list-view" class="shop-layout-btn" type="button" aria-label="List view"><i class="fas fa-list"></i></button>
+            </div>
+          </div>
         </div>
 
-        <div id="shop-products-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+        <div id="shop-products-grid" class="shop-products-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
           <div class="profile-loading" style="grid-column: 1 / -1;">Loading products...</div>
         </div>
       </div>
@@ -287,8 +373,107 @@ export function ShopPage() {
         <p style="color: var(--text-secondary); margin-bottom: 0;">Use the Bags and Accessories blocks above to browse inventory quickly by section.</p>
       </div>
       `}
+
+      <div class="shop-quick-modal" id="shop-quick-modal" hidden>
+        <div class="shop-quick-modal__backdrop" data-close-quick-view></div>
+        <div class="shop-quick-modal__dialog" role="dialog" aria-modal="true" aria-label="Quick product view">
+          <button class="shop-quick-modal__close" data-close-quick-view aria-label="Close quick view">&times;</button>
+          <div id="shop-quick-content"></div>
+        </div>
+      </div>
     </div>
   `;
+}
+
+function renderQuickView(product) {
+  return `
+    <div class="shop-quick-view-grid">
+      <img src="${product.image}" alt="${escapeHtml(product.name)}" class="shop-quick-view-image">
+      <div>
+        <p class="shop-listing-meta">${escapeHtml(product.category)}${product.subcategory ? ` / ${escapeHtml(product.subcategory)}` : ''}</p>
+        <h3 class="shop-quick-title">${escapeHtml(product.name)}</h3>
+        <p class="shop-quick-price">${formatINR(product.price)}</p>
+        <p class="shop-quick-desc">${escapeHtml(product.description || 'A premium curated piece for your everyday wardrobe.')}</p>
+        <div class="shop-quick-actions-row">
+          <button class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
+          <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}">Add to Wishlist</button>
+          <a href="#/product/${product.id}" class="btn btn-outline">View Details</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function bindShopInteractions(products = []) {
+  const grid = document.getElementById('shop-products-grid');
+  const modal = document.getElementById('shop-quick-modal');
+  const quickContent = document.getElementById('shop-quick-content');
+  const gridBtn = document.getElementById('shop-grid-view');
+  const listBtn = document.getElementById('shop-list-view');
+
+  if (grid && gridBtn && listBtn) {
+    gridBtn.addEventListener('click', () => {
+      grid.classList.remove('is-list-view');
+      gridBtn.classList.add('is-active');
+      listBtn.classList.remove('is-active');
+    });
+
+    listBtn.addEventListener('click', () => {
+      grid.classList.add('is-list-view');
+      listBtn.classList.add('is-active');
+      gridBtn.classList.remove('is-active');
+    });
+  }
+
+  document.querySelectorAll('.shop-heart-btn').forEach(button => {
+    button.addEventListener('click', event => {
+      const target = event.currentTarget;
+      const productId = Number(target.getAttribute('data-product-id'));
+      const wishedNow = toggleWishlistProduct(productId);
+      syncWishlistUi(document);
+
+      document.querySelectorAll(`.wishlist-toggle[data-product-id="${productId}"]`).forEach(toggle => {
+        toggle.textContent = wishedNow ? 'In Wishlist' : 'Add to Wishlist';
+        toggle.classList.toggle('is-active', wishedNow);
+      });
+
+      showShopToast(wishedNow ? 'Added to wishlist' : 'Removed from wishlist');
+    });
+  });
+
+  document.querySelectorAll('.shop-compare-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      showShopToast('Compare feature coming soon');
+    });
+  });
+
+  if (modal && quickContent) {
+    const closeQuickView = () => {
+      modal.setAttribute('hidden', 'true');
+      quickContent.innerHTML = '';
+    };
+
+    modal.querySelectorAll('[data-close-quick-view]').forEach(element => {
+      element.addEventListener('click', closeQuickView);
+    });
+
+    document.querySelectorAll('.shop-quick-view-btn').forEach(button => {
+      button.addEventListener('click', event => {
+        const target = event.currentTarget;
+        const productId = Number(target.getAttribute('data-product-id'));
+        const product = products.find(item => item.id === productId);
+        if (!product) {
+          return;
+        }
+
+        quickContent.innerHTML = renderQuickView(product);
+        modal.removeAttribute('hidden');
+        window.dispatchEvent(new CustomEvent('catalogHydrated', { detail: { products } }));
+      });
+    });
+  }
+
+  syncWishlistUi(document);
 }
 
 export async function initShopPage() {
@@ -355,5 +540,6 @@ export async function initShopPage() {
   }
 
   grid.innerHTML = products.map(renderProductCard).join('');
+  bindShopInteractions(products);
   window.dispatchEvent(new CustomEvent('catalogHydrated', { detail: { products } }));
 }

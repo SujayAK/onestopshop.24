@@ -369,12 +369,6 @@ function renderPage(content) {
       <div class="floating-shape shape-4"></div>
       <div class="floating-shape shape-5"></div>
     </div>
-    <div class="sticker-layer" aria-hidden="true">
-      <div class="sticker sticker-star"><i class="fas fa-star"></i></div>
-      <div class="sticker sticker-heart"><i class="fas fa-heart"></i></div>
-      <div class="sticker sticker-spark"><i class="fas fa-magic"></i></div>
-      <div class="sticker sticker-bolt"><i class="fas fa-bolt"></i></div>
-    </div>
     ${header}
     <main id="main-content" class="fade-in">
       ${content}

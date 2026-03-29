@@ -5,7 +5,7 @@ export function Navbar() {
 
   return `
     <div class="announcement-bar" id="announcement-bar">
-      <span id="announcement-text">FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED</span>
+      <marquee id="announcement-text" behavior="scroll" direction="left" scrollamount="6">FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED • CUTE NEW DROPS EVERY WEEK</marquee>
       <button id="close-announcement" type="button" aria-label="Close announcement" title="Close">&times;</button>
     </div>
     <header class="main-header">
