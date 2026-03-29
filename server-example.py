@@ -1,5 +1,6 @@
-// Backend Payment Verification - Example with Python/Flask
-// Install dependencies: pip install flask python-dotenv requests
+# pyright: reportMissingImports=false
+# Backend Payment Verification - Example with Python/Flask
+# Install dependencies: pip install flask flask-cors python-dotenv requests
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
