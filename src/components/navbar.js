@@ -11,8 +11,8 @@ export function Navbar() {
     <header class="main-header">
       <div class="container nav-container">
         <a href="#/" class="logo-link" style="display: flex; align-items: center; gap: 10px;">
-          <img src="/logo_updated.png" alt="onestopshop" class="logo-img">
-          <span class="logo-text">onestopshop</span>
+          <img src="/logo_updated.png" alt="OneStopShop" class="logo-img">
+          <span class="logo-text">OneStopShop</span>
         </a>
         <nav>
           <ul class="nav-links" id="nav-links">

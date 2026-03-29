@@ -592,7 +592,7 @@ header.main-header.is-scrolled {
   font-weight: 300;
   letter-spacing: 2px;
   color: #000000;
-  text-transform: lowercase;
+  text-transform: none;
   animation: none;
   transition: var(--transition-smooth);
   font-optical-sizing: auto;
