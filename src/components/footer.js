@@ -4,7 +4,7 @@ export function Footer() {
       <div class="container">
         <div class="footer-grid">
           <div class="footer-column">
-            <h4 class="logo-text" style="color: white;">ONESTOPSHOP</h4>
+            <h4 class="logo-text">OneStopShop</h4>
             <p style="color: rgba(255,255,255,0.7); margin-bottom: 1.5rem;">Your one-stop destination for premium fashion, bags & accessories. Curated with care for the modern lifestyle.</p>
             <div style="display: flex; gap: 1rem; font-size: 1.2rem;">
               <a href="https://www.instagram.com/onestopshop" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
