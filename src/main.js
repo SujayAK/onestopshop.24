@@ -14,7 +14,6 @@ import { ProfilePage, initProfilePage } from './pages/profile.js';
 import products from './data/products.json';
 import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates } from './utils/supabase.js';
 import { cart } from './utils/cart.js';
-import { initBackground3D } from './utils/background-3d.js';
 
 const app = document.getElementById('app');
 const DEFAULT_ANNOUNCEMENT_MESSAGE = 'FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED';
@@ -633,6 +632,5 @@ window.addEventListener('catalogHydrated', event => {
 });
 
 initProductAccessGuard();
-initBackground3D({ intensity: 'medium' });
 window.addEventListener('hashchange', navigate);
 window.addEventListener('load', navigate);

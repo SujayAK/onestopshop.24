@@ -1,6 +1,9 @@
 import localProducts from '../data/products.json';
 import { getProductsCatalog } from '../utils/supabase.js';
 
+const HERO_SLIDES = ['NEW ARRIVALS', 'STOCK CLEARANCE SALE', 'PREMIUM PRODUCTS'];
+let heroSlideTimer = null;
+
 function normalizeProduct(row) {
   return {
     id: Number(row.id),
@@ -32,7 +35,21 @@ export function HomePage() {
   return `
     <section class="hero">
       <div class="container hero-content" style="text-align: center;">
-        <h1>Your One-Stop Destination for Style</h1>
+        <div class="hero-slide-shell" aria-live="polite">
+          <p class="hero-slide-kicker">Trending Now</p>
+          <div class="hero-slide-nav">
+            <button type="button" class="hero-slide-arrow" id="hero-slide-prev" aria-label="Previous promotion">
+              <i class="fas fa-chevron-left" aria-hidden="true"></i>
+            </button>
+            <h1 id="hero-slide-text" class="hero-slide-text">${HERO_SLIDES[0]}</h1>
+            <button type="button" class="hero-slide-arrow" id="hero-slide-next" aria-label="Next promotion">
+              <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="hero-slide-dots" id="hero-slide-dots" role="tablist" aria-label="Homepage promotions">
+            ${HERO_SLIDES.map((_, index) => `<button class="hero-slide-dot${index === 0 ? ' is-active' : ''}" data-hero-slide="${index}" role="tab" aria-label="Show slide ${index + 1}"></button>`).join('')}
+          </div>
+        </div>
         <p>Discover curated collections of premium bags and accessories designed for everyday elegance and modern living.</p>
         <div style="display: flex; gap: 1rem; justify-content: center;">
           <a href="#/shop" class="btn">Shop Collection</a>
@@ -78,6 +95,11 @@ export function HomePage() {
 
     <section class="section" style="background: var(--bg-secondary);">
       <div class="container" style="text-align: center;">
+        <div class="home-marquee-wrap" aria-hidden="true">
+          <marquee class="home-marquee" behavior="scroll" direction="left" scrollamount="6">
+            &#9733; Premium Products &#9733; Durability &#9733; Add more later &#9733;
+          </marquee>
+        </div>
         <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">Why Choose Us</p>
         <h2>The OneStop Experience</h2>
         <div class="trust-grid">
@@ -136,19 +158,99 @@ export function HomePage() {
       <div class="container" style="text-align: center;">
         <h2>Trusted by our Instagram community</h2>
         <p style="color: var(--text-secondary); margin-bottom: 3rem;">Tag us @onestopshop to be featured</p>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-          <div style="aspect-ratio: 1/1; background: #ddd;"></div>
-          <div style="aspect-ratio: 1/1; background: #eee;"></div>
-          <div style="aspect-ratio: 1/1; background: #ddd;"></div>
-          <div style="aspect-ratio: 1/1; background: #eee;"></div>
-        </div>
         <a href="https://www.instagram.com/onestopshop" target="_blank" class="btn btn-outline" style="margin-top: 3rem;">Follow Us on Instagram</a>
       </div>
     </section>
   `;
 }
 
+function initHomeHeroSlides() {
+  const textEl = document.getElementById('hero-slide-text');
+  const dotsWrap = document.getElementById('hero-slide-dots');
+  const shellEl = document.querySelector('.hero-slide-shell');
+  const prevBtn = document.getElementById('hero-slide-prev');
+  const nextBtn = document.getElementById('hero-slide-next');
+  if (!textEl || !dotsWrap || !shellEl || !prevBtn || !nextBtn) {
+    return;
+  }
+
+  const dots = Array.from(dotsWrap.querySelectorAll('.hero-slide-dot'));
+  let activeIndex = 0;
+
+  const render = index => {
+    textEl.classList.remove('is-visible');
+    requestAnimationFrame(() => {
+      textEl.textContent = HERO_SLIDES[index];
+      textEl.classList.add('is-visible');
+    });
+
+    dots.forEach((dot, dotIndex) => {
+      dot.classList.toggle('is-active', dotIndex === index);
+    });
+  };
+
+  const setSlide = index => {
+    activeIndex = (index + HERO_SLIDES.length) % HERO_SLIDES.length;
+    render(activeIndex);
+  };
+
+  const startAuto = () => {
+    if (heroSlideTimer) {
+      clearInterval(heroSlideTimer);
+    }
+
+    heroSlideTimer = setInterval(() => {
+      if (!document.body.contains(textEl)) {
+        clearInterval(heroSlideTimer);
+        heroSlideTimer = null;
+        return;
+      }
+
+      setSlide(activeIndex + 1);
+    }, 2600);
+  };
+
+  const stopAuto = () => {
+    if (heroSlideTimer) {
+      clearInterval(heroSlideTimer);
+      heroSlideTimer = null;
+    }
+  };
+
+  dotsWrap.addEventListener('click', event => {
+    const target = event.target.closest('[data-hero-slide]');
+    if (!target) {
+      return;
+    }
+
+    const index = Number(target.getAttribute('data-hero-slide'));
+    if (Number.isFinite(index)) {
+      setSlide(index);
+    }
+  });
+
+  prevBtn.addEventListener('click', () => {
+    setSlide(activeIndex - 1);
+    startAuto();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    setSlide(activeIndex + 1);
+    startAuto();
+  });
+
+  shellEl.addEventListener('mouseenter', stopAuto);
+  shellEl.addEventListener('mouseleave', startAuto);
+  shellEl.addEventListener('focusin', stopAuto);
+  shellEl.addEventListener('focusout', startAuto);
+
+  render(0);
+  startAuto();
+}
+
 export async function initHomePage() {
+  initHomeHeroSlides();
+
   const grid = document.getElementById('home-featured-grid');
   if (!grid) {
     return;

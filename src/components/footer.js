@@ -39,11 +39,6 @@ export function Footer() {
             </form>
           </div>
         </div>
-        <div class="footer-marquee-wrap" aria-hidden="true">
-          <marquee class="footer-marquee" behavior="scroll" direction="left" scrollamount="6">
-            Our signature comfort fabric was developed carefully for everyday wear • Soft touch feel with breathable stretch • Premium essentials with easy returns and shipping support •
-          </marquee>
-        </div>
         <div class="footer-bottom">
           <p>&copy; 2026 onestopshop. Designed for elegance. Secure and Trusted.</p>
         </div>
