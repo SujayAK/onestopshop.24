@@ -1822,6 +1822,13 @@ footer.main-footer {
   padding-top: 0.2rem;
 }
 
+.shop-results-placeholder {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
 @media (max-width: 980px) {
   #shop-search,
   #shop-category,

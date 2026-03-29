@@ -249,11 +249,16 @@ function getSelectionTitle(cat, sub) {
   return `${cat} / ${sub}`;
 }
 
+function shouldShowProductResults(category) {
+  return category !== 'all';
+}
+
 export function ShopPage() {
   const rawFilters = parseShopQuery();
   const taxonomyMap = getMergedTaxonomyMap();
   const categoryValue = normalizeCategoryValue(rawFilters.cat, taxonomyMap);
   const subcategoryValue = normalizeSubcategoryValue(rawFilters.sub, categoryValue, taxonomyMap);
+  const showResults = shouldShowProductResults(categoryValue);
 
   return `
     <div class="container section">
@@ -265,6 +270,7 @@ export function ShopPage() {
         ${renderDiscoverySections(taxonomyMap, categoryValue, subcategoryValue)}
       </div>
 
+      ${showResults ? `
       <div class="shop-results-shell">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
           <h2 id="shop-selection-title" style="margin-bottom: 0;">${escapeHtml(getSelectionTitle(categoryValue, subcategoryValue))}</h2>
@@ -275,6 +281,12 @@ export function ShopPage() {
           <div class="profile-loading" style="grid-column: 1 / -1;">Loading products...</div>
         </div>
       </div>
+      ` : `
+      <div class="shop-results-shell shop-results-placeholder">
+        <h2 style="margin-bottom: 0.65rem;">Choose a category to view products</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 0;">Use the Bags and Accessories blocks above to browse inventory quickly by section.</p>
+      </div>
+      `}
     </div>
   `;
 }
@@ -290,6 +302,7 @@ export async function initShopPage() {
   const normalizedCategory = normalizeCategoryValue(filters.cat, taxonomyMap);
   const normalizedSubcategory = normalizeSubcategoryValue(filters.sub, normalizedCategory, taxonomyMap);
   const normalizedHash = buildShopHash(normalizedCategory, normalizedSubcategory);
+  const showResults = shouldShowProductResults(normalizedCategory);
 
   if (window.location.hash !== normalizedHash) {
     window.location.hash = normalizedHash;
@@ -301,11 +314,20 @@ export async function initShopPage() {
   const resultsMeta = document.getElementById('shop-results-meta');
   const grid = document.getElementById('shop-products-grid');
 
-  if (!grid || !resultsMeta || !discoveryContainer || !selectionTitle) {
+  if (!discoveryContainer) {
     return;
   }
 
   discoveryContainer.innerHTML = renderDiscoverySections(taxonomyMap, normalizedCategory, normalizedSubcategory);
+
+  if (!showResults) {
+    return;
+  }
+
+  if (!grid || !resultsMeta || !selectionTitle) {
+    return;
+  }
+
   selectionTitle.textContent = getSelectionTitle(normalizedCategory, normalizedSubcategory);
 
   const catalogResult = await getProductsCatalog({
