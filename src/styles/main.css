@@ -587,14 +587,15 @@ header.main-header.is-scrolled {
 }
 
 .logo-text {
-  font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-family: "Playwrite IE", cursive;
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 2px;
   color: #000000;
   text-transform: lowercase;
   animation: none;
   transition: var(--transition-smooth);
+  font-optical-sizing: auto;
 }
 
 .logo-text:hover {
