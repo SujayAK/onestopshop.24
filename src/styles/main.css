@@ -1765,6 +1765,12 @@ footer.main-footer {
   background: rgba(255, 105, 180, 0.08);
 }
 
+.compare-toggle.is-active {
+  border-color: var(--accent-pink);
+  color: var(--accent-pink);
+  background: rgba(255, 105, 180, 0.08);
+}
+
 .stock-indicator {
   font-size: 0.8rem;
   font-weight: 600;
@@ -2015,6 +2021,70 @@ footer.main-footer {
   gap: 1.35rem !important;
 }
 
+.shop-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  border: 1px solid #eedfe9;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.shop-filter-bar label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #705e6b;
+}
+
+.shop-filter-bar label span {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.shop-filter-bar select {
+  border: 1px solid #e9d9e4;
+  border-radius: 10px;
+  height: 36px;
+  padding: 0 0.55rem;
+  background: #fff;
+  color: #2f2430;
+}
+
+.shop-price-filter {
+  border: 1px solid #f2e5ed;
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  background: #fff9fc;
+}
+
+.shop-price-filter p {
+  margin-bottom: 0.4rem;
+  font-size: 0.76rem;
+  color: #664f5e;
+}
+
+.shop-price-slider-row {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.shop-price-slider-row input[type='range'] {
+  width: 100%;
+}
+
+.shop-compare-count {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #6f5b68;
+  border: 1px solid #eadbe4;
+  border-radius: 999px;
+  padding: 0.32rem 0.6rem;
+  background: #fff;
+}
+
 .shop-listing-card {
   border-radius: 0;
   border: 1px solid #f0e6ec;
@@ -2060,6 +2130,11 @@ footer.main-footer {
   color: #e53982;
 }
 
+.shop-compare-btn.is-active {
+  color: #e53982;
+  border-color: rgba(229, 57, 130, 0.48);
+}
+
 .shop-heart-btn.is-active i {
   font-weight: 900;
 }
@@ -2098,16 +2173,63 @@ footer.main-footer {
   color: var(--text-secondary);
 }
 
-.shop-listing-actions {
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  transition: opacity 0.28s ease, max-height 0.28s ease;
+.shop-color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  margin-bottom: 0.45rem;
 }
 
-.shop-listing-card:hover .shop-listing-actions {
+.shop-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(58, 35, 50, 0.22);
+}
+
+.shop-listing-tags {
+  margin-bottom: 0.35rem;
+}
+
+.shop-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.18rem 0.52rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.shop-stock-pill.is-in {
+  color: #24622a;
+  background: rgba(87, 178, 109, 0.16);
+}
+
+.shop-stock-pill.is-low {
+  color: #8b4e00;
+  background: rgba(243, 183, 101, 0.24);
+}
+
+.shop-stock-pill.is-out {
+  color: #9d1432;
+  background: rgba(224, 118, 143, 0.2);
+}
+
+.shop-listing-actions {
   opacity: 1;
-  max-height: 260px;
+  max-height: 400px;
+  overflow: visible;
+  transition: opacity 0.2s ease;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.shop-listing-actions .btn {
+  width: 100%;
+  margin-top: 0;
 }
 
 .shop-layout-toggle {
@@ -2209,6 +2331,17 @@ footer.main-footer {
   margin-bottom: 1rem;
 }
 
+.shop-quick-details {
+  margin: 0 0 1rem;
+  padding-left: 1.15rem;
+  color: #5f4d5a;
+  font-size: 0.84rem;
+}
+
+.shop-quick-details li {
+  margin-bottom: 0.3rem;
+}
+
 .shop-quick-actions-row {
   display: grid;
   gap: 0.6rem;
@@ -2261,15 +2394,15 @@ footer.main-footer {
   margin: 0 auto 1rem;
   border-top: 1px solid rgba(35, 23, 32, 0.12);
   border-bottom: 1px solid rgba(35, 23, 32, 0.12);
-  padding: 0.55rem 0;
+  padding: 1.15rem 0;
 }
 
 .home-marquee {
   color: #5f4a58;
-  font-size: 0.78rem;
-  letter-spacing: 1px;
+  font-size: 1.16rem;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 @media (max-width: 980px) {
@@ -2315,6 +2448,10 @@ footer.main-footer {
 }
 
 @media (max-width: 768px) {
+  .shop-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
   .shop-subcat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -96,7 +96,7 @@ export function SignupPage() {
   `;
 }
 
-import { signUp, updateUserProfile, getCurrentUser } from '../utils/supabase.js';
+import { signUp, updateUserProfile } from '../utils/supabase.js';
 
 export function initSignupPage() {
   const form = document.getElementById('signup-form');
@@ -161,25 +161,34 @@ export function initSignupPage() {
           return;
         }
 
-        // Create user profile
-        const user = await getCurrentUser();
+        const user = result.data?.user;
+        const session = result.data?.session;
+
         if (user) {
-          await updateUserProfile(user.id, {
+          const profileResult = await updateUserProfile(user.id, {
             first_name: fname,
             last_name: lname,
             user_id: user.id,
             created_at: new Date()
           });
 
+          if (!profileResult.success) {
+            console.warn('Profile setup skipped:', profileResult.error);
+          }
+        }
+
+        if (user && session) {
           sessionStorage.setItem('user', JSON.stringify({
             id: user.id,
             email: user.email,
             user_metadata: user.user_metadata
           }));
+          window.location.hash = '#/';
+          return;
         }
 
-        alert('Account created successfully! Please check your email to confirm your account.');
-        window.location.hash = '#/';
+        alert('Account created successfully. Please verify your email, then sign in.');
+        window.location.hash = '#/login';
       } catch (error) {
         console.error('Signup error:', error);
         document.getElementById('email-error').textContent = 'An error occurred during signup';

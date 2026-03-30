@@ -74,7 +74,7 @@ export function LoginPage() {
   `;
 }
 
-import { signIn, getCurrentUser } from '../utils/supabase.js';
+import { signIn } from '../utils/supabase.js';
 
 export function initLoginPage() {
   const form = document.getElementById('login-form');
@@ -113,8 +113,8 @@ export function initLoginPage() {
           return;
         }
 
-        // Store user info in sessionStorage
-        const user = await getCurrentUser();
+        // Store authenticated user info in sessionStorage for route guards/UI.
+        const user = result.data?.user;
         if (user) {
           sessionStorage.setItem('user', JSON.stringify({
             id: user.id,

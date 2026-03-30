@@ -193,6 +193,284 @@ export async function getInventoryTaxonomy() {
   }
 }
 
+function normalizeSort(sort) {
+  if (sort === 'price-asc') {
+    return { column: 'price', ascending: true }
+  }
+  if (sort === 'price-desc') {
+    return { column: 'price', ascending: false }
+  }
+  if (sort === 'name-asc') {
+    return { column: 'name', ascending: true }
+  }
+  if (sort === 'name-desc') {
+    return { column: 'name', ascending: false }
+  }
+  return { column: 'created_at', ascending: false }
+}
+
+async function getAuthUserId() {
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (error) throw error
+    return data?.user?.id || null
+  } catch (_error) {
+    return null
+  }
+}
+
+export async function getTaxonomyTree() {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    const { data, error } = await supabase
+      .from('inventory_taxonomy')
+      .select('id, name, slug, parent_id, depth, sort_order, image_url, active')
+      .eq('active', true)
+      .order('depth', { ascending: true })
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true })
+
+    if (error) throw error
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Get taxonomy tree error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+export async function getProductsCatalogAdvanced(options = {}) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    const {
+      taxonomyIds = [],
+      search,
+      minPrice,
+      maxPrice,
+      availability = 'all',
+      sort = 'newest',
+      limit = 120,
+      offset = 0,
+      onlyActive = true
+    } = options
+
+    let query = supabase
+      .from('products')
+      .select('*')
+      .range(offset, offset + limit - 1)
+
+    if (onlyActive) {
+      query = query.eq('active', true)
+    }
+
+    if (Array.isArray(taxonomyIds) && taxonomyIds.length > 0) {
+      query = query.in('taxonomy_id', taxonomyIds)
+    }
+
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+    }
+
+    if (Number.isFinite(Number(minPrice))) {
+      query = query.gte('price', Number(minPrice))
+    }
+
+    if (Number.isFinite(Number(maxPrice))) {
+      query = query.lte('price', Number(maxPrice))
+    }
+
+    if (availability === 'in-stock') {
+      query = query.gt('stock', 0)
+    } else if (availability === 'out-of-stock') {
+      query = query.lte('stock', 0)
+    } else if (availability === 'low-stock') {
+      query = query.gt('stock', 0).lte('stock', 3)
+    }
+
+    const sortConfig = normalizeSort(sort)
+    query = query.order(sortConfig.column, { ascending: sortConfig.ascending })
+
+    const { data, error } = await query
+    if (error) throw error
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Get advanced products catalog error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+export async function getUserWishlist() {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    const userId = await getAuthUserId()
+    if (!userId) {
+      return { success: true, data: [] }
+    }
+
+    const { data, error } = await supabase
+      .from('user_wishlist')
+      .select('product_id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return { success: true, data: (data || []).map(item => Number(item.product_id)) }
+  } catch (error) {
+    console.error('Get user wishlist error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+export async function toggleWishlistProductSync(productId) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', active: false }
+    }
+
+    const userId = await getAuthUserId()
+    if (!userId) {
+      return { success: false, error: 'Please login first', active: false }
+    }
+
+    const id = Number(productId)
+    const { data: existing, error: lookupError } = await supabase
+      .from('user_wishlist')
+      .select('product_id')
+      .eq('user_id', userId)
+      .eq('product_id', id)
+      .maybeSingle()
+
+    if (lookupError) throw lookupError
+
+    if (existing) {
+      const { error } = await supabase
+        .from('user_wishlist')
+        .delete()
+        .eq('user_id', userId)
+        .eq('product_id', id)
+
+      if (error) throw error
+      return { success: true, active: false }
+    }
+
+    const { error } = await supabase
+      .from('user_wishlist')
+      .insert({ user_id: userId, product_id: id })
+
+    if (error) throw error
+    return { success: true, active: true }
+  } catch (error) {
+    console.error('Toggle wishlist sync error:', error.message)
+    return { success: false, error: error.message, active: false }
+  }
+}
+
+export async function getUserCompare() {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    const userId = await getAuthUserId()
+    if (!userId) {
+      return { success: true, data: [] }
+    }
+
+    const { data, error } = await supabase
+      .from('user_compare')
+      .select('product_id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return { success: true, data: (data || []).map(item => Number(item.product_id)) }
+  } catch (error) {
+    console.error('Get user compare error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+export async function toggleCompareProductSync(productId) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', active: false }
+    }
+
+    const userId = await getAuthUserId()
+    if (!userId) {
+      return { success: false, error: 'Please login first', active: false }
+    }
+
+    const id = Number(productId)
+    const { data: existing, error: lookupError } = await supabase
+      .from('user_compare')
+      .select('product_id')
+      .eq('user_id', userId)
+      .eq('product_id', id)
+      .maybeSingle()
+
+    if (lookupError) throw lookupError
+
+    if (existing) {
+      const { error } = await supabase
+        .from('user_compare')
+        .delete()
+        .eq('user_id', userId)
+        .eq('product_id', id)
+
+      if (error) throw error
+      return { success: true, active: false }
+    }
+
+    const { error } = await supabase
+      .from('user_compare')
+      .insert({ user_id: userId, product_id: id })
+
+    if (error) throw error
+    return { success: true, active: true }
+  } catch (error) {
+    console.error('Toggle compare sync error:', error.message)
+    return { success: false, error: error.message, active: false }
+  }
+}
+
+export function subscribeCatalogRealtime(onChange) {
+  if (!hasSupabaseConfig) {
+    return () => {}
+  }
+
+  const channel = supabase
+    .channel('catalog-realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'products' },
+      payload => onChange?.({ table: 'products', payload })
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'product_variants' },
+      payload => onChange?.({ table: 'product_variants', payload })
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'inventory_taxonomy' },
+      payload => onChange?.({ table: 'inventory_taxonomy', payload })
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
 export async function getProduct(id) {
   try {
     const { data, error } = await supabase

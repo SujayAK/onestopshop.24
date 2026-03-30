@@ -1,4 +1,5 @@
 import './styles/main.css';
+import './styles/shop-supabase.css';
 import { Navbar } from './components/navbar.js';
 import { Footer } from './components/footer.js';
 import { HomePage, initHomePage } from './pages/home.js';
@@ -12,7 +13,7 @@ import { LoginPage, initLoginPage } from './pages/login.js';
 import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
 import products from './data/products.json';
-import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates } from './utils/supabase.js';
+import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser } from './utils/supabase.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
@@ -60,6 +61,20 @@ function isAuthenticated() {
   } catch (_error) {
     return false;
   }
+}
+
+async function syncStoredUserFromAuth() {
+  const user = await getCurrentUser();
+  if (!user) {
+    sessionStorage.removeItem('user');
+    return;
+  }
+
+  sessionStorage.setItem('user', JSON.stringify({
+    id: user.id,
+    email: user.email,
+    user_metadata: user.user_metadata
+  }));
 }
 
 function closeAuthGateModal() {
@@ -633,4 +648,7 @@ window.addEventListener('catalogHydrated', event => {
 
 initProductAccessGuard();
 window.addEventListener('hashchange', navigate);
-window.addEventListener('load', navigate);
+window.addEventListener('load', async () => {
+  await syncStoredUserFromAuth();
+  navigate();
+});
