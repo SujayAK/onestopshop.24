@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim()
+const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey)
 
 const fallbackSupabaseUrl = 'https://placeholder.supabase.co'
@@ -20,6 +20,10 @@ export const supabase = createClient(
 // Authentication functions
 export async function signUp(email, password, userData) {
   try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured' }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -39,6 +43,10 @@ export async function signUp(email, password, userData) {
 
 export async function signIn(email, password) {
   try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured' }
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -55,6 +63,10 @@ export async function signIn(email, password) {
 
 export async function signOut() {
   try {
+    if (!hasSupabaseConfig) {
+      return { success: true }
+    }
+
     const { error } = await supabase.auth.signOut()
     if (error) throw error
     return { success: true }
@@ -66,6 +78,10 @@ export async function signOut() {
 
 export async function getCurrentUser() {
   try {
+    if (!hasSupabaseConfig) {
+      return null
+    }
+
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error) throw error
     return user
@@ -77,6 +93,10 @@ export async function getCurrentUser() {
 
 export async function getSession() {
   try {
+    if (!hasSupabaseConfig) {
+      return null
+    }
+
     const { data: { session }, error } = await supabase.auth.getSession()
     if (error) throw error
     return session
