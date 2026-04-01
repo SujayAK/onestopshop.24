@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim()
 const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey)
+const isRealtimeEnabled = String(import.meta.env.VITE_ENABLE_REALTIME || 'false').trim().toLowerCase() === 'true'
 
 const fallbackSupabaseUrl = 'https://placeholder.supabase.co'
 const fallbackSupabaseAnonKey = 'placeholder-anon-key'
@@ -16,6 +17,8 @@ export const supabase = createClient(
   hasSupabaseConfig ? supabaseUrl : fallbackSupabaseUrl,
   hasSupabaseConfig ? supabaseAnonKey : fallbackSupabaseAnonKey
 )
+
+let storeSettingsTableUnavailable = false
 
 // Authentication functions
 export async function signUp(email, password, userData) {
@@ -239,6 +242,42 @@ async function getAuthUserId() {
   }
 }
 
+function isMissingSchemaError(error) {
+  const message = String(error?.message || '').toLowerCase()
+  const details = String(error?.details || '').toLowerCase()
+  return (
+    message.includes('does not exist') ||
+    message.includes('could not find') ||
+    message.includes('schema cache') ||
+    details.includes('does not exist')
+  )
+}
+
+async function getCategoryIdsByNames(names = []) {
+  if (!Array.isArray(names) || names.length === 0) {
+    return []
+  }
+
+  const normalized = names
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+
+  if (normalized.length === 0) {
+    return []
+  }
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('id, name')
+    .in('name', normalized)
+
+  if (error) {
+    return []
+  }
+
+  return (data || []).map(item => Number(item.id)).filter(id => Number.isFinite(id))
+}
+
 export async function getTaxonomyTree() {
   try {
     if (!hasSupabaseConfig) {
@@ -253,7 +292,36 @@ export async function getTaxonomyTree() {
       .order('sort_order', { ascending: true })
       .order('name', { ascending: true })
 
-    if (error) throw error
+    if (error) {
+      if (!isMissingSchemaError(error)) {
+        throw error
+      }
+
+      const { data: categories, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name, parent_id, active, type')
+        .eq('active', true)
+        .in('type', ['Shop', 'Both'])
+        .order('name', { ascending: true })
+
+      if (categoriesError) {
+        throw categoriesError
+      }
+
+      const mapped = (categories || []).map(item => ({
+        id: Number(item.id),
+        name: item.name,
+        slug: String(item.name || '').toLowerCase().replace(/\s+/g, '-'),
+        parent_id: item.parent_id || null,
+        depth: item.parent_id ? 2 : 1,
+        sort_order: 0,
+        image_url: null,
+        active: true
+      }))
+
+      return { success: true, data: mapped }
+    }
+
     return { success: true, data: data || [] }
   } catch (error) {
     console.error('Get taxonomy tree error:', error.message)
@@ -279,45 +347,83 @@ export async function getProductsCatalogAdvanced(options = {}) {
       onlyActive = true
     } = options
 
-    let query = supabase
-      .from('products')
-      .select('*')
-      .range(offset, offset + limit - 1)
+    const applyBaseFilters = queryBuilder => {
+      let query = queryBuilder.range(offset, offset + limit - 1)
 
-    if (onlyActive) {
-      query = query.eq('active', true)
+      if (onlyActive) {
+        query = query.eq('active', true)
+      }
+
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+      }
+
+      if (Number.isFinite(Number(minPrice))) {
+        query = query.gte('price', Number(minPrice))
+      }
+
+      if (Number.isFinite(Number(maxPrice))) {
+        query = query.lte('price', Number(maxPrice))
+      }
+
+      if (availability === 'in-stock') {
+        query = query.gt('stock', 0)
+      } else if (availability === 'out-of-stock') {
+        query = query.lte('stock', 0)
+      } else if (availability === 'low-stock') {
+        query = query.gt('stock', 0).lte('stock', 3)
+      }
+
+      const sortConfig = normalizeSort(sort)
+      return query.order(sortConfig.column, { ascending: sortConfig.ascending })
     }
 
-    if (Array.isArray(taxonomyIds) && taxonomyIds.length > 0) {
-      query = query.in('taxonomy_id', taxonomyIds)
+    const taxonomyIdsList = Array.isArray(taxonomyIds)
+      ? taxonomyIds.map(id => Number(id)).filter(id => Number.isFinite(id))
+      : []
+
+    // Legacy schema path: products.taxonomy_id
+    let legacyQuery = applyBaseFilters(
+      supabase
+        .from('products')
+        .select('*')
+    )
+
+    if (taxonomyIdsList.length > 0) {
+      legacyQuery = legacyQuery.in('taxonomy_id', taxonomyIdsList)
     }
 
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+    const legacyResult = await legacyQuery
+    if (!legacyResult.error) {
+      return { success: true, data: legacyResult.data || [] }
     }
 
-    if (Number.isFinite(Number(minPrice))) {
-      query = query.gte('price', Number(minPrice))
+    if (!isMissingSchemaError(legacyResult.error)) {
+      throw legacyResult.error
     }
 
-    if (Number.isFinite(Number(maxPrice))) {
-      query = query.lte('price', Number(maxPrice))
+    // New schema path: products.category_id with categories table
+    let modernQuery = applyBaseFilters(
+      supabase
+        .from('products')
+        .select('*, categories:category_id(name)')
+    )
+
+    if (taxonomyIdsList.length > 0) {
+      modernQuery = modernQuery.in('category_id', taxonomyIdsList)
     }
 
-    if (availability === 'in-stock') {
-      query = query.gt('stock', 0)
-    } else if (availability === 'out-of-stock') {
-      query = query.lte('stock', 0)
-    } else if (availability === 'low-stock') {
-      query = query.gt('stock', 0).lte('stock', 3)
+    const modernResult = await modernQuery
+    if (modernResult.error) {
+      throw modernResult.error
     }
 
-    const sortConfig = normalizeSort(sort)
-    query = query.order(sortConfig.column, { ascending: sortConfig.ascending })
+    const normalized = (modernResult.data || []).map(item => ({
+      ...item,
+      category: item.category || item.categories?.name || null
+    }))
 
-    const { data, error } = await query
-    if (error) throw error
-    return { success: true, data: data || [] }
+    return { success: true, data: normalized }
   } catch (error) {
     console.error('Get advanced products catalog error:', error.message)
     return { success: false, error: error.message, data: [] }
@@ -463,7 +569,7 @@ export async function toggleCompareProductSync(productId) {
 }
 
 export function subscribeCatalogRealtime(onChange) {
-  if (!hasSupabaseConfig) {
+  if (!hasSupabaseConfig || !isRealtimeEnabled) {
     return () => {}
   }
 
@@ -827,10 +933,144 @@ export async function deleteFile(bucket, filePath) {
   }
 }
 
+// Stock clearance products functions
+export async function getStockClearanceCategories() {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    // New schema path: categories table managed from Supabase UI
+    const categoriesResult = await supabase
+      .from('categories')
+      .select('name')
+      .eq('active', true)
+      .in('type', ['Stock Clearance', 'Both'])
+      .order('name', { ascending: true })
+
+    if (!categoriesResult.error && Array.isArray(categoriesResult.data) && categoriesResult.data.length > 0) {
+      return {
+        success: true,
+        data: categoriesResult.data
+          .map(item => item.name)
+          .filter(Boolean)
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('stock_clearance_products')
+      .select('category')
+      .eq('active', true)
+      .neq('category', null)
+      .order('category', { ascending: true })
+
+    if (error) throw error
+    
+    // Remove duplicates
+    const categories = [...new Set((data || []).map(item => item.category))].filter(Boolean)
+    return { success: true, data: categories }
+  } catch (error) {
+    console.error('Get stock clearance categories error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+export async function getStockClearanceProducts(options = {}) {
+  try {
+    if (!hasSupabaseConfig) {
+      return { success: false, error: 'Supabase is not configured', data: [] }
+    }
+
+    const {
+      category,
+      search,
+      minPrice,
+      maxPrice,
+      sort = 'newest',
+      limit = 120,
+      offset = 0,
+      onlyActive = true
+    } = options
+
+    const applyFilters = queryBuilder => {
+      let query = queryBuilder.range(offset, offset + limit - 1)
+
+      if (onlyActive) {
+        query = query.eq('active', true)
+      }
+
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+      }
+
+      if (Number.isFinite(Number(minPrice))) {
+        query = query.gte('price', Number(minPrice))
+      }
+
+      if (Number.isFinite(Number(maxPrice))) {
+        query = query.lte('price', Number(maxPrice))
+      }
+
+      const sortConfig = normalizeSort(sort)
+      return query.order(sortConfig.column, { ascending: sortConfig.ascending })
+    }
+
+    // Legacy schema path: stock_clearance_products.category
+    let legacyQuery = applyFilters(
+      supabase
+        .from('stock_clearance_products')
+        .select('*')
+    )
+
+    if (category) {
+      legacyQuery = legacyQuery.eq('category', category)
+    }
+
+    const legacyResult = await legacyQuery
+    if (!legacyResult.error) {
+      return { success: true, data: legacyResult.data || [] }
+    }
+
+    if (!isMissingSchemaError(legacyResult.error)) {
+      throw legacyResult.error
+    }
+
+    // New schema path: stock_clearance_products.category_id + categories table
+    let modernQuery = applyFilters(
+      supabase
+        .from('stock_clearance_products')
+        .select('*, categories:category_id(name)')
+    )
+
+    if (category) {
+      const categoryIds = await getCategoryIdsByNames([category])
+      if (categoryIds.length === 0) {
+        return { success: true, data: [] }
+      }
+      modernQuery = modernQuery.in('category_id', categoryIds)
+    }
+
+    const modernResult = await modernQuery
+    if (modernResult.error) {
+      throw modernResult.error
+    }
+
+    const normalized = (modernResult.data || []).map(item => ({
+      ...item,
+      category: item.category || item.categories?.name || null
+    }))
+
+    return { success: true, data: normalized }
+  } catch (error) {
+    console.error('Get stock clearance products error:', error.message)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
 // Store settings
 export async function getAnnouncementBarMessage() {
   try {
-    if (!hasSupabaseConfig) {
+    if (!hasSupabaseConfig || storeSettingsTableUnavailable) {
       return { success: false, data: null }
     }
 
@@ -841,6 +1081,9 @@ export async function getAnnouncementBarMessage() {
       .maybeSingle()
 
     if (error) {
+      if (isMissingSchemaError(error)) {
+        storeSettingsTableUnavailable = true
+      }
       return { success: false, data: null }
     }
 

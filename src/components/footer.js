@@ -7,9 +7,8 @@ export function Footer() {
             <h4 class="logo-text">OneStopShop</h4>
             <p style="color: rgba(255,255,255,0.7); margin-bottom: 1.5rem;">Your one-stop destination for premium fashion, bags & accessories. Curated with care for the modern lifestyle.</p>
             <div style="display: flex; gap: 1rem; font-size: 1.2rem;">
-              <a href="https://www.instagram.com/onestopshop" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
-              <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
-              <a href="#" title="Pinterest"><i class="fab fa-pinterest"></i></a>
+              <a href="https://www.instagram.com/onestopshop.24" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+              
             </div>
           </div>
           <div class="footer-column">

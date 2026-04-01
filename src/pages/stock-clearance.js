@@ -1,11 +1,10 @@
 import {
-  getTaxonomyTree,
-  getProductsCatalogAdvanced,
+  getStockClearanceProducts,
+  getStockClearanceCategories,
   getUserWishlist,
   getUserCompare,
   toggleWishlistProductSync,
-  toggleCompareProductSync,
-  subscribeCatalogRealtime
+  toggleCompareProductSync
 } from '../utils/supabase.js';
 import { cart } from '../utils/cart.js';
 
@@ -25,33 +24,6 @@ function formatINR(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(Number(value || 0));
-}
-
-function buildTaxonomyTree(rows = []) {
-  const map = {};
-  rows.forEach(row => {
-    const parent = row.parent_id;
-    if (!map[parent]) {
-      map[parent] = [];
-    }
-    map[parent].push(row);
-  });
-  return map;
-}
-
-function renderTaxonomyLevel(parentId, tree, depth = 0) {
-  const items = tree[parentId] || [];
-  if (items.length === 0) return '';
-
-  return items.map(item => `
-    <div class="shop-tax-item" data-depth="${depth}" data-id="${item.id}">
-      <label class="shop-tax-label">
-        <input type="checkbox" class="shop-tax-checkbox" data-taxonomy-id="${item.id}" value="${item.id}">
-        <span>${escapeHtml(item.name)}</span>
-      </label>
-      ${tree[item.id] ? renderTaxonomyLevel(item.id, tree, depth + 1) : ''}
-    </div>
-  `).join('');
 }
 
 function getProductColors(product) {
@@ -101,6 +73,9 @@ function renderProductCard(product, wished, compared) {
   const colorSwatches = colors
     .map(c => `<span class="shop-color-dot" style="background:${escapeHtml(c.hex)}" title="${escapeHtml(c.name)}"></span>`)
     .join('');
+  
+  // Format size info
+  const sizeDisplay = product.sizes || product.size ? `<p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.5rem 0 0;"><strong>Size:</strong> ${escapeHtml(String(product.sizes || product.size))}</p>` : '';
 
   return `
     <div class="shop-product-card" data-product-id="${product.id}">
@@ -116,9 +91,11 @@ function renderProductCard(product, wished, compared) {
         </div>
       </div>
       <div class="shop-card-info">
+        <p style="font-size: 0.75rem; color: var(--accent-pink); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 0.5rem;">${escapeHtml(product.category || 'Clearance')}</p>
         <h3 class="shop-card-title">${escapeHtml(product.name)}</h3>
         <p class="shop-card-price">${formatINR(product.price)}</p>
         ${colorSwatches ? `<div class="shop-card-colors">${colorSwatches}</div>` : ''}
+        ${sizeDisplay}
         <span class="shop-stock-badge ${stock.css}">${stock.text}</span>
         <div class="shop-card-buttons">
           <button class="btn btn-sm add-to-cart-btn" data-product-id="${product.id}">Add to Cart</button>
@@ -129,26 +106,38 @@ function renderProductCard(product, wished, compared) {
   `;
 }
 
-export function ShopPage() {
+export function StockClearancePage() {
   return `
     <div class="container section">
       <div class="breadcrumbs">
-        <a href="#/">Home</a> / <span>Shop</span>
+        <a href="#/">Home</a> / <span>Stock Clearance Sale</span>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 3rem;">
+        <p style="font-size: 0.9rem; color: var(--accent-pink); text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 0.5rem;">LIMITED TIME OFFER</p>
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🔥 STOCK CLEARANCE SALE 🔥</h1>
+        <p style="font-size: 1rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">Massive discounts on selected items. Hurry before they're gone!</p>
       </div>
 
       <div class="shop-layout">
         <aside class="shop-sidebar">
           <div class="shop-filter-section">
-            <h3>Categories</h3>
-            <div id="shop-taxonomy" class="shop-taxonomy-tree"></div>
+            <h3>Category</h3>
+            <div id="clearance-categories" class="shop-filter-options">
+              <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+                <input type="radio" name="clearance-category" value="" checked data-category="">
+                <span>All Categories</span>
+              </label>
+              <!-- Categories will be loaded here -->
+            </div>
           </div>
 
           <div class="shop-filter-section">
-            <h3>Price</h3>
+            <h3>Price Range</h3>
             <div class="price-range-container">
               <div class="price-slider-wrapper">
-                <input type="range" id="shop-min-price" class="price-slider price-slider-min" min="0" max="100000" value="0" step="100">
-                <input type="range" id="shop-max-price" class="price-slider price-slider-max" min="0" max="100000" value="100000" step="100">
+                <input type="range" id="clearance-min-price" class="price-slider price-slider-min" min="0" max="100000" value="0" step="100">
+                <input type="range" id="clearance-max-price" class="price-slider price-slider-max" min="0" max="100000" value="100000" step="100">
                 <div class="price-slider-track"></div>
                 <div class="price-slider-fill"></div>
               </div>
@@ -161,18 +150,8 @@ export function ShopPage() {
           </div>
 
           <div class="shop-filter-section">
-            <h3>Availability</h3>
-            <select id="shop-availability">
-              <option value="all">All</option>
-              <option value="in-stock">In stock</option>
-              <option value="low-stock">Low stock</option>
-              <option value="out-of-stock">Out of stock</option>
-            </select>
-          </div>
-
-          <div class="shop-filter-section">
-            <h3>Sort</h3>
-            <select id="shop-sort">
+            <h3>Sort By</h3>
+            <select id="clearance-sort" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); font-family: inherit;">
               <option value="newest">Newest</option>
               <option value="price-asc">Price: Low to High</option>
               <option value="price-desc">Price: High to Low</option>
@@ -180,16 +159,16 @@ export function ShopPage() {
             </select>
           </div>
 
-          <button id="shop-reset-filters" class="btn btn-outline">Reset Filters</button>
+          <button id="clearance-reset-filters" class="btn btn-outline" style="width: 100%; margin-top: 1rem;">Reset Filters</button>
         </aside>
 
         <main class="shop-main">
           <div class="shop-toolbar">
-            <p id="shop-results-count">Loading products...</p>
+            <p id="clearance-results-count">Loading products...</p>
           </div>
 
-          <div id="shop-grid" class="shop-grid">
-            <div class="profile-loading">Loading products...</div>
+          <div id="clearance-grid" class="shop-grid">
+            <div class="profile-loading">Loading stock clearance products...</div>
           </div>
         </main>
       </div>
@@ -197,20 +176,19 @@ export function ShopPage() {
   `;
 }
 
-export async function initShopPage() {
-  const taxonomyContainer = document.getElementById('shop-taxonomy');
-  const minPriceInput = document.getElementById('shop-min-price');
-  const maxPriceInput = document.getElementById('shop-max-price');
+export async function initStockClearancePage() {
+  const categoriesContainer = document.getElementById('clearance-categories');
+  const minPriceInput = document.getElementById('clearance-min-price');
+  const maxPriceInput = document.getElementById('clearance-max-price');
   const minPriceDisplay = document.querySelector('.price-min-display');
   const maxPriceDisplay = document.querySelector('.price-max-display');
   const priceSliderFill = document.querySelector('.price-slider-fill');
-  const availabilitySelect = document.getElementById('shop-availability');
-  const sortSelect = document.getElementById('shop-sort');
-  const resetBtn = document.getElementById('shop-reset-filters');
-  const grid = document.getElementById('shop-grid');
-  const resultsCount = document.getElementById('shop-results-count');
+  const sortSelect = document.getElementById('clearance-sort');
+  const resetBtn = document.getElementById('clearance-reset-filters');
+  const grid = document.getElementById('clearance-grid');
+  const resultsCount = document.getElementById('clearance-results-count');
 
-  if (!grid || !taxonomyContainer) {
+  if (!grid) {
     return;
   }
 
@@ -239,22 +217,28 @@ export async function initShopPage() {
     priceSliderFill.style.right = (100 - maxPercent) + '%';
   };
 
-  // Load taxonomy
-  const taxonomyResult = await getTaxonomyTree();
-  const taxonomyRows = taxonomyResult.success ? taxonomyResult.data : [];
-  const tree = buildTaxonomyTree(taxonomyRows);
-
-  // Render root level (depth 1)
-  const rootItems = taxonomyRows.filter(row => row.depth === 1);
-  taxonomyContainer.innerHTML = rootItems.map(item => `
-    <div class="shop-tax-item" data-depth="0" data-id="${item.id}">
-      <label class="shop-tax-label">
-        <input type="checkbox" class="shop-tax-checkbox" data-taxonomy-id="${item.id}" value="${item.id}">
-        <span><strong>${escapeHtml(item.name)}</strong></span>
+  // Load categories
+  const categoriesResult = await getStockClearanceCategories();
+  const categories = categoriesResult.success ? categoriesResult.data : [];
+  
+  if (categories.length > 0) {
+    const categoryOptions = categories
+      .map(cat => `
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+          <input type="radio" name="clearance-category" value="${escapeHtml(cat)}" data-category="${escapeHtml(cat)}">
+          <span>${escapeHtml(cat)}</span>
+        </label>
+      `)
+      .join('');
+    
+    categoriesContainer.innerHTML = `
+      <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+        <input type="radio" name="clearance-category" value="" checked data-category="">
+        <span><strong>All Categories</strong></span>
       </label>
-      ${renderTaxonomyLevel(item.id, tree, 1)}
-    </div>
-  `).join('');
+      ${categoryOptions}
+    `;
+  }
 
   // Load user wishlist and compare
   const wishlistResult = await getUserWishlist();
@@ -264,20 +248,18 @@ export async function initShopPage() {
 
   // Filter state
   const filterState = {
-    taxonomyIds: [],
+    category: '',
     minPrice: 0,
     maxPrice: 100000,
-    availability: 'all',
     sort: 'newest'
   };
 
   // Load and render products
   const loadProducts = async () => {
-    const result = await getProductsCatalogAdvanced({
-      taxonomyIds: filterState.taxonomyIds.length > 0 ? filterState.taxonomyIds : undefined,
+    const result = await getStockClearanceProducts({
+      category: filterState.category || undefined,
       minPrice: filterState.minPrice,
       maxPrice: filterState.maxPrice,
-      availability: filterState.availability,
       sort: filterState.sort,
       limit: 240
     });
@@ -288,8 +270,8 @@ export async function initShopPage() {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
           <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
-          <h3>No products found</h3>
-          <p style="color: var(--text-secondary);">Try adjusting your filters or check back later.</p>
+          <h3>No clearance products found</h3>
+          <p style="color: var(--text-secondary);">Try adjusting your filters or check back later for more deals!</p>
         </div>
       `;
       resultsCount.textContent = '0 products found';
@@ -355,19 +337,18 @@ export async function initShopPage() {
 
   // Filter handlers
   const updateFilters = () => {
-    filterState.taxonomyIds = Array.from(document.querySelectorAll('.shop-tax-checkbox:checked')).map(
-      cb => Number(cb.getAttribute('data-taxonomy-id'))
-    );
+    const selectedCategory = document.querySelector('input[name="clearance-category"]:checked');
+    filterState.category = selectedCategory ? selectedCategory.value : '';
     filterState.minPrice = Number(minPriceInput.value) || 0;
     filterState.maxPrice = Number(maxPriceInput.value) || 100000;
-    filterState.availability = availabilitySelect.value || 'all';
     filterState.sort = sortSelect.value || 'newest';
     updatePriceDisplay();
     loadProducts();
   };
 
-  document.querySelectorAll('.shop-tax-checkbox').forEach(cb => {
-    cb.addEventListener('change', updateFilters);
+  // Add event listeners for category buttons
+  document.querySelectorAll('input[name="clearance-category"]').forEach(radio => {
+    radio.addEventListener('change', updateFilters);
   });
 
   // Price slider handlers with real-time updates
@@ -405,16 +386,12 @@ export async function initShopPage() {
     }, 300);
   });
 
-  availabilitySelect.addEventListener('change', updateFilters);
   sortSelect.addEventListener('change', updateFilters);
 
   resetBtn.addEventListener('click', () => {
-    document.querySelectorAll('.shop-tax-checkbox').forEach(cb => {
-      cb.checked = false;
-    });
+    document.querySelector('input[name="clearance-category"][value=""]').checked = true;
     minPriceInput.value = '0';
     maxPriceInput.value = '100000';
-    availabilitySelect.value = 'all';
     sortSelect.value = 'newest';
     updatePriceDisplay();
     updateFilters();
@@ -422,16 +399,6 @@ export async function initShopPage() {
 
   // Initialize price display
   updatePriceDisplay();
-
-  // Subscribe to realtime updates
-  let unsubscribe = () => {};
-  unsubscribe = subscribeCatalogRealtime(async () => {
-    await loadProducts();
-  });
-
-  window.addEventListener('hashchange', () => {
-    unsubscribe();
-  }, { once: true });
 
   // Load initial products
   await loadProducts();

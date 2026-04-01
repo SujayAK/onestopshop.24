@@ -1,7 +1,7 @@
 import localProducts from '../data/products.json';
 import { getProductsCatalog } from '../utils/supabase.js';
 
-const HERO_SLIDES = ['NEW ARRIVALS', 'STOCK CLEARANCE SALE', 'PREMIUM PRODUCTS'];
+const HERO_SLIDES = ['STOCK CLEARANCE SALE', 'PREMIUM PRODUCTS'];
 let heroSlideTimer = null;
 
 function normalizeProduct(row) {
@@ -53,7 +53,6 @@ export function HomePage() {
         <p>Discover curated collections of premium bags and accessories designed for everyday elegance and modern living.</p>
         <div style="display: flex; gap: 1rem; justify-content: center;">
           <a href="#/shop" class="btn">Shop Collection</a>
-          <a href="#/shop?new=true" class="btn btn-outline">New Arrivals</a>
         </div>
       </div>
     </section>
@@ -216,6 +215,14 @@ function initHomeHeroSlides() {
       heroSlideTimer = null;
     }
   };
+
+  // Navigate to stock clearance on slide text click
+  textEl.addEventListener('click', () => {
+    if (HERO_SLIDES[activeIndex] === 'STOCK CLEARANCE SALE') {
+      window.location.hash = '#/stock-clearance';
+    }
+  });
+  textEl.style.cursor = 'pointer';
 
   dotsWrap.addEventListener('click', event => {
     const target = event.target.closest('[data-hero-slide]');

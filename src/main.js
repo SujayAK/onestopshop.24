@@ -4,6 +4,7 @@ import { Navbar } from './components/navbar.js';
 import { Footer } from './components/footer.js';
 import { HomePage, initHomePage } from './pages/home.js';
 import { ShopPage, initShopPage } from './pages/shop.js';
+import { StockClearancePage, initStockClearancePage } from './pages/stock-clearance.js';
 import { ProductPage, initProductPage } from './pages/product.js';
 import { CartPage, initCartPage } from './pages/cart.js';
 import { CheckoutPage, initCheckoutPage } from './pages/checkout.js';
@@ -533,6 +534,9 @@ function navigate() {
   } else if (hash.startsWith('#/shop')) {
     renderPage(ShopPage());
     initShopPage();
+  } else if (hash === '#/stock-clearance') {
+    renderPage(StockClearancePage());
+    initStockClearancePage();
   } else if (hash.startsWith('#/product/')) {
     const id = hash.split('/').pop();
     renderPage(ProductPage(id));
