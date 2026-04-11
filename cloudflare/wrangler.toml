@@ -9,6 +9,10 @@ vars = { APP_ORIGIN = "localhost:3000", R2_PUBLIC_URL = "https://871e37cff095f0e
 [env.production]
 vars = { APP_ORIGIN = "onestopshop24.in", R2_PUBLIC_URL = "" }
 
+[env.production.assets]
+directory = "../dist"
+not_found_handling = "single-page-application"
+
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "onestopshop24-db"
