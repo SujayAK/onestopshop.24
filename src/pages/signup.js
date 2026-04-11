@@ -45,13 +45,16 @@ export function SignupPage() {
 
           <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">Password *</label>
-            <input 
-              type="password" 
-              id="signup-password" 
-              placeholder="••••••••" 
-              style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 1rem;" 
-              required
-            >
+            <div style="position: relative;">
+              <input 
+                type="password" 
+                id="signup-password" 
+                placeholder="••••••••" 
+                style="width: 100%; padding: 12px 50px 12px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 1rem;" 
+                required
+              >
+              <button type="button" id="signup-toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.82rem; font-weight: 600; color: var(--accent-pink);">Show</button>
+            </div>
             <span id="password-error" style="color: #f44336; font-size: 0.8rem; display: none; margin-top: 0.3rem;"></span>
             <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
               <p style="margin: 0.2rem 0;">✓ At least 8 characters</p>
@@ -62,13 +65,16 @@ export function SignupPage() {
 
           <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">Confirm Password *</label>
-            <input 
-              type="password" 
-              id="signup-confirm-password" 
-              placeholder="••••••••" 
-              style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 1rem;" 
-              required
-            >
+            <div style="position: relative;">
+              <input 
+                type="password" 
+                id="signup-confirm-password" 
+                placeholder="••••••••" 
+                style="width: 100%; padding: 12px 50px 12px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 1rem;" 
+                required
+              >
+              <button type="button" id="signup-toggle-confirm-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.82rem; font-weight: 600; color: var(--accent-pink);">Show</button>
+            </div>
             <span id="confirm-error" style="color: #f44336; font-size: 0.8rem; display: none; margin-top: 0.3rem;"></span>
           </div>
 
@@ -96,9 +102,31 @@ export function SignupPage() {
   `;
 }
 
-import { signUp, updateUserProfile } from '../utils/supabase.js';
+import { signUp, updateUserProfile } from '../utils/cloudflare.js';
+import { sendWelcomeEmail } from '../utils/email.js';
 
 export function initSignupPage() {
+  const signupPasswordInput = document.getElementById('signup-password');
+  const signupConfirmInput = document.getElementById('signup-confirm-password');
+  const signupTogglePassword = document.getElementById('signup-toggle-password');
+  const signupToggleConfirm = document.getElementById('signup-toggle-confirm-password');
+
+  if (signupPasswordInput && signupTogglePassword) {
+    signupTogglePassword.addEventListener('click', () => {
+      const reveal = signupPasswordInput.type === 'password';
+      signupPasswordInput.type = reveal ? 'text' : 'password';
+      signupTogglePassword.textContent = reveal ? 'Hide' : 'Show';
+    });
+  }
+
+  if (signupConfirmInput && signupToggleConfirm) {
+    signupToggleConfirm.addEventListener('click', () => {
+      const reveal = signupConfirmInput.type === 'password';
+      signupConfirmInput.type = reveal ? 'text' : 'password';
+      signupToggleConfirm.textContent = reveal ? 'Hide' : 'Show';
+    });
+  }
+
   const form = document.getElementById('signup-form');
   if (form) {
     form.addEventListener('submit', async (e) => {
@@ -146,7 +174,7 @@ export function initSignupPage() {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating Account...';
 
-        // Supabase signup with user metadata
+        // Cloudflare signup with user metadata
         const result = await signUp(email, password, {
           first_name: fname,
           last_name: lname,
@@ -175,6 +203,13 @@ export function initSignupPage() {
           if (!profileResult.success) {
             console.warn('Profile setup skipped:', profileResult.error);
           }
+
+          // Fire-and-forget welcome email; user signup should not fail if email service is unavailable.
+          await sendWelcomeEmail({
+            email,
+            firstName: fname,
+            lastName: lname
+          });
         }
 
         if (user && session) {

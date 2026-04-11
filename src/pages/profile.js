@@ -1,5 +1,5 @@
 import products from '../data/products.json'
-import { getOrders, signOut } from '../utils/supabase.js'
+import { getOrders, signOut } from '../utils/cloudflare.js'
 import { cart } from '../utils/cart.js'
 
 function getStoredUser() {
@@ -13,14 +13,14 @@ function getStoredUser() {
 function getWishlistIds() {
   try {
     const stored = JSON.parse(localStorage.getItem('wishlist') || '[]')
-    return Array.isArray(stored) ? stored : []
+    return Array.isArray(stored) ? stored.map(item => String(item).trim()).filter(Boolean) : []
   } catch (_error) {
     return []
   }
 }
 
 function normalizeTab(tab) {
-  const allowed = ['overview', 'orders', 'wishlist', 'addresses', 'payments', 'settings']
+  const allowed = ['overview', 'orders', 'wishlist', 'addresses', 'settings']
   return allowed.includes(tab) ? tab : 'overview'
 }
 
@@ -36,7 +36,7 @@ function getUserDisplayName(user) {
 
 function renderWishlistCards() {
   const wishlistIds = getWishlistIds()
-  const wishedProducts = products.filter(product => wishlistIds.includes(product.id))
+  const wishedProducts = products.filter(product => wishlistIds.includes(String(product.id).trim()))
 
   if (wishedProducts.length === 0) {
     return `
@@ -110,8 +110,8 @@ export function ProfilePage(tab = 'overview') {
             <small>Wishlist</small>
           </div>
           <div class="profile-stat">
-            <span>Gold</span>
-            <small>Loyalty</small>
+            <span>Active</span>
+            <small>Account</small>
           </div>
         </div>
       </div>
@@ -122,7 +122,6 @@ export function ProfilePage(tab = 'overview') {
           <button class="profile-tab-btn ${activeTab === 'orders' ? 'active' : ''}" data-tab="orders"><i class="fas fa-box"></i> Purchased Products</button>
           <button class="profile-tab-btn ${activeTab === 'wishlist' ? 'active' : ''}" data-tab="wishlist"><i class="far fa-heart"></i> Wishlist</button>
           <button class="profile-tab-btn ${activeTab === 'addresses' ? 'active' : ''}" data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Addresses</button>
-          <button class="profile-tab-btn ${activeTab === 'payments' ? 'active' : ''}" data-tab="payments"><i class="far fa-credit-card"></i> Payment Methods</button>
           <button class="profile-tab-btn ${activeTab === 'settings' ? 'active' : ''}" data-tab="settings"><i class="fas fa-cog"></i> Account Settings</button>
           <button class="profile-signout-btn" id="profile-signout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
         </aside>
@@ -146,9 +145,9 @@ export function ProfilePage(tab = 'overview') {
                 <a href="#/profile?tab=addresses">Edit Addresses</a>
               </article>
               <article class="profile-panel">
-                <h3><i class="fas fa-shield-alt"></i> Secure Payments</h3>
-                <p>Manage saved cards, UPI preferences, and billing details safely.</p>
-                <a href="#/profile?tab=payments">Payment Settings</a>
+                <h3><i class="fas fa-shield-alt"></i> Security</h3>
+                <p>Keep account details current and update security settings in one place.</p>
+                <a href="#/profile?tab=settings">Open Settings</a>
               </article>
             </div>
 
@@ -176,28 +175,12 @@ export function ProfilePage(tab = 'overview') {
               <article class="profile-panel">
                 <h3>Home</h3>
                 <p>Add your default delivery address for one-tap checkout.</p>
-                <button class="btn btn-outline">Add Address</button>
+                <button class="btn btn-outline profile-action-btn" data-action="address-home">Add Address</button>
               </article>
               <article class="profile-panel">
                 <h3>Work</h3>
                 <p>Store office address for weekday deliveries and gift drops.</p>
-                <button class="btn btn-outline">Add Address</button>
-              </article>
-            </div>
-          </section>
-
-          <section class="profile-tab ${activeTab === 'payments' ? 'active' : ''}" data-tab-content="payments">
-            <h2>Payment Methods</h2>
-            <div class="profile-panel-grid">
-              <article class="profile-panel">
-                <h3>Saved Cards</h3>
-                <p>Keep preferred cards for faster checkout with secure tokenization.</p>
-                <button class="btn btn-outline">Add Card</button>
-              </article>
-              <article class="profile-panel">
-                <h3>UPI & Wallets</h3>
-                <p>Manage UPI IDs, linked wallets, and auto-pay preferences.</p>
-                <button class="btn btn-outline">Add UPI</button>
+                <button class="btn btn-outline profile-action-btn" data-action="address-work">Add Address</button>
               </article>
             </div>
           </section>
@@ -205,10 +188,10 @@ export function ProfilePage(tab = 'overview') {
           <section class="profile-tab ${activeTab === 'settings' ? 'active' : ''}" data-tab-content="settings">
             <h2>Account Settings</h2>
             <div class="profile-settings-list">
-              <button><i class="fas fa-user-edit"></i> Update Personal Information</button>
-              <button><i class="fas fa-lock"></i> Change Password</button>
-              <button><i class="fas fa-bell"></i> Notification Preferences</button>
-              <button><i class="fas fa-shield-alt"></i> Privacy Controls</button>
+              <button class="profile-action-btn" data-action="settings-profile"><i class="fas fa-user-edit"></i> Update Personal Information</button>
+              <button class="profile-action-btn" data-action="settings-password"><i class="fas fa-lock"></i> Change Password</button>
+              <button class="profile-action-btn" data-action="settings-notifications"><i class="fas fa-bell"></i> Notification Preferences</button>
+              <button class="profile-action-btn" data-action="settings-privacy"><i class="fas fa-shield-alt"></i> Privacy Controls</button>
             </div>
           </section>
         </div>
@@ -299,7 +282,7 @@ function renderPurchasedProductsFromOrders(orders) {
   orders.forEach(order => {
     const items = Array.isArray(order.items) ? order.items : []
     items.forEach(item => {
-      const product = products.find(p => p.id === Number(item.id))
+      const product = products.find(p => String(p.id) === String(item.id))
       flattened.push({
         id: item.id,
         name: item.name || product?.name || 'Product',
@@ -347,15 +330,15 @@ async function hydrateOrders() {
 
   const result = await getOrders(user.id)
   if (!result.success) {
-    const errorHtml = `
+    const fallbackHtml = `
       <div class="profile-empty-state">
-        <i class="fas fa-exclamation-circle"></i>
-        <h3>Could not load purchases</h3>
-        <p>Orders are unavailable right now. Check Supabase configuration and try again.</p>
+        <i class="fas fa-box-open"></i>
+        <h3>No purchases loaded yet</h3>
+        <p>Orders will appear here after checkout. If the live API is unavailable, the page stays usable.</p>
       </div>
     `
-    ordersContainer.innerHTML = errorHtml
-    overviewContainer.innerHTML = errorHtml
+    ordersContainer.innerHTML = fallbackHtml
+    overviewContainer.innerHTML = fallbackHtml
     ordersCount.textContent = '0'
     return
   }
@@ -371,8 +354,8 @@ async function hydrateOrders() {
 function bindWishlistActions() {
   document.querySelectorAll('.btn-add-wishlist-to-cart').forEach(button => {
     button.addEventListener('click', event => {
-      const productId = Number(event.currentTarget.dataset.productId)
-      const product = products.find(item => item.id === productId)
+      const productId = String(event.currentTarget.dataset.productId || '').trim()
+      const product = products.find(item => String(item.id).trim() === productId)
       if (!product) {
         return
       }
@@ -389,7 +372,7 @@ function bindWishlistActions() {
 
   document.querySelectorAll('.btn-remove-wishlist').forEach(button => {
     button.addEventListener('click', event => {
-      const productId = Number(event.currentTarget.dataset.productId)
+      const productId = String(event.currentTarget.dataset.productId || '').trim()
       const next = getWishlistIds().filter(id => id !== productId)
       localStorage.setItem('wishlist', JSON.stringify(next))
 
@@ -437,4 +420,28 @@ export function initProfilePage(initialTab = 'overview') {
 
   bindWishlistActions()
   hydrateOrders()
+
+  document.querySelectorAll('.profile-action-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const action = button.dataset.action || ''
+      if (action.startsWith('address-')) {
+        alert('Address management UI will be enabled next. For now, place orders with checkout form address fields.')
+        return
+      }
+
+      if (action === 'settings-profile') {
+        alert('Profile details update screen is coming next. Basic account data is already saved at signup.')
+        return
+      }
+
+      if (action === 'settings-password') {
+        window.location.hash = '#/forgot-password'
+        return
+      }
+
+      if (action === 'settings-notifications' || action === 'settings-privacy') {
+        alert('This settings module is planned. Core shopping/account flows are active now.')
+      }
+    })
+  })
 }

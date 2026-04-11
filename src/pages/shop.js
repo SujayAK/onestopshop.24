@@ -5,9 +5,12 @@ import {
   getUserCompare,
   toggleWishlistProductSync,
   toggleCompareProductSync,
-  subscribeCatalogRealtime
-} from '../utils/supabase.js';
+  subscribeCatalogRealtime,
+  cloudflareConfig
+} from '../utils/cloudflare.js';
 import { cart } from '../utils/cart.js';
+import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
+import { INVENTORY_STRUCTURE } from '../data/inventory-structure.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -39,17 +42,25 @@ function buildTaxonomyTree(rows = []) {
   return map;
 }
 
+function getTaxonomyChildrenCount(itemId, tree) {
+  const directChildren = tree[itemId] || [];
+  return directChildren.reduce((count, child) => count + 1 + getTaxonomyChildrenCount(child.id, tree), 0);
+}
+
 function renderTaxonomyLevel(parentId, tree, depth = 0) {
   const items = tree[parentId] || [];
   if (items.length === 0) return '';
 
   return items.map(item => `
     <div class="shop-tax-item" data-depth="${depth}" data-id="${item.id}">
-      <label class="shop-tax-label">
-        <input type="checkbox" class="shop-tax-checkbox" data-taxonomy-id="${item.id}" value="${item.id}">
-        <span>${escapeHtml(item.name)}</span>
-      </label>
-      ${tree[item.id] ? renderTaxonomyLevel(item.id, tree, depth + 1) : ''}
+      <div class="shop-tax-row">
+        <label class="shop-tax-label">
+          <input type="checkbox" class="shop-tax-checkbox" data-taxonomy-id="${item.id}" value="${item.id}">
+          <span>${escapeHtml(item.name)}</span>
+        </label>
+        ${tree[item.id] ? `<button type="button" class="shop-tax-toggle" data-taxonomy-toggle="${item.id}" aria-expanded="false" aria-label="Expand ${escapeHtml(item.name)}">+</button>` : ''}
+      </div>
+      ${tree[item.id] ? `<div class="shop-tax-children is-collapsed" data-taxonomy-children="${item.id}">${renderTaxonomyLevel(item.id, tree, depth + 1)}</div>` : ''}
     </div>
   `).join('');
 }
@@ -98,6 +109,11 @@ function getStockLabel(stock) {
 function renderProductCard(product, wished, compared) {
   const colors = getProductColors(product);
   const stock = getStockLabel(product.stock);
+  const image = getProductImageAttrs(product.image_url || product.image, {
+    desktopWidth: 900,
+    sizes: '(max-width: 640px) 92vw, (max-width: 980px) 46vw, (max-width: 1320px) 31vw, 24vw',
+    aspectRatio: '4:5'
+  });
   const colorSwatches = colors
     .map(c => `<span class="shop-color-dot" style="background:${escapeHtml(c.hex)}" title="${escapeHtml(c.name)}"></span>`)
     .join('');
@@ -105,7 +121,18 @@ function renderProductCard(product, wished, compared) {
   return `
     <div class="shop-product-card" data-product-id="${product.id}">
       <div class="shop-card-image">
-        <img src="${product.image_url || product.image || 'https://via.placeholder.com/300x350?text=Images+Coming+Soon'}" alt="${escapeHtml(product.name)}">
+        <img
+          class="lazy-image"
+          src="${image.placeholder}"
+          data-src="${image.src}"
+          data-srcset="${image.srcset}"
+          sizes="${image.sizes}"
+          width="800"
+          height="1000"
+          alt="${escapeHtml(product.name)}"
+          decoding="async"
+          loading="lazy"
+        >
         <div class="shop-card-actions">
           <button class="shop-heart-icon${wished ? ' is-active' : ''}" data-product-id="${product.id}" data-action="wishlist" title="${wished ? 'Remove from wishlist' : 'Add to wishlist'}">
             <i class="fas fa-heart"></i>
@@ -140,7 +167,12 @@ export function ShopPage() {
         <aside class="shop-sidebar">
           <div class="shop-filter-section">
             <h3>Categories</h3>
+            <p class="shop-filter-helper">Choose one or more categories. Click the + to expand subcategories.</p>
             <div id="shop-taxonomy" class="shop-taxonomy-tree"></div>
+            <div class="shop-taxonomy-actions">
+              <button type="button" id="shop-clear-categories" class="btn btn-outline btn-sm">Clear Categories</button>
+              <span id="shop-category-summary" class="shop-category-summary">All categories</span>
+            </div>
           </div>
 
           <div class="shop-filter-section">
@@ -207,6 +239,8 @@ export async function initShopPage() {
   const availabilitySelect = document.getElementById('shop-availability');
   const sortSelect = document.getElementById('shop-sort');
   const resetBtn = document.getElementById('shop-reset-filters');
+  const clearCategoriesBtn = document.getElementById('shop-clear-categories');
+  const categorySummary = document.getElementById('shop-category-summary');
   const grid = document.getElementById('shop-grid');
   const resultsCount = document.getElementById('shop-results-count');
 
@@ -239,28 +273,56 @@ export async function initShopPage() {
     priceSliderFill.style.right = (100 - maxPercent) + '%';
   };
 
-  // Load taxonomy
-  const taxonomyResult = await getTaxonomyTree();
-  const taxonomyRows = taxonomyResult.success ? taxonomyResult.data : [];
+  // Load startup data in parallel to reduce first paint latency.
+  const [taxonomyResult, wishlistResult, compareResult] = await Promise.all([
+    getTaxonomyTree(),
+    getUserWishlist(),
+    getUserCompare()
+  ]);
+  if (!taxonomyResult.success && cloudflareConfig.apiBaseUrl) {
+    taxonomyContainer.innerHTML = '<p style="color: var(--text-secondary);">Failed to load categories from backend. Showing local development categories instead.</p>';
+  }
+  const taxonomyRows = taxonomyResult.success && Array.isArray(taxonomyResult.data) && taxonomyResult.data.length > 0
+    ? taxonomyResult.data
+    : Object.entries(INVENTORY_STRUCTURE).flatMap(([category, subcategories], categoryIndex) => {
+        const categoryId = `local-${category.toLowerCase().replace(/[^a-z0-9]+/g, '-') || categoryIndex}`;
+        return [
+          {
+            id: categoryId,
+            name: category,
+            parent_id: null,
+            depth: 1,
+            active: true
+          },
+          ...(subcategories || []).map((subcategory, index) => ({
+            id: `${categoryId}-${String(subcategory).toLowerCase().replace(/[^a-z0-9]+/g, '-') || index}`,
+            name: subcategory,
+            parent_id: categoryId,
+            depth: 2,
+            active: true
+          }))
+        ];
+      });
   const tree = buildTaxonomyTree(taxonomyRows);
 
   // Render root level (depth 1)
-  const rootItems = taxonomyRows.filter(row => row.depth === 1);
+  const rootItems = taxonomyRows.filter(row => row.depth === 1 || row.depth === undefined);
   taxonomyContainer.innerHTML = rootItems.map(item => `
     <div class="shop-tax-item" data-depth="0" data-id="${item.id}">
-      <label class="shop-tax-label">
-        <input type="checkbox" class="shop-tax-checkbox" data-taxonomy-id="${item.id}" value="${item.id}">
-        <span><strong>${escapeHtml(item.name)}</strong></span>
-      </label>
-      ${renderTaxonomyLevel(item.id, tree, 1)}
+      <div class="shop-tax-row">
+        <label class="shop-tax-label">
+          <input type="checkbox" class="shop-tax-checkbox" data-taxonomy-id="${item.id}" value="${item.id}">
+          <span><strong>${escapeHtml(item.name)}</strong></span>
+        </label>
+        ${tree[item.id] ? `<button type="button" class="shop-tax-toggle" data-taxonomy-toggle="${item.id}" aria-expanded="false" aria-label="Expand ${escapeHtml(item.name)}">+ ${getTaxonomyChildrenCount(item.id, tree)}</button>` : ''}
+      </div>
+      ${tree[item.id] ? `<div class="shop-tax-children is-collapsed" data-taxonomy-children="${item.id}">${renderTaxonomyLevel(item.id, tree, 1)}</div>` : ''}
     </div>
   `).join('');
 
   // Load user wishlist and compare
-  const wishlistResult = await getUserWishlist();
-  const compareResult = await getUserCompare();
-  const wishlistIds = new Set(wishlistResult.success ? wishlistResult.data : []);
-  const compareIds = new Set(compareResult.success ? compareResult.data : []);
+  const wishlistIds = new Set((wishlistResult.success ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
+  const compareIds = new Set((compareResult.success ? compareResult.data : []).map(item => String(item).trim()).filter(Boolean));
 
   // Filter state
   const filterState = {
@@ -284,6 +346,18 @@ export async function initShopPage() {
 
     const products = result.success ? result.data : [];
 
+    if (!result.success && cloudflareConfig.apiBaseUrl) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+          <i class="fas fa-triangle-exclamation" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
+          <h3>Backend connection error</h3>
+          <p style="color: var(--text-secondary);">Could not fetch shop products from Worker API. Check env API URL and Worker logs.</p>
+        </div>
+      `;
+      resultsCount.textContent = 'Backend unavailable';
+      return;
+    }
+
     if (products.length === 0) {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
@@ -302,6 +376,7 @@ export async function initShopPage() {
       wishlistIds.has(product.id),
       compareIds.has(product.id)
     )).join('');
+    initLazyLoading();
 
     // Attach action handlers
     attachHandlers();
@@ -313,7 +388,10 @@ export async function initShopPage() {
     document.querySelectorAll('[data-action="wishlist"]').forEach(btn => {
       btn.addEventListener('click', async event => {
         event.preventDefault();
-        const productId = Number(btn.getAttribute('data-product-id'));
+        const productId = String(btn.getAttribute('data-product-id') || '').trim();
+        if (!productId) {
+          return;
+        }
         const result = await toggleWishlistProductSync(productId);
 
         if (result.success) {
@@ -333,7 +411,10 @@ export async function initShopPage() {
     document.querySelectorAll('[data-action="compare"]').forEach(btn => {
       btn.addEventListener('click', async event => {
         event.preventDefault();
-        const productId = Number(btn.getAttribute('data-product-id'));
+        const productId = String(btn.getAttribute('data-product-id') || '').trim();
+        if (!productId) {
+          return;
+        }
         const result = await toggleCompareProductSync(productId);
 
         if (result.success) {
@@ -356,15 +437,35 @@ export async function initShopPage() {
   // Filter handlers
   const updateFilters = () => {
     filterState.taxonomyIds = Array.from(document.querySelectorAll('.shop-tax-checkbox:checked')).map(
-      cb => Number(cb.getAttribute('data-taxonomy-id'))
-    );
+      cb => String(cb.getAttribute('data-taxonomy-id') || '').trim()
+    ).filter(Boolean);
     filterState.minPrice = Number(minPriceInput.value) || 0;
     filterState.maxPrice = Number(maxPriceInput.value) || 100000;
     filterState.availability = availabilitySelect.value || 'all';
     filterState.sort = sortSelect.value || 'newest';
     updatePriceDisplay();
+    if (categorySummary) {
+      const labels = Array.from(document.querySelectorAll('.shop-tax-checkbox:checked'))
+        .map(cb => cb.closest('.shop-tax-label')?.textContent?.trim())
+        .filter(Boolean);
+      categorySummary.textContent = labels.length > 0 ? labels.slice(0, 3).join(', ') + (labels.length > 3 ? ` +${labels.length - 3}` : '') : 'All categories';
+    }
     loadProducts();
   };
+
+  document.querySelectorAll('.shop-tax-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const taxonomyId = btn.getAttribute('data-taxonomy-toggle');
+      const children = document.querySelector(`[data-taxonomy-children="${taxonomyId}"]`);
+      if (!children) {
+        return;
+      }
+
+      const isCollapsed = children.classList.toggle('is-collapsed');
+      btn.setAttribute('aria-expanded', String(!isCollapsed));
+      btn.textContent = isCollapsed ? '+' : '−';
+    });
+  });
 
   document.querySelectorAll('.shop-tax-checkbox').forEach(cb => {
     cb.addEventListener('change', updateFilters);
@@ -419,6 +520,15 @@ export async function initShopPage() {
     updatePriceDisplay();
     updateFilters();
   });
+
+  if (clearCategoriesBtn) {
+    clearCategoriesBtn.addEventListener('click', () => {
+      document.querySelectorAll('.shop-tax-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      updateFilters();
+    });
+  }
 
   // Initialize price display
   updatePriceDisplay();

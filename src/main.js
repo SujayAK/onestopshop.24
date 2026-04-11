@@ -1,5 +1,5 @@
 import './styles/main.css';
-import './styles/shop-supabase.css';
+import './styles/shop-cloudflare.css';
 import { Navbar } from './components/navbar.js';
 import { Footer } from './components/footer.js';
 import { HomePage, initHomePage } from './pages/home.js';
@@ -12,9 +12,10 @@ import { PaymentSuccessPage, initPaymentSuccessPage } from './pages/payment-succ
 import { PaymentFailedPage, initPaymentFailedPage } from './pages/payment-failed.js';
 import { LoginPage, initLoginPage } from './pages/login.js';
 import { SignupPage, initSignupPage } from './pages/signup.js';
+import { ForgotPasswordPage, initForgotPasswordPage } from './pages/forgot-password.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
 import products from './data/products.json';
-import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser } from './utils/supabase.js';
+import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig } from './utils/cloudflare.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
@@ -29,8 +30,8 @@ function normalizeCatalogProduct(product) {
     return null;
   }
 
-  const id = Number(product.id);
-  if (!Number.isFinite(id)) {
+  const id = String(product.id ?? '').trim();
+  if (!id) {
     return null;
   }
 
@@ -53,7 +54,9 @@ function registerCatalogProducts(productsList = []) {
   });
 }
 
-registerCatalogProducts(products);
+if (!cloudflareConfig.apiBaseUrl) {
+  registerCatalogProducts(products);
+}
 
 function isAuthenticated() {
   try {
@@ -128,7 +131,7 @@ function initProductAccessGuard() {
 function getWishlistIds() {
   try {
     const stored = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    return Array.isArray(stored) ? stored : [];
+    return Array.isArray(stored) ? stored.map(item => String(item).trim()).filter(Boolean) : [];
   } catch (_error) {
     return [];
   }
@@ -140,7 +143,7 @@ function setWishlistIds(ids) {
 
 function initWishlistButtons() {
   document.querySelectorAll('.wishlist-toggle').forEach(button => {
-    const productId = Number(button.getAttribute('data-product-id'));
+    const productId = String(button.getAttribute('data-product-id') || '').trim();
     const wished = getWishlistIds().includes(productId);
     button.textContent = wished ? 'In Wishlist' : 'Add to Wishlist';
     button.classList.toggle('is-active', wished);
@@ -153,7 +156,7 @@ function initWishlistButtons() {
 
     button.addEventListener('click', event => {
       const target = event.currentTarget;
-      const productId = Number(target.getAttribute('data-product-id'));
+      const productId = String(target.getAttribute('data-product-id') || '').trim();
       const wishlist = getWishlistIds();
       const exists = wishlist.includes(productId);
 
@@ -181,7 +184,7 @@ function initAddToCartButtons() {
       if (target.disabled || target.dataset.stockBlocked === 'true') {
         return;
       }
-      const productId = Number(target.getAttribute('data-product-id'));
+      const productId = String(target.getAttribute('data-product-id') || '').trim();
       const product = productCatalogById.get(productId);
 
       if (!product) {
@@ -216,13 +219,16 @@ function getStockPresentation(stock) {
 }
 
 function applyInventoryToProductUI(productId, stockValue) {
-  const productIdNum = Number(productId);
+  const productIdString = String(productId || '').trim();
+  if (!productIdString) {
+    return;
+  }
   const stock = Number(stockValue);
   const safeStock = Number.isFinite(stock) && stock >= 0 ? Math.floor(stock) : null;
   const presentation = getStockPresentation(safeStock);
 
   document
-    .querySelectorAll(`[data-stock-label][data-product-id="${productIdNum}"]`)
+    .querySelectorAll(`[data-stock-label][data-product-id="${productIdString}"]`)
     .forEach(label => {
       label.textContent = presentation.label;
       label.classList.remove('stock-low', 'stock-out');
@@ -232,7 +238,7 @@ function applyInventoryToProductUI(productId, stockValue) {
     });
 
   document
-    .querySelectorAll(`.add-to-cart-btn[data-product-id="${productIdNum}"], #add-to-cart-btn[data-product-id="${productIdNum}"]`)
+    .querySelectorAll(`.add-to-cart-btn[data-product-id="${productIdString}"], #add-to-cart-btn[data-product-id="${productIdString}"]`)
     .forEach(button => {
       if (safeStock === 0) {
         button.disabled = true;
@@ -251,7 +257,7 @@ function applyInventoryToProductUI(productId, stockValue) {
 
   const qtyInput = document.getElementById('product-qty');
   const qtyButton = document.getElementById('add-to-cart-btn');
-  if (qtyInput && qtyButton && Number(qtyButton.dataset.productId) === productIdNum && Number.isFinite(safeStock)) {
+  if (qtyInput && qtyButton && String(qtyButton.dataset.productId || '').trim() === productIdString && Number.isFinite(safeStock)) {
     qtyInput.max = safeStock > 0 ? String(safeStock) : '1';
     const current = Number(qtyInput.value);
     if (safeStock === 0) {
@@ -273,8 +279,8 @@ function getVisibleInventoryProductIds() {
   document
     .querySelectorAll('.add-to-cart-btn[data-product-id], #add-to-cart-btn[data-product-id], [data-stock-label][data-product-id]')
     .forEach(element => {
-      const id = Number(element.getAttribute('data-product-id'));
-      if (Number.isFinite(id)) {
+      const id = String(element.getAttribute('data-product-id') || '').trim();
+      if (id) {
         ids.add(id);
       }
     });
@@ -296,7 +302,7 @@ async function initLiveInventorySync() {
   if (inventoryResult.success) {
     const foundIds = new Set();
     (inventoryResult.data || []).forEach(row => {
-      foundIds.add(Number(row.id));
+      foundIds.add(String(row.id || '').trim());
       applyInventoryToProductUI(row.id, row.stock);
     });
 
@@ -306,8 +312,8 @@ async function initLiveInventorySync() {
   }
 
   unsubscribeInventorySync = subscribeToInventoryUpdates(updatedProduct => {
-    const updatedId = Number(updatedProduct?.id);
-    if (!Number.isFinite(updatedId) || !visibleIds.includes(updatedId)) {
+    const updatedId = String(updatedProduct?.id || '').trim();
+    if (!updatedId || !visibleIds.includes(updatedId)) {
       return;
     }
     applyInventoryToProductUI(updatedId, updatedProduct.stock);
@@ -452,7 +458,7 @@ async function initAnnouncementBar() {
   // Set default message
   announcementText.textContent = DEFAULT_ANNOUNCEMENT_MESSAGE;
 
-  // Fetch from Supabase
+  // Fetch from Cloudflare
   const result = await getAnnouncementBarMessage();
   if (result.success && result.data) {
     announcementText.textContent = result.data;
@@ -531,6 +537,9 @@ function navigate() {
   } else if (hash === '#/signup') {
     renderPage(SignupPage());
     initSignupPage();
+  } else if (hash === '#/forgot-password') {
+    renderPage(ForgotPasswordPage());
+    initForgotPasswordPage();
   } else if (hash.startsWith('#/shop')) {
     renderPage(ShopPage());
     initShopPage();

@@ -5,7 +5,8 @@ import {
   getUserCompare,
   toggleWishlistProductSync,
   toggleCompareProductSync
-} from '../utils/supabase.js';
+} from '../utils/cloudflare.js';
+import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -85,7 +86,11 @@ function renderProductTemplate(product, wished, compared) {
     .map(color => `<span style="width:16px;height:16px;border-radius:999px;border:1px solid rgba(20,20,20,0.25);background:${escapeHtml(color.hex)};display:inline-block;" title="${escapeHtml(color.name)}"></span>`)
     .join('');
 
-  const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/700x900?text=Images+Coming+Soon';
+  const image = getProductImageAttrs(product.image_url || product.image, {
+    desktopWidth: 1200,
+    sizes: '(max-width: 768px) 95vw, (max-width: 1200px) 50vw, 46vw',
+    aspectRatio: '4:5'
+  });
 
   return `
     <div class="container section">
@@ -93,12 +98,27 @@ function renderProductTemplate(product, wished, compared) {
         <a href="#/">Home</a> / <a href="#/shop">Shop</a> / <span>${escapeHtml(product.name || 'Product')}</span>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: var(--spacing-lg); align-items: start;">
-        <div class="product-gallery">
-          <img src="${imageUrl}" alt="${escapeHtml(product.name)}" style="width: 100%; border: 1px solid var(--border-color); display: block;">
+      <div class="product-page-layout">
+        <div class="product-gallery" id="product-gallery">
+          <div class="product-image-stage">
+            <img
+              class="product-hero-image lazy-image"
+              id="product-hero-image"
+              src="${image.placeholder}"
+              data-src="${image.src}"
+              data-srcset="${image.srcset}"
+              sizes="${image.sizes}"
+              width="1200"
+              height="1500"
+              alt="${escapeHtml(product.name)}"
+              decoding="async"
+              loading="lazy"
+            >
+          </div>
+          <div class="product-zoom-view" id="product-zoom-view" aria-hidden="true"></div>
         </div>
 
-        <div class="product-info" style="background: var(--bg-primary); padding: var(--spacing-md); border: 1px solid var(--border-color);">
+        <div class="product-info product-info-card" >
           <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 0.5rem;">${escapeHtml(product.category || 'General')}</p>
           <h1 style="margin-bottom: 1rem;">${escapeHtml(product.name || 'Product')}</h1>
           <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
@@ -134,10 +154,55 @@ function renderProductTemplate(product, wished, compared) {
   `;
 }
 
+function initProductImageZoom() {
+  const gallery = document.getElementById('product-gallery');
+  const image = document.getElementById('product-hero-image');
+  const zoom = document.getElementById('product-zoom-view');
+
+  if (!gallery || !image || !zoom) {
+    return;
+  }
+
+  const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!supportsHover) {
+    return;
+  }
+
+  const syncZoomImage = () => {
+    const source = image.currentSrc || image.getAttribute('src') || '';
+    if (source) {
+      zoom.style.backgroundImage = `url("${source}")`;
+    }
+  };
+
+  const handleMove = event => {
+    const bounds = image.getBoundingClientRect();
+    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+    const xClamped = Math.max(0, Math.min(100, x));
+    const yClamped = Math.max(0, Math.min(100, y));
+    zoom.style.backgroundPosition = `${xClamped}% ${yClamped}%`;
+  };
+
+  image.addEventListener('mouseenter', () => {
+    syncZoomImage();
+    gallery.classList.add('zoom-active');
+  });
+
+  image.addEventListener('mousemove', handleMove);
+
+  image.addEventListener('mouseleave', () => {
+    gallery.classList.remove('zoom-active');
+  });
+
+  image.addEventListener('load', syncZoomImage, { once: true });
+  syncZoomImage();
+}
+
 export function ProductPage(id) {
   return `
     <section class="section">
-      <div class="container" id="product-page-root" data-product-id="${Number(id)}">
+      <div class="container" id="product-page-root" data-product-id="${String(id || '').trim()}">
         <div class="profile-loading">Loading product...</div>
       </div>
     </section>
@@ -150,8 +215,8 @@ export async function initProductPage(productId) {
     return;
   }
 
-  const id = Number(productId);
-  if (!Number.isFinite(id)) {
+  const id = String(productId || '').trim();
+  if (!id) {
     root.innerHTML = renderProductNotFound();
     return;
   }
@@ -168,10 +233,12 @@ export async function initProductPage(productId) {
   }
 
   const product = productResult.data;
-  const wishlistIds = new Set(wishlistResult.success ? wishlistResult.data : []);
-  const compareIds = new Set(compareResult.success ? compareResult.data : []);
+  const wishlistIds = new Set((wishlistResult.success ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
+  const compareIds = new Set((compareResult.success ? compareResult.data : []).map(item => String(item).trim()).filter(Boolean));
 
   root.outerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
+  initLazyLoading();
+  initProductImageZoom();
 
   window.dispatchEvent(new CustomEvent('catalogHydrated', {
     detail: {
@@ -196,7 +263,7 @@ export async function initProductPage(productId) {
       const parsedQuantity = Number(qtyInput?.value);
       const quantity = Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? Math.floor(parsedQuantity) : 1;
       cart.addItem({
-        id: Number(product.id),
+        id: String(product.id || '').trim(),
         name: product.name || 'Product',
         category: product.category || 'General',
         price: Number(product.price || 0),

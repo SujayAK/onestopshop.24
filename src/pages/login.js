@@ -22,13 +22,16 @@ export function LoginPage() {
 
           <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">Password *</label>
-            <input 
-              type="password" 
-              id="login-password" 
-              placeholder="••••••••" 
-              style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 1rem;" 
-              required
-            >
+            <div style="position: relative;">
+              <input 
+                type="password" 
+                id="login-password" 
+                placeholder="••••••••" 
+                style="width: 100%; padding: 12px 50px 12px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 1rem;" 
+                required
+              >
+              <button type="button" id="login-toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.82rem; font-weight: 600; color: var(--accent-pink);">Show</button>
+            </div>
             <span id="password-error" style="color: #f44336; font-size: 0.8rem; display: none; margin-top: 0.3rem;"></span>
           </div>
 
@@ -74,9 +77,19 @@ export function LoginPage() {
   `;
 }
 
-import { signIn } from '../utils/supabase.js';
+import { signIn } from '../utils/cloudflare.js';
 
 export function initLoginPage() {
+  const passwordInput = document.getElementById('login-password');
+  const toggleBtn = document.getElementById('login-toggle-password');
+  if (passwordInput && toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const reveal = passwordInput.type === 'password';
+      passwordInput.type = reveal ? 'text' : 'password';
+      toggleBtn.textContent = reveal ? 'Hide' : 'Show';
+    });
+  }
+
   const form = document.getElementById('login-form');
   if (form) {
     form.addEventListener('submit', async (e) => {
@@ -102,7 +115,7 @@ export function initLoginPage() {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Signing in...';
 
-        // Supabase authentication
+        // Cloudflare-backed authentication
         const result = await signIn(email, password);
 
         if (!result.success) {

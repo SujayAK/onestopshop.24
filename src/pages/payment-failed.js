@@ -1,4 +1,4 @@
-import { releaseInventory, updateOrder } from '../utils/supabase.js';
+import { releaseInventory, updateOrder } from '../utils/cloudflare.js';
 
 export function PaymentFailedPage() {
   const lastError = JSON.parse(localStorage.getItem('lastPaymentError') || '{}');
@@ -61,18 +61,18 @@ export function PaymentFailedPage() {
       releaseInventory(
         currentOrder.products.map(item => ({ id: item.id, quantity: item.quantity }))
       ).catch(error => {
-        console.error('Error releasing inventory in Supabase:', error);
+        console.error('Error releasing inventory in Cloudflare:', error);
       });
     }
   
-    // Update order status to failed in Supabase
+    // Update order status to failed in Cloudflare D1
     if (currentOrder.orderDBId) {
       updateOrder(currentOrder.orderDBId, {
         status: 'failed',
         payment_status: 'failed',
         updated_at: new Date()
       }).catch(error => {
-        console.error('Error updating order in Supabase:', error);
+        console.error('Error updating order in Cloudflare:', error);
       });
     }
 

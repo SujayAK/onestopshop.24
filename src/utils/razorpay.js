@@ -1,4 +1,3 @@
-// Razorpay Payment Gateway Integration
 export class RazorpayPayment {
   constructor(config = {}) {
     this.keyId =
@@ -9,63 +8,71 @@ export class RazorpayPayment {
     this.failureUrl = config.failureUrl || '#/payment-failed';
   }
 
-  loadRazorpayScript() {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load Razorpay script'));
-      
-      document.head.appendChild(script);
-    });
-  }
-
   async initiatePayment(orderDetails) {
     try {
-      // Load Razorpay script if not already loaded
-      if (!window.Razorpay) {
-        await this.loadRazorpayScript();
-      }
-
-      const options = {
-        key: this.keyId || 'rzp_test_1DP5mmOlF5G5ag', // Test key - replace with actual
-        amount: Math.round(orderDetails.amount * 100), // Amount in paise
-        currency: orderDetails.currency || 'INR',
-        name: orderDetails.storeName || 'onestopshop',
-        description: orderDetails.description || 'Purchase products',
-        order_id: orderDetails.orderId, // Order ID from backend (optional)
-        image: '/logo_updated.png', // Your logo
-        prefill: {
-          name: orderDetails.customerName || '',
-          email: orderDetails.customerEmail || '',
-          contact: orderDetails.customerPhone || ''
-        },
-        notes: {
-          orderId: orderDetails.orderId,
-          products: orderDetails.products || [],
-          customData: orderDetails.customData || {}
-        },
-        handler: (response) => this.handlePaymentSuccess(response, orderDetails),
-        modal: {
-          ondismiss: () => this.handlePaymentDismiss(orderDetails)
-        },
-        // Optional: Add theme colors
-        theme: {
-          color: '#8B5A9C' // Your brand color
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', (response) => this.handlePaymentFailed(response, orderDetails));
-      rzp.open();
-
-      return { status: 'initiated' };
+      return await this.openDummyCheckout(orderDetails);
     } catch (error) {
       console.error('Payment initiation error:', error);
       return { status: 'error', message: error.message };
     }
+  }
+
+  openDummyCheckout(orderDetails) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'dummy-razorpay-overlay';
+      overlay.innerHTML = `
+        <div class="dummy-razorpay-modal" role="dialog" aria-modal="true" aria-labelledby="dummy-razorpay-title">
+          <h2 id="dummy-razorpay-title">Test Razorpay Checkout</h2>
+          <p>Use this simulator to verify the order flow before going live.</p>
+          <div class="dummy-razorpay-summary">
+            <div><span>Order</span><strong>${orderDetails.orderId}</strong></div>
+            <div><span>Amount</span><strong>₹${Number(orderDetails.amount || 0).toFixed(2)}</strong></div>
+            <div><span>Customer</span><strong>${orderDetails.customerName || ''}</strong></div>
+          </div>
+          <div class="dummy-razorpay-actions">
+            <button type="button" class="btn" data-action="success">Pay Test Success</button>
+            <button type="button" class="btn btn-outline" data-action="failure">Pay Test Failure</button>
+            <button type="button" class="dummy-razorpay-dismiss" data-action="dismiss">Cancel</button>
+          </div>
+        </div>
+      `;
+
+      const cleanup = () => overlay.remove();
+
+      overlay.addEventListener('click', event => {
+        if (event.target === overlay) {
+          cleanup();
+          this.handlePaymentDismiss(orderDetails);
+          resolve({ status: 'dismissed' });
+        }
+      });
+
+      overlay.querySelector('[data-action="success"]').addEventListener('click', () => {
+        cleanup();
+        const response = {
+          razorpay_payment_id: `pay_${Date.now()}`,
+          razorpay_order_id: String(orderDetails.orderId || `order_${Date.now()}`),
+          razorpay_signature: `sig_${Math.random().toString(36).slice(2, 12)}`
+        };
+        this.handlePaymentSuccess(response, orderDetails);
+        resolve({ status: 'success' });
+      });
+
+      overlay.querySelector('[data-action="failure"]').addEventListener('click', () => {
+        cleanup();
+        this.handlePaymentFailed({ error: { code: 'TEST_PAYMENT_FAILED', description: 'This is a dummy failure for checkout testing.' } }, orderDetails);
+        resolve({ status: 'failed' });
+      });
+
+      overlay.querySelector('[data-action="dismiss"]').addEventListener('click', () => {
+        cleanup();
+        this.handlePaymentDismiss(orderDetails);
+        resolve({ status: 'dismissed' });
+      });
+
+      document.body.appendChild(overlay);
+    });
   }
 
   handlePaymentSuccess(response, orderDetails) {
@@ -129,7 +136,7 @@ export class RazorpayPayment {
   // Verify payment on backend (call from your server)
   async verifyPayment(paymentData) {
     try {
-      // This should be called from your backend
+      // This should be called from your backend in production
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: {

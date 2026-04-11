@@ -4,9 +4,11 @@ import {
   getUserWishlist,
   getUserCompare,
   toggleWishlistProductSync,
-  toggleCompareProductSync
-} from '../utils/supabase.js';
+  toggleCompareProductSync,
+  cloudflareConfig
+} from '../utils/cloudflare.js';
 import { cart } from '../utils/cart.js';
+import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -70,6 +72,11 @@ function getStockLabel(stock) {
 function renderProductCard(product, wished, compared) {
   const colors = getProductColors(product);
   const stock = getStockLabel(product.stock);
+  const image = getProductImageAttrs(product.image_url || product.image, {
+    desktopWidth: 900,
+    sizes: '(max-width: 640px) 92vw, (max-width: 980px) 46vw, (max-width: 1320px) 31vw, 24vw',
+    aspectRatio: '4:5'
+  });
   const colorSwatches = colors
     .map(c => `<span class="shop-color-dot" style="background:${escapeHtml(c.hex)}" title="${escapeHtml(c.name)}"></span>`)
     .join('');
@@ -80,7 +87,18 @@ function renderProductCard(product, wished, compared) {
   return `
     <div class="shop-product-card" data-product-id="${product.id}">
       <div class="shop-card-image">
-        <img src="${product.image_url || product.image || 'https://via.placeholder.com/300x350?text=Images+Coming+Soon'}" alt="${escapeHtml(product.name)}">
+        <img
+          class="lazy-image"
+          src="${image.placeholder}"
+          data-src="${image.src}"
+          data-srcset="${image.srcset}"
+          sizes="${image.sizes}"
+          width="800"
+          height="1000"
+          alt="${escapeHtml(product.name)}"
+          decoding="async"
+          loading="lazy"
+        >
         <div class="shop-card-actions">
           <button class="shop-heart-icon${wished ? ' is-active' : ''}" data-product-id="${product.id}" data-action="wishlist" title="${wished ? 'Remove from wishlist' : 'Add to wishlist'}">
             <i class="fas fa-heart"></i>
@@ -219,6 +237,11 @@ export async function initStockClearancePage() {
 
   // Load categories
   const categoriesResult = await getStockClearanceCategories();
+  if (!categoriesResult.success && cloudflareConfig.apiBaseUrl) {
+    categoriesContainer.innerHTML = `
+      <p style="color: var(--text-secondary); margin: 0;">Failed to load categories from backend.</p>
+    `;
+  }
   const categories = categoriesResult.success ? categoriesResult.data : [];
   
   if (categories.length > 0) {
@@ -243,8 +266,8 @@ export async function initStockClearancePage() {
   // Load user wishlist and compare
   const wishlistResult = await getUserWishlist();
   const compareResult = await getUserCompare();
-  const wishlistIds = new Set(wishlistResult.success ? wishlistResult.data : []);
-  const compareIds = new Set(compareResult.success ? compareResult.data : []);
+  const wishlistIds = new Set((wishlistResult.success ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
+  const compareIds = new Set((compareResult.success ? compareResult.data : []).map(item => String(item).trim()).filter(Boolean));
 
   // Filter state
   const filterState = {
@@ -266,6 +289,18 @@ export async function initStockClearancePage() {
 
     const products = result.success ? result.data : [];
 
+    if (!result.success && cloudflareConfig.apiBaseUrl) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+          <i class="fas fa-triangle-exclamation" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
+          <h3>Backend connection error</h3>
+          <p style="color: var(--text-secondary);">Could not fetch stock clearance products from Worker API. Check env API URL and Worker logs.</p>
+        </div>
+      `;
+      resultsCount.textContent = 'Backend unavailable';
+      return;
+    }
+
     if (products.length === 0) {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
@@ -284,6 +319,7 @@ export async function initStockClearancePage() {
       wishlistIds.has(product.id),
       compareIds.has(product.id)
     )).join('');
+    initLazyLoading();
 
     // Attach action handlers
     attachHandlers();
@@ -295,7 +331,10 @@ export async function initStockClearancePage() {
     document.querySelectorAll('[data-action="wishlist"]').forEach(btn => {
       btn.addEventListener('click', async event => {
         event.preventDefault();
-        const productId = Number(btn.getAttribute('data-product-id'));
+        const productId = String(btn.getAttribute('data-product-id') || '').trim();
+        if (!productId) {
+          return;
+        }
         const result = await toggleWishlistProductSync(productId);
 
         if (result.success) {
@@ -315,7 +354,10 @@ export async function initStockClearancePage() {
     document.querySelectorAll('[data-action="compare"]').forEach(btn => {
       btn.addEventListener('click', async event => {
         event.preventDefault();
-        const productId = Number(btn.getAttribute('data-product-id'));
+        const productId = String(btn.getAttribute('data-product-id') || '').trim();
+        if (!productId) {
+          return;
+        }
         const result = await toggleCompareProductSync(productId);
 
         if (result.success) {

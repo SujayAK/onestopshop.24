@@ -1,5 +1,5 @@
 import { cart } from '../utils/cart.js';
-import { updateOrder } from '../utils/supabase.js';
+import { updateOrder } from '../utils/cloudflare.js';
 
 export function PaymentSuccessPage() {
   const lastPayment = JSON.parse(localStorage.getItem('lastPayment') || '{}');
@@ -77,7 +77,7 @@ export function initPaymentSuccessPage() {
     sessionStorage.getItem('currentOrder') || localStorage.getItem('currentOrder') || '{}'
   );
   
-  // Update order status in Supabase
+  // Update order status in Cloudflare D1
   if (currentOrder.orderDBId) {
     updateOrder(currentOrder.orderDBId, {
       status: 'confirmed',
@@ -86,7 +86,7 @@ export function initPaymentSuccessPage() {
       razorpay_order_id: currentOrder.razorpayOrderId || '',
       updated_at: new Date()
     }).catch(error => {
-      console.error('Error updating order in Supabase:', error);
+      console.error('Error updating order in Cloudflare:', error);
     });
   }
 

@@ -1,12 +1,13 @@
 import localProducts from '../data/products.json';
-import { getProductsCatalog } from '../utils/supabase.js';
+import { getProductsCatalog, cloudflareConfig } from '../utils/cloudflare.js';
+import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
 
 const HERO_SLIDES = ['STOCK CLEARANCE SALE', 'PREMIUM PRODUCTS'];
 let heroSlideTimer = null;
 
 function normalizeProduct(row) {
   return {
-    id: Number(row.id),
+    id: String(row.id ?? '').trim(),
     name: row.name || 'Product',
     price: Number(row.price || 0),
     category: row.category || 'General',
@@ -17,16 +18,37 @@ function normalizeProduct(row) {
 }
 
 function renderProductCard(product) {
+  const image = getProductImageAttrs(product.image, {
+    desktopWidth: 700,
+    sizes: '(max-width: 640px) 46vw, (max-width: 980px) 30vw, 22vw'
+  });
+
   return `
-    <div class="product-card" data-product-id="${product.id}">
-      <img src="${product.image}" alt="${product.name}" class="product-image">
-      <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">${product.category}</p>
-      <h3>${product.name}</h3>
-      <p style="font-weight: 700; color: var(--accent-pink);">₹${product.price.toFixed(2)}</p>
-      <p class="stock-indicator" data-stock-label data-product-id="${product.id}" style="margin-bottom: 0.5rem;">Checking stock...</p>
-      <button class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart" style="margin-top: 0.75rem; width: 100%;">Add to Cart</button>
-      <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}" style="margin-top: 0.75rem; width: 100%;">Add to Wishlist</button>
-      <a href="#/product/${product.id}" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View Details</a>
+    <div class="shop-product-card" data-product-id="${product.id}">
+      <div class="shop-card-image">
+        <img
+          class="lazy-image"
+          src="${image.placeholder}"
+          data-src="${image.src}"
+          data-srcset="${image.srcset}"
+          sizes="${image.sizes}"
+          width="800"
+          height="1000"
+          alt="${product.name}"
+          decoding="async"
+          loading="lazy"
+        >
+      </div>
+      <div class="shop-card-info">
+        <h3 class="shop-card-title">${product.name}</h3>
+        <p class="shop-card-price">₹${product.price.toFixed(2)}</p>
+        <span class="shop-stock-badge is-in" data-stock-label data-product-id="${product.id}">Checking stock...</span>
+        <div class="shop-card-buttons">
+          <button class="btn btn-sm add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
+          <a href="#/product/${product.id}" class="btn btn-sm btn-outline">Details</a>
+        </div>
+        <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}" style="margin-top: 0.7rem; width: 100%;">Add to Wishlist</button>
+      </div>
     </div>
   `;
 }
@@ -86,7 +108,7 @@ export function HomePage() {
           </div>
           <a href="#/shop" style="font-weight: 600; border-bottom: 2px solid var(--accent-pink);">View All Products</a>
         </div>
-        <div id="home-featured-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+        <div id="home-featured-grid" class="shop-grid">
           <div class="profile-loading" style="grid-column: 1 / -1;">Loading featured products...</div>
         </div>
       </div>
@@ -267,8 +289,11 @@ export async function initHomePage() {
   const catalogResult = await getProductsCatalog({ limit: 3, sort: 'newest' });
   if (catalogResult.success && (catalogResult.data || []).length > 0) {
     featured = catalogResult.data.map(normalizeProduct).slice(0, 3);
-  } else {
+  } else if (!cloudflareConfig.apiBaseUrl) {
     featured = localProducts.slice(0, 3).map(normalizeProduct);
+  } else {
+    grid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>Could not load products from backend</h3><p>Check Worker API URL, D1 data, and network logs.</p></div>';
+    return;
   }
 
   if (featured.length === 0) {
@@ -277,5 +302,6 @@ export async function initHomePage() {
   }
 
   grid.innerHTML = featured.map(renderProductCard).join('');
+  initLazyLoading();
   window.dispatchEvent(new CustomEvent('catalogHydrated', { detail: { products: featured } }));
 }

@@ -1,12 +1,13 @@
 import { cart } from '../utils/cart.js';
 import { razorpayPayment } from '../utils/razorpay.js';
-import { createOrder, getCurrentUser, validateCoupon, redeemCoupon, getInventoryByProductIds, reserveInventory, releaseInventory } from '../utils/supabase.js';
+import { createOrder, getCurrentUser, validateCoupon, redeemCoupon, getInventoryByProductIds, reserveInventory, releaseInventory } from '../utils/cloudflare.js';
 
 export function CheckoutPage() {
   const items = cart.getItems();
   const subtotal = cart.getTotal();
   const tax = subtotal * 0.1;
-  const total = subtotal + tax;
+  const shipping = subtotal >= 999 || subtotal === 0 ? 0 : 79;
+  const total = subtotal + tax + shipping;
 
   if (items.length === 0) {
     return `
@@ -99,8 +100,13 @@ export function CheckoutPage() {
               </div>
 
               <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; color: var(--text-secondary);">
-                <span>Tax (10%):</span>
+                <span>Tax Included (10%):</span>
                 <span>₹${tax.toFixed(2)}</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; color: var(--text-secondary);">
+                <span>Shipping:</span>
+                <span>${shipping === 0 ? 'Free' : `₹${shipping.toFixed(2)}`}</span>
               </div>
 
               <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; color: var(--accent-pink);">
@@ -157,7 +163,8 @@ export function initCheckoutPage() {
       const items = cart.getItems();
       const subtotal = cart.getTotal();
       const tax = subtotal * 0.1;
-      const total = subtotal + tax;
+      const shipping = subtotal >= 999 || subtotal === 0 ? 0 : 79;
+      const total = subtotal + tax + shipping;
 
       // Prepare shipping address
       const shippingAddress = {
@@ -183,16 +190,16 @@ export function initCheckoutPage() {
         }
 
         const inventoryMap = new Map(
-          (inventoryResult.data || []).map(row => [Number(row.id), Number(row.stock || 0)])
+          (inventoryResult.data || []).map(row => [String(row.id), Number(row.stock || 0)])
         );
 
         const unavailableItem = items.find(item => {
-          const stock = inventoryMap.get(Number(item.id));
+          const stock = inventoryMap.get(String(item.id));
           return typeof stock === 'number' && item.quantity > stock;
         });
 
         if (unavailableItem) {
-          alert(`${unavailableItem.name} has only ${inventoryMap.get(Number(unavailableItem.id)) || 0} left in stock. Please update your cart.`);
+          alert(`${unavailableItem.name} has only ${inventoryMap.get(String(unavailableItem.id)) || 0} left in stock. Please update your cart.`);
           window.location.hash = '#/cart';
           proceedBtn.disabled = false;
           proceedBtn.textContent = 'Proceed to Payment';
@@ -212,7 +219,7 @@ export function initCheckoutPage() {
           return;
         }
 
-        // Create order in Supabase
+        // Create order in Cloudflare D1
         const orderResult = await createOrder(
           user.id,
           items,

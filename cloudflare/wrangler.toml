@@ -1,0 +1,32 @@
+name = "onestop-storefront"
+main = "worker.js"
+compatibility_date = "2026-04-08"
+account_id = "871e37cff095f0e6e3803f97dcaaff7c"
+
+[env.development]
+vars = { APP_ORIGIN = "localhost:3000", R2_PUBLIC_URL = "https://871e37cff095f0e6e3803f97dcaaff7c.r2.cloudflarestorage.com/onestopshop24-media" }
+
+[env.production]
+vars = { APP_ORIGIN = "onestopshop24.in", R2_PUBLIC_URL = "" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "onestopshop24-db"
+database_id = "1d768208-74a7-4a9c-846c-f6d06eca8099"
+
+[[env.production.r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "onestopshop24-media"
+
+[vars]
+APP_ORIGIN = "onestopshop24.in"
+R2_PUBLIC_URL = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "onestopshop24-db"
+database_id = "1d768208-74a7-4a9c-846c-f6d06eca8099"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "onestopshop24-media"

@@ -6,14 +6,16 @@
   "scripts": {
     "dev": "vite --host --port 5175",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:worker": "npx wrangler deploy --config cloudflare/wrangler.toml",
+    "deploy:worker:prod": "npx wrangler deploy --config cloudflare/wrangler.toml --env production"
   },
   "devDependencies": {
     "prettier": "^3.3.1",
     "vite": "^5.1.6"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.1",
+    "@emailjs/browser": "^4.4.1",
     "three": "^0.176.0"
   }
 }
