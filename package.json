@@ -6,13 +6,16 @@
   "scripts": {
     "dev": "vite --host --port 5175",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "npm run build && wrangler dev",
     "deploy:worker": "npx wrangler deploy --config cloudflare/wrangler.toml",
-    "deploy:worker:prod": "npx wrangler deploy --config cloudflare/wrangler.toml --env production"
+    "deploy:worker:prod": "npx wrangler deploy --config cloudflare/wrangler.toml --env production",
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.31.2",
     "prettier": "^3.3.1",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "wrangler": "^4.81.1"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
