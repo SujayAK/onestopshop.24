@@ -1,9 +1,25 @@
 import seedProducts from '../data/products.json';
 
-const RAW_API_BASE_URL = String(import.meta.env.VITE_CLOUDFLARE_API_BASE_URL || '').trim().replace(/\/$/, '');
-const API_BASE_URL = RAW_API_BASE_URL.endsWith('/api')
-  ? RAW_API_BASE_URL.slice(0, -4)
-  : RAW_API_BASE_URL;
+function resolveApiBaseUrl() {
+  const configuredBaseUrl = String(import.meta.env.VITE_CLOUDFLARE_API_BASE_URL || '').trim().replace(/\/$/, '');
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.endsWith('/api')
+      ? configuredBaseUrl.slice(0, -4)
+      : configuredBaseUrl;
+  }
+
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    const hostname = String(window.location.hostname || '').toLowerCase();
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    if (!isLocalhost) {
+      return window.location.origin;
+    }
+  }
+
+  return '';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 const IMAGE_BASE_URL = String(import.meta.env.VITE_CLOUDFLARE_IMAGE_BASE_URL || '').trim().replace(/\/$/, '');
 const DEV_MODE = String(import.meta.env.VITE_CLOUDFLARE_DEV_MODE || 'true').trim().toLowerCase() !== 'false';
 const CACHE_PREFIX = 'onestop.cloudflare.cache.';
