@@ -321,8 +321,10 @@ export async function initShopPage() {
   `).join('');
 
   // Load user wishlist and compare
-  const wishlistIds = new Set((wishlistResult.success ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
-  const compareIds = new Set((compareResult.success ? compareResult.data : []).map(item => String(item).trim()).filter(Boolean));
+  const wishlistSource = wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : [];
+  const compareSource = compareResult.success && Array.isArray(compareResult.data) ? compareResult.data : [];
+  const wishlistIds = new Set(wishlistSource.map(item => String(item).trim()).filter(Boolean));
+  const compareIds = new Set(compareSource.map(item => String(item).trim()).filter(Boolean));
 
   // Filter state
   const filterState = {
@@ -344,7 +346,19 @@ export async function initShopPage() {
       limit: 240
     });
 
-    const products = result.success ? result.data : [];
+    const products = result.success && Array.isArray(result.data) ? result.data : [];
+
+    if (result.success && !Array.isArray(result.data) && cloudflareConfig.apiBaseUrl) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+          <i class="fas fa-triangle-exclamation" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
+          <h3>Unexpected backend response</h3>
+          <p style="color: var(--text-secondary);">Shop API returned an invalid payload format. Please verify that /api/products returns a JSON array in data.</p>
+        </div>
+      `;
+      resultsCount.textContent = 'Backend response invalid';
+      return;
+    }
 
     if (!result.success && cloudflareConfig.apiBaseUrl) {
       grid.innerHTML = `
