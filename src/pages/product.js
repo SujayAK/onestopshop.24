@@ -26,15 +26,29 @@ function formatINR(value) {
   }).format(Number(value || 0));
 }
 
-function parseColors(product) {
-  const source = product?.colors;
-  if (!source) {
-    return [];
+function parseJsonValue(value, fallback) {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
   }
 
-  const list = Array.isArray(source) ? source : (typeof source === 'string' ? JSON.parse(source) : []);
+  if (typeof value === 'object') {
+    return value;
+  }
+
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (_error) {
+    return fallback;
+  }
+}
+
+function parseColors(product) {
+  const list = parseJsonValue(product?.colors, []);
   return (Array.isArray(list) ? list : [])
-    .slice(0, 4)
     .map(item => ({
       name: typeof item === 'string' ? item : item?.name || item?.hex || 'Color',
       hex: typeof item === 'string' ? item : item?.hex || '#d9c7d2'
@@ -42,21 +56,145 @@ function parseColors(product) {
 }
 
 function parseDetails(product) {
-  const source = product?.details;
-  if (!source) {
-    return {};
+  const parsed = parseJsonValue(product?.details, {});
+  return parsed && typeof parsed === 'object' ? parsed : {};
+}
+
+function buildMissingImageUrl(colorName, viewName) {
+  const label = `Add ${colorName} ${viewName} image.webp`;
+  return `https://placehold.co/920x1150/f7edf3/7b5a6f?text=${encodeURIComponent(label)}`;
+}
+
+function normalizeViewLabel(value, fallback) {
+  const text = String(value || '').trim();
+  if (!text) {
+    return fallback;
   }
 
-  if (typeof source === 'object') {
-    return source;
+  return text
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function normalizeViews(rawViews, colorName) {
+  let source = rawViews;
+  if (typeof source === 'string') {
+    source = parseJsonValue(source, []);
   }
 
-  try {
-    const parsed = JSON.parse(source);
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (_error) {
-    return {};
+  if (source && typeof source === 'object' && !Array.isArray(source)) {
+    source = Object.entries(source).map(([label, value]) => {
+      if (typeof value === 'string') {
+        return { label, url: value };
+      }
+      return { label, ...(value || {}) };
+    });
   }
+
+  const list = Array.isArray(source) ? source : [];
+  if (list.length === 0) {
+    return [{
+      label: 'Primary',
+      url: buildMissingImageUrl(colorName, 'primary')
+    }];
+  }
+
+  return list.map((view, index) => {
+    const objectView = typeof view === 'string' ? { url: view } : (view || {});
+    const label = normalizeViewLabel(objectView.label || objectView.name || objectView.view || objectView.angle, `View ${index + 1}`);
+    const url = String(objectView.url || objectView.image_url || objectView.image || objectView.src || '').trim();
+    return {
+      label,
+      url: url || buildMissingImageUrl(colorName, label.toLowerCase())
+    };
+  });
+}
+
+function normalizeProductMedia(product) {
+  const productColors = parseColors(product);
+  const details = parseDetails(product);
+
+  const variantsRaw = parseJsonValue(
+    product?.variants || product?.variant_images || product?.color_variants || product?.media_variants,
+    []
+  );
+
+  const galleryRaw = parseJsonValue(
+    product?.media_gallery || product?.media_json || product?.images || product?.gallery || details.images || details.gallery,
+    []
+  );
+
+  const variants = Array.isArray(variantsRaw) ? variantsRaw : [];
+  const colors = [];
+
+  if (variants.length > 0) {
+    variants.forEach((variant, index) => {
+      const baseColor = productColors[index] || {};
+      const colorName = String(variant?.color || variant?.name || baseColor.name || `Color ${index + 1}`);
+      const colorHex = String(variant?.hex || baseColor.hex || '#d9c7d2');
+      colors.push({
+        id: `color-${index}`,
+        name: colorName,
+        hex: colorHex,
+        views: normalizeViews(variant?.views || variant?.images || variant?.gallery, colorName)
+      });
+    });
+  }
+
+  if (colors.length === 0) {
+    const fallbackColorName = productColors[0]?.name || 'Default';
+    const fallbackColorHex = productColors[0]?.hex || '#d9c7d2';
+    const galleryViews = normalizeViews(galleryRaw, fallbackColorName);
+    colors.push({
+      id: 'color-0',
+      name: fallbackColorName,
+      hex: fallbackColorHex,
+      views: galleryViews
+    });
+  }
+
+  if (colors[0].views.length === 0) {
+    colors[0].views = [{
+      label: 'Primary',
+      url: String(product.image_url || product.image || '').trim() || buildMissingImageUrl(colors[0].name, 'primary')
+    }];
+  }
+
+  return colors;
+}
+
+function getCurrentPriceAndDiscount(product) {
+  const currentPrice = Number(product?.price || 0);
+  const discountPercentRaw = Number(product?.discount || 0);
+  const discountPercent = discountPercentRaw > 0 ? Math.min(95, discountPercentRaw) : 40;
+  const originalPrice = currentPrice > 0 ? (currentPrice / (1 - discountPercent / 100)) : 0;
+  return { currentPrice, discountPercent, originalPrice };
+}
+
+function buildMaterialContent(product) {
+  const details = parseDetails(product);
+  const entries = Object.entries(details);
+  if (entries.length === 0) {
+    return '<p>Material details pending. Add fields like Material, Lining, Hardware, and Care in product details.</p>';
+  }
+
+  return `
+    <ul class="product-meta-list">
+      ${entries.map(([key, value]) => `<li><span>${escapeHtml(key)}</span><strong>${escapeHtml(value)}</strong></li>`).join('')}
+    </ul>
+  `;
+}
+
+function buildShippingContent(product) {
+  const timeline = String(product?.delivery_timeline || '6-8 days').trim();
+  return `
+    <div class="product-shipping-copy">
+      <p>Delivery Timeline: ${escapeHtml(timeline)}</p>
+      <p>Orders are processed in 24-48 hours. Tracking details are shared once dispatched.</p>
+      <p>Shipping charges are calculated at checkout based on destination and weight.</p>
+    </div>
+  `;
 }
 
 function renderProductNotFound() {
@@ -71,26 +209,77 @@ function renderProductNotFound() {
   `;
 }
 
-function renderProductTemplate(product, wished, compared) {
-  const details = parseDetails(product);
-  const detailRows = Object.entries(details)
-    .map(([key, value]) => `
-      <div style="border-bottom: 1px solid var(--border-color); padding: 10px 0; display: flex; justify-content: space-between; gap: 1rem;">
-        <span style="font-weight: 600; text-transform: uppercase; font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(key)}</span>
-        <span style="font-size: 0.9rem; text-align: right;">${escapeHtml(value)}</span>
+function renderColorRail(colors, activeColorIndex) {
+  return colors.map((color, index) => {
+    const primaryView = color.views[0] || { label: 'Primary', url: buildMissingImageUrl(color.name, 'primary') };
+    const thumb = getProductImageAttrs(primaryView.url, {
+      desktopWidth: 180,
+      sizes: '72px',
+      aspectRatio: '1:1'
+    });
+
+    return `
+      <button type="button" class="product-color-rail-item${index === activeColorIndex ? ' is-active' : ''}" data-color-index="${index}" aria-label="Switch to ${escapeHtml(color.name)}" title="${escapeHtml(color.name)}">
+        <img src="${thumb.src}" alt="${escapeHtml(color.name)} color">
+        <span>${escapeHtml(color.name)}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function renderAngles(views, activeViewIndex) {
+  return views.map((view, index) => {
+    const thumb = getProductImageAttrs(view.url, {
+      desktopWidth: 260,
+      sizes: '110px',
+      aspectRatio: '1:1'
+    });
+    return `
+      <button type="button" class="product-angle-thumb${index === activeViewIndex ? ' is-active' : ''}" data-view-index="${index}" aria-label="${escapeHtml(view.label)}">
+        <img src="${thumb.src}" alt="${escapeHtml(view.label)}">
+        <span>${escapeHtml(view.label)}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function renderColorSwatches(colors, activeColorIndex) {
+  return colors.map((color, index) => `
+    <button
+      type="button"
+      class="product-color-swatch${index === activeColorIndex ? ' is-active' : ''}"
+      data-color-index="${index}"
+      title="${escapeHtml(color.name)}"
+      aria-label="Choose ${escapeHtml(color.name)}"
+      style="--swatch:${escapeHtml(color.hex)};"
+    ></button>
+  `).join('');
+}
+
+function renderAccordion(id, title, content) {
+  return `
+    <div class="product-accordion-item" data-accordion-item>
+      <button type="button" class="product-accordion-trigger" data-accordion-toggle="${id}" aria-expanded="false">
+        <span>${escapeHtml(title)}</span>
+        <i class="fas fa-plus" aria-hidden="true"></i>
+      </button>
+      <div id="${id}" class="product-accordion-panel" hidden>
+        ${content}
       </div>
-    `)
-    .join('');
+    </div>
+  `;
+}
 
-  const colors = parseColors(product)
-    .map(color => `<span style="width:16px;height:16px;border-radius:999px;border:1px solid rgba(20,20,20,0.25);background:${escapeHtml(color.hex)};display:inline-block;" title="${escapeHtml(color.name)}"></span>`)
-    .join('');
-
-  const image = getProductImageAttrs(product.image_url || product.image, {
-    desktopWidth: 1200,
-    sizes: '(max-width: 768px) 95vw, (max-width: 1200px) 50vw, 46vw',
+function renderProductTemplate(product, wished, compared) {
+  const media = normalizeProductMedia(product);
+  const activeColor = media[0];
+  const activeView = activeColor.views[0];
+  const mainImage = getProductImageAttrs(activeView.url, {
+    desktopWidth: 1300,
+    sizes: '(max-width: 980px) 100vw, 46vw',
     aspectRatio: '4:5'
   });
+  const { currentPrice, originalPrice, discountPercent } = getCurrentPriceAndDiscount(product);
 
   return `
     <div class="container section">
@@ -100,54 +289,114 @@ function renderProductTemplate(product, wished, compared) {
 
       <div class="product-page-layout">
         <div class="product-gallery" id="product-gallery">
-          <div class="product-image-stage">
-            <img
-              class="product-hero-image lazy-image"
-              id="product-hero-image"
-              src="${image.placeholder}"
-              data-src="${image.src}"
-              data-srcset="${image.srcset}"
-              sizes="${image.sizes}"
-              width="1200"
-              height="1500"
-              alt="${escapeHtml(product.name)}"
-              decoding="async"
-              loading="lazy"
-            >
-          </div>
-          <div class="product-zoom-view" id="product-zoom-view" aria-hidden="true"></div>
-        </div>
+          <aside class="product-color-rail" id="product-color-rail">
+            ${renderColorRail(media, 0)}
+          </aside>
 
-        <div class="product-info product-info-card" >
-          <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 0.5rem;">${escapeHtml(product.category || 'General')}</p>
-          <h1 style="margin-bottom: 1rem;">${escapeHtml(product.name || 'Product')}</h1>
-          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-            <h2 style="margin-bottom: 0; color: var(--text-primary);">${formatINR(product.price)}</h2>
-            <span id="product-stock-status" class="stock-indicator" data-stock-label data-product-id="${product.id}" style="color: var(--accent-pink); font-size: 0.9rem; font-weight: 600;">Checking stock...</span>
-          </div>
+          <div class="product-media-main">
+            <div class="product-image-stage">
+              <img
+                class="product-hero-image lazy-image"
+                id="product-hero-image"
+                src="${mainImage.src}"
+                data-src="${mainImage.src}"
+                data-srcset="${mainImage.srcset}"
+                sizes="${mainImage.sizes}"
+                width="1200"
+                height="1500"
+                alt="${escapeHtml(product.name)} - ${escapeHtml(activeColor.name)} - ${escapeHtml(activeView.label)}"
+                decoding="async"
+                loading="eager"
+              >
+              <div class="product-zoom-view" id="product-zoom-view" aria-hidden="true"></div>
+            </div>
 
-          <p style="margin-bottom: 2rem; color: var(--text-secondary); line-height: 1.8;">${escapeHtml(product.description || 'Description will be updated soon.')}</p>
-
-          <div style="display:flex;align-items:center;gap:0.45rem; margin-bottom:1.4rem;">
-            ${colors}
-          </div>
-
-          <div style="margin-bottom: 2rem;">
-            <h4 style="margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; border-bottom: 2px solid var(--accent-pink); display: inline-block;">Product Details</h4>
-            <div style="margin-top: 0.5rem;">
-              ${detailRows || '<p style="font-size:0.9rem;color:var(--text-secondary);">Detailed specs will be updated shortly.</p>'}
+            <div class="product-angle-strip" id="product-angle-strip">
+              ${renderAngles(activeColor.views, 0)}
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 100px 1fr; gap: 1rem; margin-bottom: 2rem;">
-            <input type="number" id="product-qty" value="1" min="1" style="padding: 12px; border: 1px solid var(--border-color); text-align: center; font-family: inherit;">
-            <button id="add-to-cart-btn" class="btn" data-product-id="${product.id}" data-default-label="Add to Cart" style="width: 100%;">Add to Cart</button>
+          <div class="product-mobile-swatch-row" id="product-mobile-swatch-row">
+            ${renderColorSwatches(media, 0)}
+          </div>
+        </div>
+
+        <div class="product-info product-info-card">
+          <p class="product-category-kicker">${escapeHtml(product.category || 'General')}</p>
+          <h1 class="product-title">${escapeHtml(product.name || 'Product')}</h1>
+
+          <div class="product-price-stack">
+            <div class="product-price-row">
+              <strong class="product-price-current">${formatINR(currentPrice)}</strong>
+              <span class="product-price-original">${formatINR(originalPrice)}</span>
+              <span class="product-discount-badge">${Math.round(discountPercent)}% OFF</span>
+            </div>
+            <p class="product-tax-note">Taxes included. Shipping calculated at checkout.</p>
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.3rem;">
+          <div class="product-review-row" aria-label="1 review">
+            <div class="product-stars" aria-hidden="true">★★★★★</div>
+            <span>1 review</span>
+          </div>
+
+          <div class="product-color-block">
+            <p class="product-color-label">Color: <strong id="product-active-color">${escapeHtml(activeColor.name)}</strong></p>
+            <div class="product-color-swatches" id="product-color-swatches">
+              ${renderColorSwatches(media, 0)}
+            </div>
+          </div>
+
+          <p class="product-delivery-line">Delivery Timeline: ${escapeHtml(String(product.delivery_timeline || '6-8 days'))}</p>
+
+          <div class="product-stock-row">
+            <span id="product-stock-status" class="stock-indicator" data-stock-label data-product-id="${product.id}">Checking stock...</span>
+          </div>
+
+          <p class="product-description">${escapeHtml(product.description || 'Description will be updated soon.')}</p>
+
+          <div class="product-cart-row">
+            <div class="product-qty-control" role="group" aria-label="Quantity selector">
+              <button type="button" data-qty-action="decrease" data-qty-target="product-qty">-</button>
+              <input type="number" id="product-qty" min="1" value="1" inputmode="numeric" aria-label="Quantity">
+              <button type="button" data-qty-action="increase" data-qty-target="product-qty">+</button>
+            </div>
+            <button id="add-to-cart-btn" class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
+          </div>
+
+          <div class="product-quick-actions">
             <button id="product-wishlist-btn" class="btn btn-outline wishlist-toggle${wished ? ' is-active' : ''}" data-product-id="${product.id}">${wished ? 'In Wishlist' : 'Add to Wishlist'}</button>
             <button id="product-compare-btn" class="btn btn-outline compare-toggle${compared ? ' is-active' : ''}" data-product-id="${product.id}">${compared ? 'In Compare' : 'Add to Compare'}</button>
           </div>
+
+          <div class="product-accordion">
+            ${renderAccordion('product-material-panel', 'Material & Make', buildMaterialContent(product))}
+            ${renderAccordion('product-shipping-panel', 'Shipping Policy', buildShippingContent(product))}
+          </div>
+        </div>
+      </div>
+
+      <div class="product-sticky-bar" id="product-sticky-bar" data-product-id="${product.id}">
+        <div class="product-sticky-media">
+            <img
+            id="product-sticky-thumb"
+            src="${mainImage.src}"
+            alt="${escapeHtml(product.name)}"
+            width="56"
+            height="56"
+          >
+          <div>
+            <p class="product-sticky-title">${escapeHtml(product.name || 'Product')}</p>
+            <p class="product-sticky-price">${formatINR(currentPrice)}</p>
+          </div>
+        </div>
+
+        <div class="product-sticky-actions">
+          <div class="product-qty-control product-qty-control-compact" role="group" aria-label="Sticky quantity selector">
+            <button type="button" data-qty-action="decrease" data-qty-target="sticky-product-qty">-</button>
+            <input type="number" id="sticky-product-qty" min="1" value="1" inputmode="numeric" aria-label="Sticky quantity">
+            <button type="button" data-qty-action="increase" data-qty-target="sticky-product-qty">+</button>
+          </div>
+          <button id="sticky-add-to-cart-btn" class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
         </div>
       </div>
     </div>
@@ -233,8 +482,17 @@ export async function initProductPage(productId) {
   }
 
   const product = productResult.data;
-  const wishlistIds = new Set((wishlistResult.success ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
-  const compareIds = new Set((compareResult.success ? compareResult.data : []).map(item => String(item).trim()).filter(Boolean));
+  const wishlistSource = wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : [];
+  const compareSource = compareResult.success && Array.isArray(compareResult.data) ? compareResult.data : [];
+  const wishlistIds = new Set(wishlistSource.map(item => String(item).trim()).filter(Boolean));
+  const compareIds = new Set(compareSource.map(item => String(item).trim()).filter(Boolean));
+
+  const media = normalizeProductMedia(product);
+  const state = {
+    colorIndex: 0,
+    viewIndex: 0,
+    quantity: 1
+  };
 
   root.outerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
   initLazyLoading();
@@ -247,34 +505,206 @@ export async function initProductPage(productId) {
         name: product.name || 'Product',
         category: product.category || 'General',
         price: Number(product.price || 0),
-        image: product.image || product.image_url || 'https://via.placeholder.com/600x600?text=Images+Coming+Soon',
+        image: media[0]?.views?.[0]?.url || product.image || product.image_url || 'https://placehold.co/900x1125?text=Add+product+image.webp',
         description: product.description || ''
       }]
     }
   }));
 
   const qtyInput = document.getElementById('product-qty');
+  const stickyQtyInput = document.getElementById('sticky-product-qty');
   const addToCartBtn = document.getElementById('add-to-cart-btn');
+  const stickyAddToCartBtn = document.getElementById('sticky-add-to-cart-btn');
   const wishlistBtn = document.getElementById('product-wishlist-btn');
   const compareBtn = document.getElementById('product-compare-btn');
+  const colorRail = document.getElementById('product-color-rail');
+  const colorSwatches = document.getElementById('product-color-swatches');
+  const mobileSwatches = document.getElementById('product-mobile-swatch-row');
+  const angleStrip = document.getElementById('product-angle-strip');
+  const heroImage = document.getElementById('product-hero-image');
+  const stickyThumb = document.getElementById('product-sticky-thumb');
+  const activeColorLabel = document.getElementById('product-active-color');
+  const gallery = document.getElementById('product-gallery');
+  const zoom = document.getElementById('product-zoom-view');
+
+  const getActiveColor = () => media[state.colorIndex] || media[0];
+  const getActiveView = () => {
+    const color = getActiveColor();
+    return color.views[state.viewIndex] || color.views[0];
+  };
+
+  const syncQuantityInputs = () => {
+    if (qtyInput) {
+      qtyInput.value = String(state.quantity);
+    }
+    if (stickyQtyInput) {
+      stickyQtyInput.value = String(state.quantity);
+    }
+  };
+
+  const setQuantity = value => {
+    const parsed = Number(value);
+    const next = Number.isFinite(parsed) ? Math.max(1, Math.min(99, Math.floor(parsed))) : 1;
+    state.quantity = next;
+    syncQuantityInputs();
+  };
+
+  const updateHeroFromState = () => {
+    if (!heroImage) {
+      return;
+    }
+
+    const color = getActiveColor();
+    const view = getActiveView();
+    const hero = getProductImageAttrs(view.url, {
+      desktopWidth: 1300,
+      sizes: '(max-width: 980px) 100vw, 46vw',
+      aspectRatio: '4:5'
+    });
+
+    heroImage.src = hero.src;
+    heroImage.srcset = hero.srcset;
+    heroImage.setAttribute('data-src', hero.src);
+    heroImage.setAttribute('data-srcset', hero.srcset);
+    heroImage.alt = `${product.name || 'Product'} - ${color.name} - ${view.label}`;
+
+    if (stickyThumb) {
+      const compact = getProductImageAttrs(view.url, {
+        desktopWidth: 120,
+        sizes: '56px',
+        aspectRatio: '1:1'
+      });
+      stickyThumb.src = compact.src;
+    }
+
+    if (zoom) {
+      zoom.style.backgroundImage = `url("${hero.src}")`;
+      if (gallery) {
+        gallery.classList.remove('zoom-active');
+      }
+    }
+
+    if (activeColorLabel) {
+      activeColorLabel.textContent = color.name;
+    }
+
+    if (angleStrip) {
+      angleStrip.innerHTML = renderAngles(color.views, state.viewIndex);
+      angleStrip.querySelectorAll('[data-view-index]').forEach(button => {
+        button.addEventListener('click', () => {
+          const index = Number(button.getAttribute('data-view-index'));
+          if (!Number.isFinite(index)) {
+            return;
+          }
+          state.viewIndex = index;
+          updateHeroFromState();
+        });
+      });
+    }
+
+    const markColorSelection = container => {
+      if (!container) {
+        return;
+      }
+      container.querySelectorAll('[data-color-index]').forEach(element => {
+        const index = Number(element.getAttribute('data-color-index'));
+        element.classList.toggle('is-active', index === state.colorIndex);
+      });
+    };
+
+    markColorSelection(colorRail);
+    markColorSelection(colorSwatches);
+    markColorSelection(mobileSwatches);
+  };
+
+  const bindColorSelector = container => {
+    if (!container) {
+      return;
+    }
+
+    container.querySelectorAll('[data-color-index]').forEach(button => {
+      button.addEventListener('click', () => {
+        const index = Number(button.getAttribute('data-color-index'));
+        if (!Number.isFinite(index)) {
+          return;
+        }
+
+        state.colorIndex = Math.max(0, Math.min(media.length - 1, index));
+        state.viewIndex = 0;
+        updateHeroFromState();
+      });
+    });
+  };
+
+  bindColorSelector(colorRail);
+  bindColorSelector(colorSwatches);
+  bindColorSelector(mobileSwatches);
+
+  document.querySelectorAll('[data-accordion-toggle]').forEach(button => {
+    button.addEventListener('click', () => {
+      const panelId = button.getAttribute('data-accordion-toggle');
+      const panel = panelId ? document.getElementById(panelId) : null;
+      if (!panel) {
+        return;
+      }
+
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', String(!expanded));
+      panel.hidden = expanded;
+      button.closest('[data-accordion-item]')?.classList.toggle('is-open', !expanded);
+    });
+  });
+
+  document.querySelectorAll('[data-qty-action]').forEach(button => {
+    button.addEventListener('click', () => {
+      const action = button.getAttribute('data-qty-action');
+      if (action === 'increase') {
+        setQuantity(state.quantity + 1);
+      } else {
+        setQuantity(state.quantity - 1);
+      }
+    });
+  });
+
+  [qtyInput, stickyQtyInput].forEach(input => {
+    if (!input) {
+      return;
+    }
+    input.addEventListener('change', () => setQuantity(input.value));
+    input.addEventListener('input', () => setQuantity(input.value));
+  });
+
+  const addSelectedVariantToCart = button => {
+    if (!button || button.disabled || button.dataset.stockBlocked === 'true') {
+      return;
+    }
+
+    const color = getActiveColor();
+    const view = getActiveView();
+    cart.addItem({
+      id: String(product.id || '').trim(),
+      name: product.name || 'Product',
+      category: product.category || 'General',
+      price: Number(product.price || 0),
+      image: view.url,
+      image_url: view.url,
+      description: product.description || '',
+      selected_color: color.name,
+      selected_view: view.label
+    }, state.quantity);
+
+    button.textContent = 'Added';
+    setTimeout(() => {
+      button.textContent = button.dataset.defaultLabel || 'Add to Cart';
+    }, 900);
+  };
 
   if (addToCartBtn) {
-    addToCartBtn.addEventListener('click', () => {
-      const parsedQuantity = Number(qtyInput?.value);
-      const quantity = Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? Math.floor(parsedQuantity) : 1;
-      cart.addItem({
-        id: String(product.id || '').trim(),
-        name: product.name || 'Product',
-        category: product.category || 'General',
-        price: Number(product.price || 0),
-        image: product.image || product.image_url || 'https://via.placeholder.com/600x600?text=Images+Coming+Soon',
-        description: product.description || ''
-      }, quantity);
-      addToCartBtn.textContent = 'Added';
-      setTimeout(() => {
-        addToCartBtn.textContent = addToCartBtn.dataset.defaultLabel || 'Add to Cart';
-      }, 900);
-    });
+    addToCartBtn.addEventListener('click', () => addSelectedVariantToCart(addToCartBtn));
+  }
+
+  if (stickyAddToCartBtn) {
+    stickyAddToCartBtn.addEventListener('click', () => addSelectedVariantToCart(stickyAddToCartBtn));
   }
 
   if (wishlistBtn) {
@@ -306,4 +736,7 @@ export async function initProductPage(productId) {
       compareBtn.textContent = result.active ? 'In Compare' : 'Add to Compare';
     });
   }
+
+  syncQuantityInputs();
+  updateHeroFromState();
 }

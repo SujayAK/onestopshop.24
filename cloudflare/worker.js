@@ -111,7 +111,7 @@ async function upsertSession(env, userId) {
 }
 
 function productBaseQuery() {
-  return 'SELECT id, name, category, subcategory, price, image_url, description, stock, active, discount, created_at, taxonomy_id FROM products';
+  return 'SELECT * FROM products';
 }
 
 function applyProductFilters(sql, query) {
