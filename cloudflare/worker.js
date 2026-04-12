@@ -145,7 +145,6 @@ function normalizeMediaView(view, fallbackLabel, fallbackColor) {
     label: String(entry.label || entry.view_name || entry.angle || fallbackLabel || 'View').trim(),
     url: imageUrl,
     image_url: imageUrl,
-    storage_key: String(entry.storage_key || '').trim(),
     alt_text: String(entry.alt_text || entry.alt || `${fallbackColor || 'Product'} ${fallbackLabel || 'view'}`).trim()
   };
 }
@@ -153,7 +152,7 @@ function normalizeMediaView(view, fallbackLabel, fallbackColor) {
 async function fetchProductMedia(env, productId) {
   try {
     const result = await env.DB.prepare(
-      'SELECT id, product_id, color_name, color_hex, view_name, sort_order, image_url, storage_key, alt_text, active FROM product_media WHERE product_id = ? AND active = 1 ORDER BY sort_order ASC, color_name ASC, view_name ASC'
+      'SELECT id, product_id, color_name, color_hex, view_name, sort_order, image_url, alt_text, active FROM product_media WHERE product_id = ? AND active = 1 ORDER BY sort_order ASC, color_name ASC, view_name ASC'
     ).bind(String(productId)).all();
 
     return result.results || [];
@@ -215,7 +214,6 @@ function hydrateMediaVariants(product, mediaRows = []) {
         label: row.view_name || view.label,
         url: view.url,
         image_url: view.image_url,
-        storage_key: view.storage_key,
         alt_text: view.alt_text,
         sort_order: Number(row.sort_order || 0)
       });
@@ -351,7 +349,6 @@ async function handleProducts(request, env, url, allowedOrigin) {
         view_name: String(row.view_name || row.label || `View ${index + 1}`).trim() || `View ${index + 1}`,
         sort_order: Number.isFinite(Number(row.sort_order)) ? Number(row.sort_order) : index + 1,
         image_url: String(row.image_url || row.url || row.image || row.src || '').trim(),
-        storage_key: String(row.storage_key || '').trim(),
         alt_text: String(row.alt_text || row.alt || '').trim(),
         active: row.active === false ? 0 : 1
       })).filter(row => Boolean(row.image_url));
@@ -359,7 +356,7 @@ async function handleProducts(request, env, url, allowedOrigin) {
       if (normalizedMedia.length > 0) {
         const statements = normalizedMedia.map(row =>
           env.DB.prepare(
-            'INSERT INTO product_media (id, product_id, color_name, color_hex, view_name, sort_order, image_url, storage_key, alt_text, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"))'
+            'INSERT INTO product_media (id, product_id, color_name, color_hex, view_name, sort_order, image_url, alt_text, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"))'
           ).bind(
             row.id,
             row.product_id,
@@ -368,7 +365,6 @@ async function handleProducts(request, env, url, allowedOrigin) {
             row.view_name,
             row.sort_order,
             row.image_url,
-            row.storage_key,
             row.alt_text,
             row.active
           )

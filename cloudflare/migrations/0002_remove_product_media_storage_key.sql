@@ -1,0 +1,1 @@
+ALTER TABLE product_media DROP COLUMN storage_key;
