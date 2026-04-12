@@ -494,7 +494,20 @@ export async function initProductPage(productId) {
     quantity: 1
   };
 
-  root.outerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
+  root.innerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id)).replace(/<\/?div class="container section">/g, '').replace(/<div class="product-sticky-bar"/g, '<div class="product-sticky-bar').slice(0, -6) + '</div>';
+  
+  // Parse the template and extract content only (strip container/section wrappers)
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
+  const contentOnly = tempDiv.querySelector('.breadcrumbs').parentElement.innerHTML;
+  root.innerHTML = contentOnly;
+  
+  // Place sticky bar at root level for proper positioning
+  const stickyBar = tempDiv.querySelector('.product-sticky-bar');
+  if (stickyBar) {
+    document.body.appendChild(stickyBar);
+  }
+  
   initLazyLoading();
   initProductImageZoom();
 
