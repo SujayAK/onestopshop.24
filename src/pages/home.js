@@ -181,10 +181,9 @@ function renderHomeProductCard(product, wished = false) {
         >
         ${imagePair.hasHover ? `
           <img
-            class="lazy-image home-product-image secondary"
-            src="${secondary.placeholder}"
-            data-src="${secondary.src}"
-            data-srcset="${secondary.srcset}"
+            class="home-product-image secondary"
+            src="${secondary.src}"
+            srcset="${secondary.srcset}"
             sizes="${secondary.sizes}"
             width="800"
             height="1000"

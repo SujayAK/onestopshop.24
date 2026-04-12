@@ -282,7 +282,6 @@ function renderProductTemplate(product, wished, compared) {
   const { currentPrice, originalPrice, discountPercent } = getCurrentPriceAndDiscount(product);
 
   return `
-    <div class="container section">
       <div class="breadcrumbs">
         <a href="#/">Home</a> / <a href="#/shop">Shop</a> / <span>${escapeHtml(product.name || 'Product')}</span>
       </div>
@@ -399,7 +398,6 @@ function renderProductTemplate(product, wished, compared) {
           <button id="sticky-add-to-cart-btn" class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
         </div>
       </div>
-    </div>
   `;
 }
 
@@ -494,19 +492,7 @@ export async function initProductPage(productId) {
     quantity: 1
   };
 
-  root.innerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id)).replace(/<\/?div class="container section">/g, '').replace(/<div class="product-sticky-bar"/g, '<div class="product-sticky-bar').slice(0, -6) + '</div>';
-  
-  // Parse the template and extract content only (strip container/section wrappers)
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
-  const contentOnly = tempDiv.querySelector('.breadcrumbs').parentElement.innerHTML;
-  root.innerHTML = contentOnly;
-  
-  // Place sticky bar at root level for proper positioning
-  const stickyBar = tempDiv.querySelector('.product-sticky-bar');
-  if (stickyBar) {
-    document.body.appendChild(stickyBar);
-  }
+  root.innerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
   
   initLazyLoading();
   initProductImageZoom();

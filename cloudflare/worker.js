@@ -151,11 +151,16 @@ function normalizeMediaView(view, fallbackLabel, fallbackColor) {
 }
 
 async function fetchProductMedia(env, productId) {
-  const result = await env.DB.prepare(
-    'SELECT id, product_id, color_name, color_hex, view_name, sort_order, image_url, storage_key, alt_text, active FROM product_media WHERE product_id = ? AND active = 1 ORDER BY sort_order ASC, color_name ASC, view_name ASC'
-  ).bind(String(productId)).all();
+  try {
+    const result = await env.DB.prepare(
+      'SELECT id, product_id, color_name, color_hex, view_name, sort_order, image_url, storage_key, alt_text, active FROM product_media WHERE product_id = ? AND active = 1 ORDER BY sort_order ASC, color_name ASC, view_name ASC'
+    ).bind(String(productId)).all();
 
-  return result.results || [];
+    return result.results || [];
+  } catch (_error) {
+    // Older databases may not have product_media yet. Fall back to variants/media_json in products row.
+    return [];
+  }
 }
 
 function hydrateMediaVariants(product, mediaRows = []) {
