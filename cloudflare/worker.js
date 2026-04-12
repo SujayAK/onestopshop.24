@@ -746,82 +746,91 @@ export default {
     const requestOrigin = request.headers.get('origin') || '';
     const allowedOrigin = getAllowedOrigin(requestOrigin, env);
     
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders(allowedOrigin, true) });
+    try {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { headers: corsHeaders(allowedOrigin, true) });
+      }
+
+      const pathname = url.pathname.replace(/\/$/, '');
+
+      if (pathname.startsWith('/media/')) {
+        return handleMediaRequest(request, env, pathname);
+      }
+
+      if (pathname === '/health') {
+        return json({ success: true, status: 'ok' }, { headers: corsHeaders(allowedOrigin) });
+      }
+
+      if (pathname === '/api/announcement') {
+        return handleAnnouncement(request, env, url, allowedOrigin);
+      }
+
+      if (pathname.startsWith('/api/auth')) {
+        return handleAuth(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/taxonomy') {
+        return handleTaxonomy(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/products') {
+        return handleProducts(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/products/clearance') {
+        return handleClearance(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/products/clearance/categories') {
+        return handleClearanceCategories(request, env, url, allowedOrigin);
+      }
+
+      if (pathname.startsWith('/api/products/')) {
+        const id = pathname.split('/').pop();
+        return handleProductById(request, env, url, id, allowedOrigin);
+      }
+
+      if (pathname === '/api/inventory') {
+        return handleInventory(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/inventory/reserve') {
+        return handleReserveInventory(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/inventory/release') {
+        return handleReleaseInventory(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/orders') {
+        return handleOrders(request, env, url, allowedOrigin);
+      }
+
+      if (pathname.startsWith('/api/orders/')) {
+        const orderId = pathname.split('/').pop();
+        return handleOrderById(request, env, url, orderId, allowedOrigin);
+      }
+
+      if (pathname === '/api/coupons/validate' || pathname === '/api/coupons/redeem') {
+        return handleCoupons(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/wishlist' || pathname === '/api/wishlist/toggle') {
+        return handleWishlist(request, env, url, allowedOrigin);
+      }
+
+      if (pathname === '/api/compare' || pathname === '/api/compare/toggle') {
+        return handleCompare(request, env, url, allowedOrigin);
+      }
+
+      return json({ success: false, error: 'Route not found' }, { status: 404, headers: corsHeaders(allowedOrigin) });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error || 'Unknown error');
+      console.error('Worker error:', errorMessage, error);
+      return json(
+        { success: false, error: 'Internal server error', details: errorMessage },
+        { status: 500, headers: corsHeaders(allowedOrigin) }
+      );
     }
-
-    const pathname = url.pathname.replace(/\/$/, '');
-
-    if (pathname.startsWith('/media/')) {
-      return handleMediaRequest(request, env, pathname);
-    }
-
-    if (pathname === '/health') {
-      return json({ success: true, status: 'ok' }, { headers: corsHeaders(allowedOrigin) });
-    }
-
-    if (pathname === '/api/announcement') {
-      return handleAnnouncement(request, env, url, allowedOrigin);
-    }
-
-    if (pathname.startsWith('/api/auth')) {
-      return handleAuth(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/taxonomy') {
-      return handleTaxonomy(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/products') {
-      return handleProducts(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/products/clearance') {
-      return handleClearance(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/products/clearance/categories') {
-      return handleClearanceCategories(request, env, url, allowedOrigin);
-    }
-
-    if (pathname.startsWith('/api/products/')) {
-      const id = pathname.split('/').pop();
-      return handleProductById(request, env, url, id, allowedOrigin);
-    }
-
-    if (pathname === '/api/inventory') {
-      return handleInventory(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/inventory/reserve') {
-      return handleReserveInventory(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/inventory/release') {
-      return handleReleaseInventory(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/orders') {
-      return handleOrders(request, env, url, allowedOrigin);
-    }
-
-    if (pathname.startsWith('/api/orders/')) {
-      const orderId = pathname.split('/').pop();
-      return handleOrderById(request, env, url, orderId, allowedOrigin);
-    }
-
-    if (pathname === '/api/coupons/validate' || pathname === '/api/coupons/redeem') {
-      return handleCoupons(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/wishlist' || pathname === '/api/wishlist/toggle') {
-      return handleWishlist(request, env, url, allowedOrigin);
-    }
-
-    if (pathname === '/api/compare' || pathname === '/api/compare/toggle') {
-      return handleCompare(request, env, url, allowedOrigin);
-    }
-
-    return json({ success: false, error: 'Route not found' }, { status: 404, headers: corsHeaders(allowedOrigin) });
   }
 };

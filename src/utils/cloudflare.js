@@ -654,9 +654,12 @@ export async function getInventoryTaxonomy() {
 
 export async function getUserWishlist() {
   if (API_BASE_URL) {
-    const remote = await cachedRemoteRequest(cacheKeyFor('wishlist'), 2 * 60 * 1000, () => request('/wishlist'), { persist: false });
-    if (remote.success) {
-      return remote;
+    const user = await getCurrentUser();
+    if (user) {
+      const remote = await cachedRemoteRequest(cacheKeyFor('wishlist'), 2 * 60 * 1000, () => request('/wishlist'), { persist: false });
+      if (remote.success) {
+        return remote;
+      }
     }
   }
 
@@ -665,9 +668,12 @@ export async function getUserWishlist() {
 
 export async function getUserCompare() {
   if (API_BASE_URL) {
-    const remote = await cachedRemoteRequest(cacheKeyFor('compare'), 2 * 60 * 1000, () => request('/compare'), { persist: false });
-    if (remote.success) {
-      return remote;
+    const user = await getCurrentUser();
+    if (user) {
+      const remote = await cachedRemoteRequest(cacheKeyFor('compare'), 2 * 60 * 1000, () => request('/compare'), { persist: false });
+      if (remote.success) {
+        return remote;
+      }
     }
   }
 
