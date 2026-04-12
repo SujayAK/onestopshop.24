@@ -21,13 +21,3 @@ CREATE TABLE IF NOT EXISTS product_media (
 
 CREATE INDEX IF NOT EXISTS idx_product_media_product_color_order
   ON product_media(product_id, color_name, sort_order);
-
-CREATE TRIGGER IF NOT EXISTS product_media_autogen_id
-AFTER INSERT ON product_media
-FOR EACH ROW
-WHEN NEW.id IS NULL OR NEW.id = '' OR LOWER(NEW.id) = 'default'
-BEGIN
-  UPDATE product_media
-  SET id = lower(hex(randomblob(16)))
-  WHERE rowid = NEW.rowid;
-END;
