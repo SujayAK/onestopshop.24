@@ -25,39 +25,14 @@ const HERO_SLIDES = [
 
 const CATEGORY_FALLBACK = [
   {
-    name: 'Tote Bags',
-    href: '#/shop?cat=Bags&subcat=Tote+Bags',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800&auto=format&fit=crop'
+    name: 'Bags',
+    href: '#/shop?cat=Bags',
+    image: 'https://placehold.co/900x1100/f3f4f6/111111?text=Add+Bags+Image'
   },
   {
-    name: 'Shoulder Bags',
-    href: '#/shop?cat=Bags&subcat=Shoulder+Bags',
-    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    name: 'Sling Bags',
-    href: '#/shop?cat=Bags&subcat=Sling+Bags',
-    image: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    name: 'Duffle Bags',
-    href: '#/shop?cat=Bags&subcat=Duffle+Bags',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    name: 'Wallets',
-    href: '#/shop?cat=Bags&subcat=Wallets',
-    image: 'https://images.unsplash.com/photo-1627123834957-4466880c0d94?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    name: 'Earrings',
-    href: '#/shop?cat=Accessories&subcat=Earrings',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    name: 'Phone Covers',
-    href: '#/shop?cat=Accessories&subcat=Phone+Covers',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop'
+    name: 'Accessories',
+    href: '#/shop?cat=Accessories',
+    image: 'https://placehold.co/900x1100/f3f4f6/111111?text=Add+Accessories+Image'
   }
 ];
 
@@ -152,36 +127,22 @@ function formatINR(value) {
 }
 
 function renderCategoryCards(products = []) {
-  if (!Array.isArray(products) || products.length === 0) {
-    return CATEGORY_FALLBACK.map(item => `
-      <a href="${item.href}" class="home-category-card">
-        <span class="home-category-media"><img src="${item.image}" alt="${escapeHtml(item.name)}"></span>
-        <span class="home-category-name">${escapeHtml(item.name)}</span>
-      </a>
-    `).join('');
+  const categories = CATEGORY_FALLBACK.map(item => ({ ...item }));
+
+  if (Array.isArray(products) && products.length > 0) {
+    const bagProduct = products.find(product => String(product.category || '').toLowerCase() === 'bags');
+    const accessoryProduct = products.find(product => String(product.category || '').toLowerCase() === 'accessories');
+
+    if (bagProduct?.image) {
+      categories[0].image = bagProduct.image;
+    }
+
+    if (accessoryProduct?.image) {
+      categories[1].image = accessoryProduct.image;
+    }
   }
 
-  const seen = new Set();
-  const categories = [];
-  products.forEach(product => {
-    const subcat = String(product.subcategory || '').trim();
-    if (!subcat) {
-      return;
-    }
-    const key = subcat.toLowerCase();
-    if (seen.has(key)) {
-      return;
-    }
-    seen.add(key);
-    categories.push({
-      name: subcat,
-      href: `#/shop?cat=${encodeURIComponent(product.category || 'Bags')}&subcat=${encodeURIComponent(subcat)}`,
-      image: product.image
-    });
-  });
-
-  const finalCategories = categories.length > 0 ? categories.slice(0, 8) : CATEGORY_FALLBACK;
-  return finalCategories.map(item => `
+  return categories.map(item => `
     <a href="${item.href}" class="home-category-card">
       <span class="home-category-media"><img src="${item.image}" alt="${escapeHtml(item.name)}"></span>
       <span class="home-category-name">${escapeHtml(item.name)}</span>

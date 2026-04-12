@@ -254,7 +254,6 @@ function renderMegaMenuLinks(section) {
   return section.items.map(item => `
     <a class="nav-mega-card" href="${buildCategoryHref(section.category, item.name)}">
       <span class="nav-mega-card-label">${escapeHtml(item.name)}</span>
-      <span class="nav-mega-card-link">Shop ${escapeHtml(section.label)}</span>
     </a>
   `).join('');
 }

@@ -17,6 +17,9 @@ export function Navbar() {
 
         <nav class="nav-center" aria-label="Primary navigation">
           <ul class="nav-links nav-links-desktop" id="nav-links">
+            <li class="nav-mega-item" data-nav-section="home">
+              <a href="#/" class="nav-mega-link">HOME</a>
+            </li>
             <li class="nav-mega-item" data-nav-section="bags">
               <a href="#/shop?cat=Bags" class="nav-mega-link" data-nav-trigger="bags">BAGS</a>
             </li>
