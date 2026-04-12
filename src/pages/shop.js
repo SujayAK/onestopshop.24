@@ -9,7 +9,7 @@ import {
   cloudflareConfig
 } from '../utils/cloudflare.js';
 import { cart } from '../utils/cart.js';
-import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
+import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
 import { INVENTORY_STRUCTURE } from '../data/inventory-structure.js';
 
 function escapeHtml(value) {
@@ -304,12 +304,12 @@ function getProductColorSwatches(product) {
 
 function getCardImagePair(product) {
   const media = getPrimaryProductMedia(product);
-  const primary = getProductImageAttrs(media.primaryView?.url || product.image_url || product.image, {
+  const primary = getProductImageAttrs(toThumbnailUrl(media.primaryView?.url || product.image_url || product.image), {
     desktopWidth: 900,
     sizes: '(max-width: 640px) 92vw, (max-width: 980px) 46vw, (max-width: 1320px) 31vw, 24vw',
     aspectRatio: '4:5'
   });
-  const hover = getProductImageAttrs(media.hoverView?.url || media.primaryView?.url || product.image_url || product.image, {
+  const hover = getProductImageAttrs(toThumbnailUrl(media.hoverView?.url || media.primaryView?.url || product.image_url || product.image), {
     desktopWidth: 900,
     sizes: '(max-width: 640px) 92vw, (max-width: 980px) 46vw, (max-width: 1320px) 31vw, 24vw',
     aspectRatio: '4:5'

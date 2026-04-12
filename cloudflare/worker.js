@@ -186,9 +186,25 @@ function hydrateMediaVariants(product, mediaRows = []) {
   }
 
   const grouped = new Map();
+  const explicitColors = new Map();
+  const isDefaultColor = value => {
+    const normalized = String(value || '').trim().toLowerCase();
+    return !normalized || normalized === 'default' || normalized === 'na' || normalized === 'n/a';
+  };
+
   mediaRows.forEach(row => {
-    const colorName = String(row.color_name || 'Default').trim() || 'Default';
-    const colorHex = String(row.color_hex || '#d9c7d2').trim() || '#d9c7d2';
+    const rawName = String(row.color_name || '').trim();
+    if (!isDefaultColor(rawName)) {
+      explicitColors.set(rawName, String(row.color_hex || '#d9c7d2').trim() || '#d9c7d2');
+    }
+  });
+
+  const singleExplicitColorName = explicitColors.size === 1 ? [...explicitColors.keys()][0] : null;
+  mediaRows.forEach(row => {
+    const rawColorName = String(row.color_name || 'Default').trim() || 'Default';
+    const colorName = isDefaultColor(rawColorName) && singleExplicitColorName ? singleExplicitColorName : rawColorName;
+    const explicitHex = explicitColors.get(colorName);
+    const colorHex = String(explicitHex || row.color_hex || '#d9c7d2').trim() || '#d9c7d2';
     if (!grouped.has(colorName)) {
       grouped.set(colorName, { color: colorName, hex: colorHex, views: [] });
     }

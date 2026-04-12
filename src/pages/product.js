@@ -6,7 +6,7 @@ import {
   toggleWishlistProductSync,
   toggleCompareProductSync
 } from '../utils/cloudflare.js';
-import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
+import { getProductImageAttrs, initLazyLoading, toThumbnailUrl, toFullImageUrl } from '../utils/image-optimization.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -212,7 +212,7 @@ function renderProductNotFound() {
 function renderColorRail(colors, activeColorIndex) {
   return colors.map((color, index) => {
     const primaryView = color.views[0] || { label: 'Primary', url: buildMissingImageUrl(color.name, 'primary') };
-    const thumb = getProductImageAttrs(primaryView.url, {
+    const thumb = getProductImageAttrs(toThumbnailUrl(primaryView.url), {
       desktopWidth: 180,
       sizes: '72px',
       aspectRatio: '1:1'
@@ -229,7 +229,7 @@ function renderColorRail(colors, activeColorIndex) {
 
 function renderAngles(views, activeViewIndex) {
   return views.map((view, index) => {
-    const thumb = getProductImageAttrs(view.url, {
+    const thumb = getProductImageAttrs(toThumbnailUrl(view.url), {
       desktopWidth: 260,
       sizes: '110px',
       aspectRatio: '1:1'
@@ -274,7 +274,7 @@ function renderProductTemplate(product, wished, compared) {
   const media = normalizeProductMedia(product);
   const activeColor = media[0];
   const activeView = activeColor.views[0];
-  const mainImage = getProductImageAttrs(activeView.url, {
+  const mainImage = getProductImageAttrs(toFullImageUrl(activeView.url), {
     desktopWidth: 1300,
     sizes: '(max-width: 980px) 100vw, 46vw',
     aspectRatio: '4:5'
@@ -555,7 +555,7 @@ export async function initProductPage(productId) {
 
     const color = getActiveColor();
     const view = getActiveView();
-    const hero = getProductImageAttrs(view.url, {
+    const hero = getProductImageAttrs(toFullImageUrl(view.url), {
       desktopWidth: 1300,
       sizes: '(max-width: 980px) 100vw, 46vw',
       aspectRatio: '4:5'
@@ -568,7 +568,7 @@ export async function initProductPage(productId) {
     heroImage.alt = `${product.name || 'Product'} - ${color.name} - ${view.label}`;
 
     if (stickyThumb) {
-      const compact = getProductImageAttrs(view.url, {
+      const compact = getProductImageAttrs(toThumbnailUrl(view.url), {
         desktopWidth: 120,
         sizes: '56px',
         aspectRatio: '1:1'

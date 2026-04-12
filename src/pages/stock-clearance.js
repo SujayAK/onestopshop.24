@@ -8,7 +8,7 @@ import {
   cloudflareConfig
 } from '../utils/cloudflare.js';
 import { cart } from '../utils/cart.js';
-import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
+import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -72,7 +72,7 @@ function getStockLabel(stock) {
 function renderProductCard(product, wished, compared) {
   const colors = getProductColors(product);
   const stock = getStockLabel(product.stock);
-  const image = getProductImageAttrs(product.image_url || product.image, {
+  const image = getProductImageAttrs(toThumbnailUrl(product.image_url || product.image), {
     desktopWidth: 900,
     sizes: '(max-width: 640px) 92vw, (max-width: 980px) 46vw, (max-width: 1320px) 31vw, 24vw',
     aspectRatio: '4:5'

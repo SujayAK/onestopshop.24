@@ -1,6 +1,6 @@
 import localProducts from '../data/products.json';
 import { getProductsCatalog, cloudflareConfig, getUserWishlist, toggleWishlistProductSync } from '../utils/cloudflare.js';
-import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
+import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
 
 const HERO_SLIDES = [
   {
@@ -152,12 +152,12 @@ function renderCategoryCards(products = []) {
 
 function renderHomeProductCard(product, wished = false) {
   const imagePair = getProductImagePair(product);
-  const primary = getProductImageAttrs(imagePair.primary, {
+  const primary = getProductImageAttrs(toThumbnailUrl(imagePair.primary), {
     desktopWidth: 900,
     sizes: '(max-width: 640px) 70vw, (max-width: 980px) 40vw, 24vw',
     aspectRatio: '4:5'
   });
-  const secondary = getProductImageAttrs(imagePair.secondary, {
+  const secondary = getProductImageAttrs(toThumbnailUrl(imagePair.secondary), {
     desktopWidth: 900,
     sizes: '(max-width: 640px) 70vw, (max-width: 980px) 40vw, 24vw',
     aspectRatio: '4:5'

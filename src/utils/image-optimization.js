@@ -106,6 +106,30 @@ export function getOptimizedImageUrl(imageUrl, width = 400, service = 'none') {
   return imageUrl;
 }
 
+function swapVariantSuffix(imageUrl, targetVariant) {
+  const raw = String(imageUrl || '').trim();
+  if (!raw) {
+    return raw;
+  }
+
+  // Keep query/hash suffixes intact when swapping between -full and -thumb.
+  const match = raw.match(/^(.*?)(-full|-thumb)(\.[a-z0-9]+)((?:\?.*)?(?:#.*)?)$/i);
+  if (!match) {
+    return raw;
+  }
+
+  const [, base, , extension, suffix] = match;
+  return `${base}-${targetVariant}${extension}${suffix || ''}`;
+}
+
+export function toThumbnailUrl(imageUrl) {
+  return swapVariantSuffix(imageUrl, 'thumb');
+}
+
+export function toFullImageUrl(imageUrl) {
+  return swapVariantSuffix(imageUrl, 'full');
+}
+
 /**
  * Generate responsive image srcset for different screen sizes
  * Reduces bandwidth by serving right-sized images
