@@ -6,12 +6,36 @@ CREATE TABLE IF NOT EXISTS products (
   price REAL NOT NULL DEFAULT 0,
   image_url TEXT,
   description TEXT DEFAULT '',
+  details TEXT NOT NULL DEFAULT '{}',
+  variants TEXT NOT NULL DEFAULT '[]',
+  media_gallery TEXT NOT NULL DEFAULT '[]',
+  media_json TEXT NOT NULL DEFAULT '[]',
+  media_schema_version INTEGER NOT NULL DEFAULT 1,
   stock INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   discount INTEGER NOT NULL DEFAULT 0,
   taxonomy_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS product_media (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  color_name TEXT NOT NULL,
+  color_hex TEXT NOT NULL DEFAULT '',
+  view_name TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  image_url TEXT NOT NULL,
+  storage_key TEXT DEFAULT '',
+  alt_text TEXT DEFAULT '',
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_media_product_color_order
+  ON product_media(product_id, color_name, sort_order);
 
 CREATE TABLE IF NOT EXISTS taxonomy (
   id TEXT PRIMARY KEY,

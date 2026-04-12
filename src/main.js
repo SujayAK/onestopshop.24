@@ -15,7 +15,8 @@ import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ForgotPasswordPage, initForgotPasswordPage } from './pages/forgot-password.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
 import products from './data/products.json';
-import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig } from './utils/cloudflare.js';
+import { INVENTORY_STRUCTURE } from './data/inventory-structure.js';
+import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig, getTaxonomyTree } from './utils/cloudflare.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
@@ -139,6 +140,157 @@ function getWishlistIds() {
 
 function setWishlistIds(ids) {
   localStorage.setItem('wishlist', JSON.stringify(ids));
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+const NAV_SECTION_DEFINITIONS = [
+  { key: 'bags', label: 'BAGS', category: 'Bags' },
+  { key: 'accessories', label: 'ACCESSORIES', category: 'Accessories' }
+];
+
+function normalizeCategoryName(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function buildTaxonomyIndex(rows = []) {
+  const tree = new Map();
+
+  rows.forEach(row => {
+    const parentId = String(row?.parent_id ?? 'root');
+    if (!tree.has(parentId)) {
+      tree.set(parentId, []);
+    }
+    tree.get(parentId).push(row);
+  });
+
+  tree.forEach(items => {
+    items.sort((left, right) => {
+      const leftOrder = Number(left.sort_order || 0);
+      const rightOrder = Number(right.sort_order || 0);
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder;
+      }
+      return String(left.name || '').localeCompare(String(right.name || ''));
+    });
+  });
+
+  return tree;
+}
+
+function collectDescendantNames(parentId, tree) {
+  const children = tree.get(String(parentId)) || [];
+  const items = [];
+
+  children.forEach(child => {
+    if (child && child.active !== false && child.name) {
+      items.push({
+        id: String(child.id || child.name),
+        name: String(child.name),
+        slug: String(child.slug || child.name).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      });
+    }
+
+    const grandchildren = collectDescendantNames(child.id, tree);
+    grandchildren.forEach(item => items.push(item));
+  });
+
+  return items;
+}
+
+function buildNavigationSections(rows = [], forceFallback = false) {
+  const taxonomyRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  const tree = buildTaxonomyIndex(taxonomyRows);
+  const rootRows = tree.get('root') || [];
+
+  return NAV_SECTION_DEFINITIONS.map(section => {
+    let items = [];
+
+    if (!forceFallback) {
+      const rootRow = rootRows.find(row => normalizeCategoryName(row.name) === normalizeCategoryName(section.category))
+        || taxonomyRows.find(row => normalizeCategoryName(row.name) === normalizeCategoryName(section.category) && (row.depth === 1 || row.parent_id === null));
+
+      if (rootRow) {
+        items = collectDescendantNames(rootRow.id, tree).filter((item, index, list) => list.findIndex(entry => entry.name === item.name) === index);
+      }
+    }
+
+    if (forceFallback || items.length === 0) {
+      items = (INVENTORY_STRUCTURE[section.category] || []).map(name => ({
+        id: `${section.key}-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        name,
+        slug: String(name).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      }));
+    }
+
+    return {
+      ...section,
+      items
+    };
+  });
+}
+
+function buildCategoryHref(sectionCategory, itemName = '') {
+  const params = new URLSearchParams();
+  params.set('cat', sectionCategory);
+  if (itemName) {
+    params.set('subcat', itemName);
+  }
+  return `#/shop?${params.toString()}`;
+}
+
+function renderMegaMenuLinks(section) {
+  if (!section.items.length) {
+    return '<p class="nav-mega-empty">No subcategories available yet.</p>';
+  }
+
+  return section.items.map(item => `
+    <a class="nav-mega-card" href="${buildCategoryHref(section.category, item.name)}">
+      <span class="nav-mega-card-label">${escapeHtml(item.name)}</span>
+      <span class="nav-mega-card-link">Shop ${escapeHtml(section.label)}</span>
+    </a>
+  `).join('');
+}
+
+function renderDrawerLinks(section) {
+  if (!section.items.length) {
+    return '<p class="nav-drawer-empty">No subcategories available yet.</p>';
+  }
+
+  return section.items.map(item => `
+    <a class="nav-drawer-sublink" href="${buildCategoryHref(section.category, item.name)}">${escapeHtml(item.name)}</a>
+  `).join('');
+}
+
+function renderNavbarMenus(sections) {
+  sections.forEach(section => {
+    const megaGrid = document.querySelector(`[data-nav-panel-grid="${section.key}"]`);
+    if (megaGrid) {
+      megaGrid.innerHTML = renderMegaMenuLinks(section);
+    }
+
+    const drawerGrid = document.querySelector(`[data-nav-drawer-grid="${section.key}"]`);
+    if (drawerGrid) {
+      drawerGrid.innerHTML = renderDrawerLinks(section);
+    }
+  });
+}
+
+async function hydrateNavbarMenus() {
+  const fallback = !cloudflareConfig.apiBaseUrl;
+  const taxonomyResult = fallback ? { success: true, data: [] } : await getTaxonomyTree();
+  const sections = buildNavigationSections(
+    taxonomyResult.success && Array.isArray(taxonomyResult.data) ? taxonomyResult.data : [],
+    fallback
+  );
+  renderNavbarMenus(sections);
 }
 
 function initWishlistButtons() {
@@ -400,10 +552,11 @@ function renderPage(content) {
       class="whatsapp-floater"
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat on WhatsApp"
-      title="Chat on WhatsApp"
+      aria-label="chat with us"
+      title="chat with us"
     >
       <i class="fab fa-whatsapp"></i>
+      <span>chat with us</span>
     </a>
   `;
   
@@ -424,22 +577,113 @@ function renderPage(content) {
 
 function initNavbar() {
   const hamburger = document.getElementById('hamburger');
+  const header = document.querySelector('.main-header');
+  const drawer = document.getElementById('nav-drawer');
+  const drawerOverlay = document.getElementById('nav-drawer-overlay');
+  const drawerClose = document.getElementById('nav-drawer-close');
   const navLinks = document.getElementById('nav-links');
-  
-  if (hamburger && navLinks) {
-    hamburger.addEventListener('click', () => {
-      hamburger.classList.toggle('active');
-      navLinks.classList.toggle('active');
-    });
+  const megaItems = document.querySelectorAll('.nav-mega-item');
 
-    // Close menu when clicking on a link
-    navLinks.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        hamburger.classList.remove('active');
-        navLinks.classList.remove('active');
-      });
+  const closeDrawer = () => {
+    if (!drawer || !drawerOverlay || !hamburger) {
+      return;
+    }
+    drawer.classList.remove('is-open');
+    drawerOverlay.hidden = true;
+    drawer.setAttribute('aria-hidden', 'true');
+    hamburger.classList.remove('active');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('nav-drawer-open');
+  };
+
+  const openDrawer = () => {
+    if (!drawer || !drawerOverlay || !hamburger) {
+      return;
+    }
+    drawer.classList.add('is-open');
+    drawerOverlay.hidden = false;
+    drawer.setAttribute('aria-hidden', 'false');
+    hamburger.classList.add('active');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('nav-drawer-open');
+  };
+
+  if (hamburger && drawer) {
+    hamburger.addEventListener('click', () => {
+      if (drawer.classList.contains('is-open')) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
     });
   }
+
+  if (drawerOverlay) {
+    drawerOverlay.addEventListener('click', closeDrawer);
+  }
+
+  if (drawerClose) {
+    drawerClose.addEventListener('click', closeDrawer);
+  }
+
+  if (drawer) {
+    drawer.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeDrawer);
+    });
+  }
+
+  document.querySelectorAll('.nav-drawer-accordion-trigger').forEach(button => {
+    button.addEventListener('click', () => {
+      const sectionKey = button.getAttribute('data-nav-accordion');
+      const panel = sectionKey ? document.querySelector(`[data-nav-mobile-panel="${sectionKey}"]`) : null;
+      if (!panel) {
+        return;
+      }
+
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', String(!expanded));
+      panel.hidden = expanded;
+      button.closest('.nav-drawer-accordion')?.classList.toggle('is-open', !expanded);
+    });
+  });
+
+  const closeMegaMenus = () => {
+    megaItems.forEach(item => item.classList.remove('is-open'));
+    header?.classList.remove('has-mega-open');
+    header?.removeAttribute('data-active-mega');
+  };
+
+  megaItems.forEach(item => {
+    const sectionKey = item.getAttribute('data-nav-section');
+    const trigger = item.querySelector('.nav-mega-link');
+
+    const openItem = () => {
+      closeMegaMenus();
+      item.classList.add('is-open');
+      header?.classList.add('has-mega-open');
+      if (sectionKey) {
+        header?.setAttribute('data-active-mega', sectionKey);
+      }
+    };
+
+    item.addEventListener('mouseenter', openItem);
+    item.addEventListener('focusin', openItem);
+
+    if (trigger && sectionKey) {
+      trigger.addEventListener('focus', openItem);
+    }
+  });
+
+  if (header) {
+    header.addEventListener('mouseleave', closeMegaMenus);
+    header.addEventListener('focusout', event => {
+      if (!header.contains(event.relatedTarget)) {
+        closeMegaMenus();
+      }
+    });
+  }
+
+  void hydrateNavbarMenus();
 
   // Update cart badge
   updateCartBadge();

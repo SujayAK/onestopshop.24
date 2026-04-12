@@ -56,7 +56,7 @@ function parseColors(product) {
 }
 
 function parseDetails(product) {
-  const parsed = parseJsonValue(product?.details, {});
+  const parsed = parseJsonValue(product?.details || product?.details_json, {});
   return parsed && typeof parsed === 'object' ? parsed : {};
 }
 

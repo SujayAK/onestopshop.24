@@ -114,6 +114,112 @@ function productBaseQuery() {
   return 'SELECT * FROM products';
 }
 
+function parseJsonPayload(value, fallback) {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  if (typeof value === 'object') {
+    return value;
+  }
+
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (_error) {
+    return fallback;
+  }
+}
+
+function normalizeMediaView(view, fallbackLabel, fallbackColor) {
+  const entry = typeof view === 'string' ? { image_url: view } : (view || {});
+  const imageUrl = String(entry.image_url || entry.url || entry.image || entry.src || '').trim();
+  if (!imageUrl) {
+    return null;
+  }
+
+  return {
+    label: String(entry.label || entry.view_name || entry.angle || fallbackLabel || 'View').trim(),
+    url: imageUrl,
+    image_url: imageUrl,
+    storage_key: String(entry.storage_key || '').trim(),
+    alt_text: String(entry.alt_text || entry.alt || `${fallbackColor || 'Product'} ${fallbackLabel || 'view'}`).trim()
+  };
+}
+
+async function fetchProductMedia(env, productId) {
+  const result = await env.DB.prepare(
+    'SELECT id, product_id, color_name, color_hex, view_name, sort_order, image_url, storage_key, alt_text, active FROM product_media WHERE product_id = ? AND active = 1 ORDER BY sort_order ASC, color_name ASC, view_name ASC'
+  ).bind(String(productId)).all();
+
+  return result.results || [];
+}
+
+function hydrateMediaVariants(product, mediaRows = []) {
+  const existingVariants = parseJsonPayload(product?.variants, []);
+  const existingGallery = parseJsonPayload(product?.media_json || product?.media_gallery, []);
+
+  if (Array.isArray(existingVariants) && existingVariants.length > 0) {
+    return {
+      ...product,
+      variants: existingVariants,
+      media_json: Array.isArray(existingGallery) ? existingGallery : [],
+      media_gallery: Array.isArray(existingGallery) ? existingGallery : []
+    };
+  }
+
+  if (!Array.isArray(mediaRows) || mediaRows.length === 0) {
+    return {
+      ...product,
+      variants: Array.isArray(existingVariants) ? existingVariants : [],
+      media_json: Array.isArray(existingGallery) ? existingGallery : [],
+      media_gallery: Array.isArray(existingGallery) ? existingGallery : []
+    };
+  }
+
+  const grouped = new Map();
+  mediaRows.forEach(row => {
+    const colorName = String(row.color_name || 'Default').trim() || 'Default';
+    const colorHex = String(row.color_hex || '#d9c7d2').trim() || '#d9c7d2';
+    if (!grouped.has(colorName)) {
+      grouped.set(colorName, { color: colorName, hex: colorHex, views: [] });
+    }
+
+    const view = normalizeMediaView(row, row.view_name || 'View', colorName);
+    if (view) {
+      grouped.get(colorName).views.push({
+        label: row.view_name || view.label,
+        url: view.url,
+        image_url: view.image_url,
+        storage_key: view.storage_key,
+        alt_text: view.alt_text,
+        sort_order: Number(row.sort_order || 0)
+      });
+    }
+  });
+
+  const mediaVariants = [...grouped.values()].map(variant => ({
+    ...variant,
+    views: variant.views.sort((left, right) => Number(left.sort_order || 0) - Number(right.sort_order || 0)).map(({ sort_order, ...view }) => view)
+  }));
+
+  const flatGallery = mediaVariants.flatMap(variant => variant.views.map(view => ({
+    color: variant.color,
+    hex: variant.hex,
+    ...view
+  })));
+
+  return {
+    ...product,
+    variants: mediaVariants,
+    media_json: flatGallery,
+    media_gallery: flatGallery
+  };
+}
+
 function applyProductFilters(sql, query) {
   const conditions = [];
   const bindings = [];
@@ -188,8 +294,13 @@ async function handleProducts(request, env, url, allowedOrigin) {
   if (request.method === 'POST') {
     const body = await readJson(request);
     const id = body.id || crypto.randomUUID();
+    const details = typeof body.details === 'string' ? body.details : JSON.stringify(body.details || {});
+    const variants = typeof body.variants === 'string' ? body.variants : JSON.stringify(body.variants || []);
+    const mediaGallery = typeof body.media_gallery === 'string' ? body.media_gallery : JSON.stringify(body.media_gallery || []);
+    const mediaJson = typeof body.media_json === 'string' ? body.media_json : JSON.stringify(body.media_json || body.media_gallery || body.variants || []);
+    const mediaSchemaVersion = Number(body.media_schema_version || 1);
     await env.DB.prepare(
-      'INSERT INTO products (id, name, category, subcategory, price, image_url, description, stock, active, discount, taxonomy_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+      'INSERT INTO products (id, name, category, subcategory, price, image_url, description, details, variants, media_gallery, media_json, media_schema_version, stock, active, discount, taxonomy_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
     ).bind(
       id,
       body.name || 'Product',
@@ -198,11 +309,53 @@ async function handleProducts(request, env, url, allowedOrigin) {
       Number(body.price || 0),
       body.image_url || body.image || '',
       body.description || '',
+      details,
+      variants,
+      mediaGallery,
+      mediaJson,
+      Number.isFinite(mediaSchemaVersion) ? mediaSchemaVersion : 1,
       Number(body.stock || 0),
       body.active === false ? 0 : 1,
       Number(body.discount || 0),
       body.taxonomy_id || null
     ).run();
+
+    const mediaRows = Array.isArray(body.product_media) ? body.product_media : [];
+    if (mediaRows.length > 0) {
+      const normalizedMedia = mediaRows.map((row, index) => ({
+        id: String(row.id || crypto.randomUUID()),
+        product_id: id,
+        color_name: String(row.color_name || row.color || 'Default').trim() || 'Default',
+        color_hex: String(row.color_hex || row.hex || '#d9c7d2').trim() || '#d9c7d2',
+        view_name: String(row.view_name || row.label || `View ${index + 1}`).trim() || `View ${index + 1}`,
+        sort_order: Number.isFinite(Number(row.sort_order)) ? Number(row.sort_order) : index + 1,
+        image_url: String(row.image_url || row.url || row.image || row.src || '').trim(),
+        storage_key: String(row.storage_key || '').trim(),
+        alt_text: String(row.alt_text || row.alt || '').trim(),
+        active: row.active === false ? 0 : 1
+      })).filter(row => Boolean(row.image_url));
+
+      if (normalizedMedia.length > 0) {
+        const statements = normalizedMedia.map(row =>
+          env.DB.prepare(
+            'INSERT INTO product_media (id, product_id, color_name, color_hex, view_name, sort_order, image_url, storage_key, alt_text, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"))'
+          ).bind(
+            row.id,
+            row.product_id,
+            row.color_name,
+            row.color_hex,
+            row.view_name,
+            row.sort_order,
+            row.image_url,
+            row.storage_key,
+            row.alt_text,
+            row.active
+          )
+        );
+        await env.DB.batch(statements);
+      }
+    }
+
     return json({ success: true, data: { id } }, { status: 201, headers: corsHeaders(allowedOrigin) });
   }
 
@@ -219,7 +372,8 @@ async function handleProductById(request, env, url, id, allowedOrigin) {
     return json({ success: false, error: 'Product not found' }, { status: 404, headers: corsHeaders(allowedOrigin) });
   }
 
-  return json({ success: true, data: product }, { headers: corsHeaders(allowedOrigin) });
+  const mediaRows = await fetchProductMedia(env, id);
+  return json({ success: true, data: hydrateMediaVariants(product, mediaRows) }, { headers: corsHeaders(allowedOrigin) });
 }
 
 async function handleClearance(request, env, url, allowedOrigin) {

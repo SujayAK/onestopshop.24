@@ -1,307 +1,462 @@
 import localProducts from '../data/products.json';
-import { getProductsCatalog, cloudflareConfig } from '../utils/cloudflare.js';
+import { getProductsCatalog, cloudflareConfig, getUserWishlist, toggleWishlistProductSync } from '../utils/cloudflare.js';
 import { getProductImageAttrs, initLazyLoading } from '../utils/image-optimization.js';
 
-const HERO_SLIDES = ['STOCK CLEARANCE SALE', 'PREMIUM PRODUCTS'];
+const HERO_SLIDES = [
+  {
+    title: 'The Season of Signature Bags',
+    subtitle: 'Premium silhouettes for workdays, travel days, and every in-between moment.',
+    ctaHref: '#/shop?cat=Bags',
+    image: 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=2000&auto=format&fit=crop'
+  },
+  {
+    title: 'Accessories That Finish The Look',
+    subtitle: 'Layered details, modern accents, and effortless gifting picks.',
+    ctaHref: '#/shop?cat=Accessories',
+    image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=2000&auto=format&fit=crop'
+  },
+  {
+    title: 'New Launches Every Week',
+    subtitle: 'Fresh drops with elevated textures and timeless color stories.',
+    ctaHref: '#/shop',
+    image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=1600&auto=format&fit=crop'
+  }
+];
+
+const CATEGORY_FALLBACK = [
+  {
+    name: 'Tote Bags',
+    href: '#/shop?cat=Bags&subcat=Tote+Bags',
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800&auto=format&fit=crop'
+  },
+  {
+    name: 'Shoulder Bags',
+    href: '#/shop?cat=Bags&subcat=Shoulder+Bags',
+    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop'
+  },
+  {
+    name: 'Sling Bags',
+    href: '#/shop?cat=Bags&subcat=Sling+Bags',
+    image: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=800&auto=format&fit=crop'
+  },
+  {
+    name: 'Duffle Bags',
+    href: '#/shop?cat=Bags&subcat=Duffle+Bags',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop'
+  },
+  {
+    name: 'Wallets',
+    href: '#/shop?cat=Bags&subcat=Wallets',
+    image: 'https://images.unsplash.com/photo-1627123834957-4466880c0d94?q=80&w=800&auto=format&fit=crop'
+  },
+  {
+    name: 'Earrings',
+    href: '#/shop?cat=Accessories&subcat=Earrings',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800&auto=format&fit=crop'
+  },
+  {
+    name: 'Phone Covers',
+    href: '#/shop?cat=Accessories&subcat=Phone+Covers',
+    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop'
+  }
+];
+
 let heroSlideTimer = null;
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function parseJsonValue(value, fallback) {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  if (typeof value === 'object') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (_error) {
+    return fallback;
+  }
+}
+
 function normalizeProduct(row) {
+  const id = String(row.id ?? '').trim();
   return {
-    id: String(row.id ?? '').trim(),
+    id,
     name: row.name || 'Product',
     price: Number(row.price || 0),
     category: row.category || 'General',
-    image: row.image || row.image_url || 'https://via.placeholder.com/600x600?text=Product',
+    subcategory: row.subcategory || '',
+    image: row.image || row.image_url || 'https://placehold.co/800x1000?text=Product',
     description: row.description || '',
-    stock: Number.isFinite(Number(row.stock)) ? Number(row.stock) : null
+    stock: Number.isFinite(Number(row.stock)) ? Number(row.stock) : null,
+    variants: parseJsonValue(row.variants || row.media_json || row.media_gallery, []),
+    colors: parseJsonValue(row.colors, [])
   };
 }
 
-function renderProductCard(product) {
-  const image = getProductImageAttrs(product.image, {
-    desktopWidth: 700,
-    sizes: '(max-width: 640px) 46vw, (max-width: 980px) 30vw, 22vw'
+function getProductColors(product) {
+  const explicit = Array.isArray(product.colors) ? product.colors : [];
+  if (explicit.length > 0) {
+    return explicit.map(item => ({
+      name: typeof item === 'string' ? item : item.name || item.hex || 'Color',
+      hex: typeof item === 'string' ? item : item.hex || '#d9c7d2'
+    }));
+  }
+
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  return variants
+    .map(variant => ({
+      name: variant.color || variant.name || 'Color',
+      hex: variant.hex || '#d9c7d2'
+    }))
+    .filter(color => color.name);
+}
+
+function getProductImagePair(product) {
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const firstVariant = variants[0] || null;
+  const views = parseJsonValue(firstVariant?.views || firstVariant?.images || firstVariant?.gallery, []);
+  const normalizedViews = Array.isArray(views) ? views : [];
+
+  const primaryUrl = normalizedViews[0]?.url || normalizedViews[0]?.image_url || normalizedViews[0]?.image || product.image;
+  const hoverUrl = normalizedViews.find(view => {
+    const label = String(view.label || view.name || view.view || view.angle || '').toLowerCase();
+    const url = view.url || view.image_url || view.image;
+    return url && /side|detail|lifestyle|back|angle|inside/.test(label);
+  })?.url || normalizedViews[1]?.url || normalizedViews[1]?.image_url || product.image;
+
+  return {
+    primary: primaryUrl || product.image,
+    secondary: hoverUrl || primaryUrl || product.image,
+    hasHover: Boolean(hoverUrl && hoverUrl !== primaryUrl)
+  };
+}
+
+function formatINR(value) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(Number(value || 0));
+}
+
+function renderCategoryCards(products = []) {
+  if (!Array.isArray(products) || products.length === 0) {
+    return CATEGORY_FALLBACK.map(item => `
+      <a href="${item.href}" class="home-category-card">
+        <span class="home-category-media"><img src="${item.image}" alt="${escapeHtml(item.name)}"></span>
+        <span class="home-category-name">${escapeHtml(item.name)}</span>
+      </a>
+    `).join('');
+  }
+
+  const seen = new Set();
+  const categories = [];
+  products.forEach(product => {
+    const subcat = String(product.subcategory || '').trim();
+    if (!subcat) {
+      return;
+    }
+    const key = subcat.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    categories.push({
+      name: subcat,
+      href: `#/shop?cat=${encodeURIComponent(product.category || 'Bags')}&subcat=${encodeURIComponent(subcat)}`,
+      image: product.image
+    });
   });
 
+  const finalCategories = categories.length > 0 ? categories.slice(0, 8) : CATEGORY_FALLBACK;
+  return finalCategories.map(item => `
+    <a href="${item.href}" class="home-category-card">
+      <span class="home-category-media"><img src="${item.image}" alt="${escapeHtml(item.name)}"></span>
+      <span class="home-category-name">${escapeHtml(item.name)}</span>
+    </a>
+  `).join('');
+}
+
+function renderHomeProductCard(product, wished = false) {
+  const imagePair = getProductImagePair(product);
+  const primary = getProductImageAttrs(imagePair.primary, {
+    desktopWidth: 900,
+    sizes: '(max-width: 640px) 70vw, (max-width: 980px) 40vw, 24vw',
+    aspectRatio: '4:5'
+  });
+  const secondary = getProductImageAttrs(imagePair.secondary, {
+    desktopWidth: 900,
+    sizes: '(max-width: 640px) 70vw, (max-width: 980px) 40vw, 24vw',
+    aspectRatio: '4:5'
+  });
+  const swatches = getProductColors(product).slice(0, 5);
+
   return `
-    <div class="shop-product-card" data-product-id="${product.id}">
-      <div class="shop-card-image">
+    <article class="home-product-card" data-product-id="${product.id}">
+      <a href="#/product/${product.id}" class="home-product-media${imagePair.hasHover ? ' has-hover' : ''}">
         <img
-          class="lazy-image"
-          src="${image.placeholder}"
-          data-src="${image.src}"
-          data-srcset="${image.srcset}"
-          sizes="${image.sizes}"
+          class="lazy-image home-product-image primary"
+          src="${primary.placeholder}"
+          data-src="${primary.src}"
+          data-srcset="${primary.srcset}"
+          sizes="${primary.sizes}"
           width="800"
           height="1000"
-          alt="${product.name}"
-          decoding="async"
+          alt="${escapeHtml(product.name)}"
           loading="lazy"
+          decoding="async"
         >
-      </div>
-      <div class="shop-card-info">
-        <h3 class="shop-card-title">${product.name}</h3>
-        <p class="shop-card-price">₹${product.price.toFixed(2)}</p>
-        <span class="shop-stock-badge is-in" data-stock-label data-product-id="${product.id}">Checking stock...</span>
-        <div class="shop-card-buttons">
-          <button class="btn btn-sm add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
-          <a href="#/product/${product.id}" class="btn btn-sm btn-outline">Details</a>
+        ${imagePair.hasHover ? `
+          <img
+            class="lazy-image home-product-image secondary"
+            src="${secondary.placeholder}"
+            data-src="${secondary.src}"
+            data-srcset="${secondary.srcset}"
+            sizes="${secondary.sizes}"
+            width="800"
+            height="1000"
+            alt="${escapeHtml(product.name)} alternate image"
+            loading="lazy"
+            decoding="async"
+          >
+        ` : ''}
+      </a>
+      <button type="button" class="home-wishlist-btn${wished ? ' is-active' : ''}" data-home-wishlist="${product.id}" aria-label="Toggle wishlist">
+        <i class="${wished ? 'fas' : 'far'} fa-heart"></i>
+      </button>
+      <div class="home-product-meta">
+        <h3><a href="#/product/${product.id}">${escapeHtml(product.name)}</a></h3>
+        <p class="home-product-price">${formatINR(product.price)}</p>
+        <div class="home-product-swatches">
+          ${swatches.map(swatch => `<span style="--swatch:${escapeHtml(swatch.hex)}" title="${escapeHtml(swatch.name)}"></span>`).join('')}
         </div>
-        <button class="btn btn-outline wishlist-toggle" data-product-id="${product.id}" style="margin-top: 0.7rem; width: 100%;">Add to Wishlist</button>
       </div>
-    </div>
+    </article>
   `;
 }
 
 export function HomePage() {
   return `
-    <section class="hero">
-      <div class="container hero-content" style="text-align: center;">
-        <div class="hero-slide-shell" aria-live="polite">
-          <p class="hero-slide-kicker">Trending Now</p>
-          <div class="hero-slide-nav">
-            <button type="button" class="hero-slide-arrow" id="hero-slide-prev" aria-label="Previous promotion">
-              <i class="fas fa-chevron-left" aria-hidden="true"></i>
-            </button>
-            <h1 id="hero-slide-text" class="hero-slide-text">${HERO_SLIDES[0]}</h1>
-            <button type="button" class="hero-slide-arrow" id="hero-slide-next" aria-label="Next promotion">
-              <i class="fas fa-chevron-right" aria-hidden="true"></i>
-            </button>
-          </div>
-          <div class="hero-slide-dots" id="hero-slide-dots" role="tablist" aria-label="Homepage promotions">
-            ${HERO_SLIDES.map((_, index) => `<button class="hero-slide-dot${index === 0 ? ' is-active' : ''}" data-hero-slide="${index}" role="tab" aria-label="Show slide ${index + 1}"></button>`).join('')}
-          </div>
-        </div>
-        <p>Discover curated collections of premium bags and accessories designed for everyday elegance and modern living.</p>
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-          <a href="#/shop" class="btn">Shop Collection</a>
-        </div>
+    <section class="home-hero" aria-label="Hero slider">
+      <div class="home-hero-slides" id="home-hero-slides">
+        ${HERO_SLIDES.map((slide, index) => `
+          <div class="home-hero-slide${index === 0 ? ' is-active' : ''}" data-hero-index="${index}" style="--hero-image:url('${slide.image}')"></div>
+        `).join('')}
+      </div>
+      <div class="home-hero-overlay"></div>
+      <div class="container home-hero-content" id="home-hero-content">
+        <p class="home-hero-kicker">New Season Edit</p>
+        <h1 id="home-hero-title">${escapeHtml(HERO_SLIDES[0].title)}</h1>
+        <p id="home-hero-subtitle">${escapeHtml(HERO_SLIDES[0].subtitle)}</p>
+        <a href="${HERO_SLIDES[0].ctaHref}" id="home-hero-cta" class="btn home-hero-cta">Shop Now</a>
+      </div>
+      <button type="button" class="home-hero-arrow prev" id="home-hero-prev" aria-label="Previous slide"><i class="fas fa-chevron-left"></i></button>
+      <button type="button" class="home-hero-arrow next" id="home-hero-next" aria-label="Next slide"><i class="fas fa-chevron-right"></i></button>
+      <div class="home-hero-dots" id="home-hero-dots">
+        ${HERO_SLIDES.map((_, index) => `<button type="button" class="home-hero-dot${index === 0 ? ' is-active' : ''}" data-hero-dot="${index}" aria-label="Slide ${index + 1}"></button>`).join('')}
       </div>
     </section>
 
-    <section class="section">
+    <section class="section home-section">
       <div class="container">
-        <h2 style="text-align: center; margin-bottom: 3rem;">Featured Categories</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-          <a href="#/shop?cat=Bags" class="category-card" style="background: url('https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800') center/cover;">
-            <div class="category-content">
-              <h3 style="color: white; font-size: 2rem;">Bags</h3>
-              <span style="text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Explore →</span>
-            </div>
-          </a>
-          <a href="#/shop?cat=Accessories" class="category-card" style="background: url('https://images.unsplash.com/photo-1523206489230-c012c64b2b48?q=80&w=800') center/cover;">
-            <div class="category-content">
-              <h3 style="color: white; font-size: 2rem;">Accessories</h3>
-              <span style="text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Explore →</span>
-            </div>
-          </a>
+        <div class="home-section-head centered">
+          <h2>SHOP BY CATEGORY</h2>
+        </div>
+        <div class="home-category-grid" id="home-category-grid">
+          <div class="profile-loading" style="grid-column: 1 / -1;">Loading categories...</div>
         </div>
       </div>
     </section>
 
-    <section class="section" style="background: var(--bg-primary);">
+    <section class="section home-section home-section-alt">
       <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem;">
-          <div>
-            <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">Our Favorites</p>
-            <h2 style="margin-bottom: 0;">Best Sellers</h2>
-          </div>
-          <a href="#/shop" style="font-weight: 600; border-bottom: 2px solid var(--accent-pink);">View All Products</a>
+        <div class="home-section-head">
+          <h2>NEW ARRIVALS</h2>
+          <a href="#/shop" class="home-view-all">View All</a>
         </div>
-        <div id="home-featured-grid" class="shop-grid">
-          <div class="profile-loading" style="grid-column: 1 / -1;">Loading featured products...</div>
+        <div class="home-products-carousel" id="home-new-arrivals-track">
+          <div class="profile-loading">Loading new arrivals...</div>
         </div>
       </div>
     </section>
 
-    <section class="section" style="background: var(--bg-secondary);">
-      <div class="container" style="text-align: center;">
-        <div class="home-marquee-wrap" aria-hidden="true">
-          <marquee class="home-marquee" behavior="scroll" direction="left" scrollamount="6">
-            &#9733; Premium Products &#9733; Durability &#9733; Add more later &#9733;
-          </marquee>
-        </div>
-        <p style="color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">Why Choose Us</p>
-        <h2>The OneStop Experience</h2>
-        <div class="trust-grid">
-          <div class="trust-card">
-            <i class="fas fa-gem" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
-            <h4>Curated Quality</h4>
-            <p>Each piece in our boutique is handpicked for its quality, durability, and timeless style.</p>
-          </div>
-          <div class="trust-card">
-            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
-            <h4>Secure Shopping</h4>
-            <p>Shop with confidence. We use industry-standard encryption to protect your data.</p>
-          </div>
-          <div class="trust-card">
-            <i class="fas fa-camera" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
-            <h4>Real Photography</h4>
-            <p>What you see is what you get. We use real product photos to ensure transparency.</p>
-          </div>
-          <div class="trust-card">
-            <i class="fab fa-instagram" style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"></i>
-            <h4>Community Loved</h4>
-            <p>Join thousands of happy customers who trust OneStop for their fashion needs.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="testimonial-section">
+    <section class="section home-section">
       <div class="container">
-        <h2 style="text-align: center; margin-bottom: 3rem;">What Our Customers Say</h2>
-        <div class="testimonial-container">
-          <div class="testimonial-wrapper" id="testimonial-wrapper">
-            <div class="testimonial-slide">
-              <div class="testimonial-content">"Absolutely love the quality of the bags! The colors are just as vibrant as they look in the photos."</div>
-              <div class="testimonial-author">- Sarah J.</div>
-            </div>
-            <div class="testimonial-slide">
-              <div class="testimonial-content">"Fast shipping and the packaging was so cute. Definitely my new favorite shop for accessories."</div>
-              <div class="testimonial-author">- Emily R.</div>
-            </div>
-            <div class="testimonial-slide">
-              <div class="testimonial-content">"The attention to detail in every piece is amazing. Highly recommend onestopshop!"</div>
-              <div class="testimonial-author">- Michelle L.</div>
-            </div>
-          </div>
-          <div class="testimonial-dots" id="testimonial-dots">
-            <span class="dot active" data-index="0"></span>
-            <span class="dot" data-index="1"></span>
-            <span class="dot" data-index="2"></span>
-          </div>
+        <div class="home-section-head">
+          <h2>BEST SELLERS</h2>
         </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container" style="text-align: center;">
-        <h2>Trusted by our Instagram community</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 3rem;">Tag us @onestopshop to be featured</p>
-        <a href="https://www.instagram.com/onestopshop" target="_blank" class="btn btn-outline" style="margin-top: 3rem;">Follow Us on Instagram</a>
+        <div class="home-best-grid" id="home-best-sellers-grid">
+          <div class="profile-loading" style="grid-column: 1 / -1;">Loading best sellers...</div>
+        </div>
       </div>
     </section>
   `;
 }
 
 function initHomeHeroSlides() {
-  const textEl = document.getElementById('hero-slide-text');
-  const dotsWrap = document.getElementById('hero-slide-dots');
-  const shellEl = document.querySelector('.hero-slide-shell');
-  const prevBtn = document.getElementById('hero-slide-prev');
-  const nextBtn = document.getElementById('hero-slide-next');
-  if (!textEl || !dotsWrap || !shellEl || !prevBtn || !nextBtn) {
+  const slides = Array.from(document.querySelectorAll('.home-hero-slide'));
+  const dots = Array.from(document.querySelectorAll('.home-hero-dot'));
+  const title = document.getElementById('home-hero-title');
+  const subtitle = document.getElementById('home-hero-subtitle');
+  const cta = document.getElementById('home-hero-cta');
+  const prev = document.getElementById('home-hero-prev');
+  const next = document.getElementById('home-hero-next');
+
+  if (!slides.length || !title || !subtitle || !cta || !prev || !next) {
     return;
   }
 
-  const dots = Array.from(dotsWrap.querySelectorAll('.hero-slide-dot'));
   let activeIndex = 0;
 
   const render = index => {
-    textEl.classList.remove('is-visible');
-    requestAnimationFrame(() => {
-      textEl.textContent = HERO_SLIDES[index];
-      textEl.classList.add('is-visible');
-    });
+    const slide = HERO_SLIDES[index];
+    if (!slide) {
+      return;
+    }
 
-    dots.forEach((dot, dotIndex) => {
-      dot.classList.toggle('is-active', dotIndex === index);
-    });
+    activeIndex = index;
+    slides.forEach((node, nodeIndex) => node.classList.toggle('is-active', nodeIndex === index));
+    dots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === index));
+    title.textContent = slide.title;
+    subtitle.textContent = slide.subtitle;
+    cta.setAttribute('href', slide.ctaHref);
   };
 
-  const setSlide = index => {
-    activeIndex = (index + HERO_SLIDES.length) % HERO_SLIDES.length;
-    render(activeIndex);
+  const goNext = step => {
+    const nextIndex = (activeIndex + step + HERO_SLIDES.length) % HERO_SLIDES.length;
+    render(nextIndex);
   };
 
   const startAuto = () => {
     if (heroSlideTimer) {
       clearInterval(heroSlideTimer);
     }
-
     heroSlideTimer = setInterval(() => {
-      if (!document.body.contains(textEl)) {
+      if (!document.body.contains(title)) {
         clearInterval(heroSlideTimer);
         heroSlideTimer = null;
         return;
       }
-
-      setSlide(activeIndex + 1);
-    }, 2600);
+      goNext(1);
+    }, 4800);
   };
 
-  const stopAuto = () => {
-    if (heroSlideTimer) {
-      clearInterval(heroSlideTimer);
-      heroSlideTimer = null;
-    }
-  };
-
-  // Navigate to stock clearance on slide text click
-  textEl.addEventListener('click', () => {
-    if (HERO_SLIDES[activeIndex] === 'STOCK CLEARANCE SALE') {
-      window.location.hash = '#/stock-clearance';
-    }
+  prev.addEventListener('click', () => {
+    goNext(-1);
+    startAuto();
   });
-  textEl.style.cursor = 'pointer';
 
-  dotsWrap.addEventListener('click', event => {
-    const target = event.target.closest('[data-hero-slide]');
-    if (!target) {
+  next.addEventListener('click', () => {
+    goNext(1);
+    startAuto();
+  });
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const index = Number(dot.getAttribute('data-hero-dot'));
+      if (Number.isFinite(index)) {
+        render(index);
+        startAuto();
+      }
+    });
+  });
+
+  startAuto();
+}
+
+function bindHomeWishlistButtons(wishlistIds, allProducts) {
+  document.querySelectorAll('[data-home-wishlist]').forEach(button => {
+    const productId = String(button.getAttribute('data-home-wishlist') || '').trim();
+    button.classList.toggle('is-active', wishlistIds.has(productId));
+    const icon = button.querySelector('i');
+    if (icon) {
+      icon.className = `${wishlistIds.has(productId) ? 'fas' : 'far'} fa-heart`;
+    }
+
+    if (button.dataset.bound === 'true') {
       return;
     }
 
-    const index = Number(target.getAttribute('data-hero-slide'));
-    if (Number.isFinite(index)) {
-      setSlide(index);
-    }
+    button.addEventListener('click', async () => {
+      const result = await toggleWishlistProductSync(productId);
+      if (!result.success) {
+        if (result.error === 'Please login first') {
+          alert('Please login to add items to your wishlist');
+        }
+        return;
+      }
+
+      if (result.active) {
+        wishlistIds.add(productId);
+      } else {
+        wishlistIds.delete(productId);
+      }
+
+      document.querySelectorAll(`[data-home-wishlist="${productId}"]`).forEach(node => {
+        node.classList.toggle('is-active', wishlistIds.has(productId));
+        const nodeIcon = node.querySelector('i');
+        if (nodeIcon) {
+          nodeIcon.className = `${wishlistIds.has(productId) ? 'fas' : 'far'} fa-heart`;
+        }
+      });
+    });
+
+    button.dataset.bound = 'true';
   });
 
-  prevBtn.addEventListener('click', () => {
-    setSlide(activeIndex - 1);
-    startAuto();
-  });
-
-  nextBtn.addEventListener('click', () => {
-    setSlide(activeIndex + 1);
-    startAuto();
-  });
-
-  shellEl.addEventListener('mouseenter', stopAuto);
-  shellEl.addEventListener('mouseleave', startAuto);
-  shellEl.addEventListener('focusin', stopAuto);
-  shellEl.addEventListener('focusout', startAuto);
-
-  render(0);
-  startAuto();
+  window.dispatchEvent(new CustomEvent('catalogHydrated', { detail: { products: allProducts } }));
 }
 
 export async function initHomePage() {
   initHomeHeroSlides();
 
-  const grid = document.getElementById('home-featured-grid');
-  if (!grid) {
+  const categoryGrid = document.getElementById('home-category-grid');
+  const newArrivalsTrack = document.getElementById('home-new-arrivals-track');
+  const bestSellersGrid = document.getElementById('home-best-sellers-grid');
+
+  if (!categoryGrid || !newArrivalsTrack || !bestSellersGrid) {
     return;
   }
 
-  let featured = [];
-  const catalogResult = await getProductsCatalog({ limit: 3, sort: 'newest' });
-  if (catalogResult.success && (catalogResult.data || []).length > 0) {
-    featured = catalogResult.data.map(normalizeProduct).slice(0, 3);
+  let products = [];
+  const catalogResult = await getProductsCatalog({ limit: 36, sort: 'newest' });
+  if (catalogResult.success && Array.isArray(catalogResult.data) && catalogResult.data.length > 0) {
+    products = catalogResult.data.map(normalizeProduct);
   } else if (!cloudflareConfig.apiBaseUrl) {
-    featured = localProducts.slice(0, 3).map(normalizeProduct);
-  } else {
-    grid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>Could not load products from backend</h3><p>Check Worker API URL, D1 data, and network logs.</p></div>';
+    products = localProducts.map(normalizeProduct);
+  }
+
+  if (products.length === 0) {
+    categoryGrid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>No products available</h3><p>Please check back soon.</p></div>';
+    newArrivalsTrack.innerHTML = '<div class="profile-empty-state"><h3>No new arrivals yet</h3></div>';
+    bestSellersGrid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>No best sellers available</h3></div>';
     return;
   }
 
-  if (featured.length === 0) {
-    grid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>No products available</h3><p>Please check back soon.</p></div>';
-    return;
-  }
+  const wishlistResult = await getUserWishlist();
+  const wishlistIds = new Set((wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
 
-  grid.innerHTML = featured.map(renderProductCard).join('');
+  const newArrivals = products.slice(0, 12);
+  const bestSellers = [...products]
+    .sort((left, right) => Number(right.stock || 0) - Number(left.stock || 0) || Number(right.price || 0) - Number(left.price || 0))
+    .slice(0, 4);
+
+  categoryGrid.innerHTML = renderCategoryCards(products);
+  newArrivalsTrack.innerHTML = newArrivals.map(product => renderHomeProductCard(product, wishlistIds.has(product.id))).join('');
+  bestSellersGrid.innerHTML = bestSellers.map(product => renderHomeProductCard(product, wishlistIds.has(product.id))).join('');
+
   initLazyLoading();
-  window.dispatchEvent(new CustomEvent('catalogHydrated', { detail: { products: featured } }));
+  bindHomeWishlistButtons(wishlistIds, products);
 }

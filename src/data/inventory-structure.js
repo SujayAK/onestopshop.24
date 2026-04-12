@@ -13,13 +13,13 @@ export const INVENTORY_STRUCTURE = {
     'Nails',
     'Earrings',
     'Bracelets',
-    'Necklace',
+    'Necklaces',
     'Bag Charms',
     'Sunglasses',
     'Hair Claw Clips',
     'Scarfs',
     'Phone Covers',
-    'Travel Pouch'
+    'Travel Pouches'
   ]
 };
 
