@@ -1,6 +1,7 @@
-import products from '../data/products.json'
-import { getOrders, signOut } from '../utils/cloudflare.js'
+import { getOrders, getProductsCatalog, signOut } from '../utils/cloudflare.js'
 import { cart } from '../utils/cart.js'
+
+let wishlistCatalog = []
 
 function getStoredUser() {
   try {
@@ -36,7 +37,7 @@ function getUserDisplayName(user) {
 
 function renderWishlistCards() {
   const wishlistIds = getWishlistIds()
-  const wishedProducts = products.filter(product => wishlistIds.includes(String(product.id).trim()))
+  const wishedProducts = wishlistCatalog.filter(product => wishlistIds.includes(String(product.id).trim()))
 
   if (wishedProducts.length === 0) {
     return `
@@ -72,6 +73,21 @@ function renderWishlistCards() {
         .join('')}
     </div>
   `
+}
+
+async function hydrateWishlistCatalog() {
+  const result = await getProductsCatalog({ limit: 500, sort: 'newest' })
+  if (result.success && Array.isArray(result.data)) {
+    wishlistCatalog = result.data
+  } else {
+    wishlistCatalog = []
+  }
+
+  const wishlistList = document.getElementById('profile-wishlist-list')
+  if (wishlistList) {
+    wishlistList.innerHTML = renderWishlistCards()
+    bindWishlistActions()
+  }
 }
 
 export function ProfilePage(tab = 'overview') {
@@ -355,7 +371,7 @@ function bindWishlistActions() {
   document.querySelectorAll('.btn-add-wishlist-to-cart').forEach(button => {
     button.addEventListener('click', event => {
       const productId = String(event.currentTarget.dataset.productId || '').trim()
-      const product = products.find(item => String(item.id).trim() === productId)
+      const product = wishlistCatalog.find(item => String(item.id).trim() === productId)
       if (!product) {
         return
       }
@@ -419,6 +435,7 @@ export function initProfilePage(initialTab = 'overview') {
   }
 
   bindWishlistActions()
+  void hydrateWishlistCatalog()
   hydrateOrders()
 
   document.querySelectorAll('.profile-action-btn').forEach(button => {

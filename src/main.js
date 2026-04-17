@@ -14,7 +14,6 @@ import { LoginPage, initLoginPage } from './pages/login.js';
 import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ForgotPasswordPage, initForgotPasswordPage } from './pages/forgot-password.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
-import products from './data/products.json';
 import { INVENTORY_STRUCTURE } from './data/inventory-structure.js';
 import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig, getTaxonomyTree } from './utils/cloudflare.js';
 import { cart } from './utils/cart.js';
@@ -53,10 +52,6 @@ function registerCatalogProducts(productsList = []) {
       productCatalogById.set(normalized.id, normalized);
     }
   });
-}
-
-if (!cloudflareConfig.apiBaseUrl) {
-  registerCatalogProducts(products);
 }
 
 function isAuthenticated() {

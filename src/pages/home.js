@@ -1,4 +1,3 @@
-import localProducts from '../data/products.json';
 import { getProductsCatalog, cloudflareConfig, getUserWishlist, toggleWishlistProductSync } from '../utils/cloudflare.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
 
@@ -394,8 +393,6 @@ export async function initHomePage() {
   const catalogResult = await getProductsCatalog({ limit: 36, sort: 'newest' });
   if (catalogResult.success && Array.isArray(catalogResult.data) && catalogResult.data.length > 0) {
     products = catalogResult.data.map(normalizeProduct);
-  } else if (!cloudflareConfig.apiBaseUrl) {
-    products = localProducts.map(normalizeProduct);
   }
 
   if (products.length === 0) {

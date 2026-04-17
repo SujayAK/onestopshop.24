@@ -1,5 +1,3 @@
-import seedProducts from '../data/products.json';
-
 function resolveApiBaseUrl() {
   const configuredBaseUrl = String(import.meta.env.VITE_CLOUDFLARE_API_BASE_URL || '').trim().replace(/\/$/, '');
   if (configuredBaseUrl) {
@@ -148,43 +146,13 @@ async function cachedRemoteRequest(cacheKey, ttlMs, fetcher, options = {}) {
   return result;
 }
 
-function normalizeProduct(product) {
-  if (!product) {
-    return null;
-  }
-
-  const id = String(product.id ?? '').trim();
-  if (!id) {
-    return null;
-  }
-
-  return {
-    ...product,
-    id,
-    price: Number(product.price || 0),
-    stock: Number.isFinite(Number(product.stock)) ? Number(product.stock) : null,
-    image_url: product.image_url || product.image || null,
-    active: product.active !== false
-  };
-}
-
-const seedCatalog = seedProducts.map(normalizeProduct).filter(Boolean);
-
-function getSeedInventory() {
-  return seedCatalog.reduce((accumulator, product) => {
-    accumulator[product.id] = Number.isFinite(Number(product.stock)) ? Number(product.stock) : 0;
-    return accumulator;
-  }, {});
-}
-
 function getInventoryState() {
-  const fallback = getSeedInventory();
   const stored = readJsonStorage(STORAGE_KEYS.inventory, null);
   if (stored && typeof stored === 'object') {
-    return { ...fallback, ...stored };
+    return stored;
   }
-  writeJsonStorage(STORAGE_KEYS.inventory, fallback);
-  return fallback;
+  writeJsonStorage(STORAGE_KEYS.inventory, {});
+  return {};
 }
 
 function setInventoryState(state) {
@@ -294,7 +262,9 @@ async function request(path, options = {}) {
     try {
       response = await runFetch('omit', REQUEST_RETRY_TIMEOUT_MS);
     } catch (retryError) {
-      console.error('Cloudflare API request failed', url, retryError);
+      if (retryError?.name !== 'AbortError') {
+        console.error('Cloudflare API request failed', url, retryError);
+      }
       return { success: false, error: 'Failed to reach Cloudflare API', data: null };
     }
   }
@@ -358,12 +328,7 @@ function sortProducts(products, sort) {
 }
 
 function getLocalCatalog() {
-  const inventory = getInventoryState();
-  return seedCatalog.map(product => ({
-    ...product,
-    image_url: product.image_url || null,
-    stock: Number.isFinite(Number(inventory[product.id])) ? Number(inventory[product.id]) : product.stock
-  }));
+  return [];
 }
 
 function filterProducts(products, options = {}) {
@@ -563,11 +528,7 @@ export async function getProductsCatalog(options = {}) {
     }
   }
 
-  const normalized = normalizeOptions(options);
-  let products = getLocalCatalog();
-  products = filterProducts(products, normalized);
-  products = sortProducts(products, normalized.sort).slice(normalized.offset, normalized.offset + normalized.limit);
-  return { success: true, data: products };
+  return { success: true, data: [] };
 }
 
 export async function getProductsCatalogAdvanced(options = {}) {
@@ -597,14 +558,7 @@ export async function getStockClearanceCategories() {
     }
   }
 
-  const categories = new Set();
-  getLocalCatalog().forEach(product => {
-    if (Number(product.discount || 0) > 0 || String(product.category || '').toLowerCase().includes('clearance')) {
-      categories.add(String(product.category || 'Clearance'));
-    }
-  });
-
-  return { success: true, data: [...categories].sort((left, right) => left.localeCompare(right)) };
+  return { success: true, data: [] };
 }
 
 export async function getProduct(id) {
@@ -620,8 +574,7 @@ export async function getProduct(id) {
     }
   }
 
-  const product = getLocalCatalog().find(item => String(item.id) === productId);
-  return product ? { success: true, data: product } : { success: false, error: 'Product not found', data: null };
+  return { success: false, error: 'Product not found', data: null };
 }
 
 export async function getTaxonomyTree() {
@@ -632,26 +585,7 @@ export async function getTaxonomyTree() {
     }
   }
 
-  const products = getLocalCatalog();
-  const categoryMap = new Map();
-
-  products.forEach(product => {
-    const category = String(product.category || 'General').trim();
-    if (!categoryMap.has(category)) {
-      categoryMap.set(category, {
-        id: category,
-        name: category,
-        slug: category.toLowerCase().replace(/\s+/g, '-'),
-        parent_id: null,
-        depth: 1,
-        sort_order: 0,
-        image_url: product.image_url || null,
-        active: true
-      });
-    }
-  });
-
-  return { success: true, data: [...categoryMap.values()] };
+  return { success: true, data: [] };
 }
 
 export async function getInventoryTaxonomy() {
@@ -749,10 +683,35 @@ export async function getInventoryByProductIds(productIds = []) {
   }
 
   if (API_BASE_URL) {
-    const sortedIds = [...ids].sort();
-    const remote = await cachedRemoteRequest(cacheKeyFor(`inventory:${sortedIds.join(',')}`), 60 * 1000, () => request(`/inventory?ids=${ids.join(',')}`), { persist: false });
-    if (remote.success) {
-      return remote;
+    const chunkSize = 8;
+    const chunks = [];
+
+    for (let index = 0; index < ids.length; index += chunkSize) {
+      chunks.push(ids.slice(index, index + chunkSize));
+    }
+
+    const responses = await Promise.all(chunks.map(async chunk => {
+      const sortedChunk = [...chunk].sort();
+      return cachedRemoteRequest(
+        cacheKeyFor(`inventory:${sortedChunk.join(',')}`),
+        60 * 1000,
+        () => request(`/inventory?ids=${chunk.join(',')}`),
+        { persist: false }
+      );
+    }));
+
+    const merged = [];
+    let allSucceeded = true;
+    responses.forEach(response => {
+      if (response && response.success && Array.isArray(response.data)) {
+        merged.push(...response.data);
+      } else {
+        allSucceeded = false;
+      }
+    });
+
+    if (allSucceeded && merged.length > 0) {
+      return { success: true, data: merged };
     }
   }
 
@@ -937,7 +896,7 @@ export async function updateAnnouncementBarMessage(message) {
 export function subscribeToInventoryUpdates(callback) {
   if (API_BASE_URL) {
     const interval = window.setInterval(async () => {
-      const result = await getInventoryByProductIds(seedCatalog.map(product => product.id).slice(0, 24));
+      const result = await getInventoryByProductIds(seedCatalog.map(product => product.id).slice(0, 16));
       if (result.success) {
         result.data.forEach(item => callback?.(item));
       }
