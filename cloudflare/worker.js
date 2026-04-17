@@ -757,6 +757,53 @@ async function handleMediaRequest(request, env, pathname) {
   return new Response(object.body, { headers });
 }
 
+function isAuthorizedR2Purge(request, env) {
+  const secret = String(env.ADMIN_R2_PURGE_SECRET || '').trim();
+  if (!secret) {
+    return false;
+  }
+
+  const headerSecret = String(request.headers.get('x-admin-secret') || '').trim();
+  const bearerSecret = String(request.headers.get('authorization') || '').trim().replace(/^Bearer\s+/i, '');
+  return headerSecret === secret || bearerSecret === secret;
+}
+
+async function handleR2Purge(request, env, url, allowedOrigin) {
+  if (request.method !== 'POST') {
+    return json({ success: false, error: 'Method not allowed' }, { status: 405, headers: corsHeaders(allowedOrigin) });
+  }
+
+  if (!env.MEDIA_BUCKET) {
+    return json({ success: false, error: 'MEDIA_BUCKET binding missing' }, { status: 500, headers: corsHeaders(allowedOrigin) });
+  }
+
+  if (!isAuthorizedR2Purge(request, env)) {
+    return json({ success: false, error: 'Unauthorized' }, { status: 401, headers: corsHeaders(allowedOrigin) });
+  }
+
+  const body = await readJson(request);
+  const prefix = String(body.prefix || url.searchParams.get('prefix') || '').trim();
+  const batchSize = 1000;
+  let cursor;
+  let deleted = 0;
+  let scanned = 0;
+
+  do {
+    const listing = await env.MEDIA_BUCKET.list({ prefix, cursor, limit: batchSize });
+    const keys = (listing.objects || []).map(object => object.key).filter(Boolean);
+    scanned += keys.length;
+
+    if (keys.length > 0) {
+      await env.MEDIA_BUCKET.delete(keys);
+      deleted += keys.length;
+    }
+
+    cursor = listing.truncated ? listing.cursor : null;
+  } while (cursor);
+
+  return json({ success: true, deleted, scanned, prefix: prefix || '' }, { headers: corsHeaders(allowedOrigin) });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -772,6 +819,10 @@ export default {
 
       if (pathname.startsWith('/media/')) {
         return handleMediaRequest(request, env, pathname);
+      }
+
+      if (pathname === '/api/admin/r2/purge') {
+        return handleR2Purge(request, env, url, allowedOrigin);
       }
 
       if (pathname === '/health') {

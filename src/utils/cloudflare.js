@@ -23,6 +23,8 @@ const API_BASE_URL = resolveApiBaseUrl();
 const IMAGE_BASE_URL = String(import.meta.env.VITE_CLOUDFLARE_IMAGE_BASE_URL || '').trim().replace(/\/$/, '');
 const DEV_MODE = String(import.meta.env.VITE_CLOUDFLARE_DEV_MODE || 'true').trim().toLowerCase() !== 'false';
 const CACHE_PREFIX = 'onestop.cloudflare.cache.';
+const REQUEST_TIMEOUT_MS = 8000;
+const REQUEST_RETRY_TIMEOUT_MS = 5000;
 const requestCache = new Map();
 
 const STORAGE_KEYS = {
@@ -265,28 +267,32 @@ async function request(path, options = {}) {
 
   const url = buildUrl(path);
 
-  let response;
-  try {
-    response = await fetch(url, {
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
-      },
-      ...options
-    });
-  } catch (_error) {
+  const runFetch = async (credentials, timeoutMs) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
     try {
-      response = await fetch(url, {
+      const response = await fetch(url, {
+        credentials,
         mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
           ...(options.headers || {})
         },
         ...options,
-        credentials: 'omit'
+        signal: controller.signal
       });
+      return response;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  };
+
+  let response;
+  try {
+    response = await runFetch('include', REQUEST_TIMEOUT_MS);
+  } catch (_error) {
+    try {
+      response = await runFetch('omit', REQUEST_RETRY_TIMEOUT_MS);
     } catch (retryError) {
       console.error('Cloudflare API request failed', url, retryError);
       return { success: false, error: 'Failed to reach Cloudflare API', data: null };

@@ -652,11 +652,31 @@ function initNavbar() {
     header?.removeAttribute('data-active-mega');
   };
 
+  const isDesktopMegaEnabled = () => window.innerWidth > 900;
+
+  const toggleMegaItem = (item, sectionKey) => {
+    const alreadyOpen = item.classList.contains('is-open');
+    if (alreadyOpen) {
+      closeMegaMenus();
+      return;
+    }
+
+    closeMegaMenus();
+    item.classList.add('is-open');
+    header?.classList.add('has-mega-open');
+    if (sectionKey) {
+      header?.setAttribute('data-active-mega', sectionKey);
+    }
+  };
+
   megaItems.forEach(item => {
     const sectionKey = item.getAttribute('data-nav-section');
     const trigger = item.querySelector('.nav-mega-link');
 
     const openItem = () => {
+      if (!isDesktopMegaEnabled() || sectionKey === 'home') {
+        return;
+      }
       closeMegaMenus();
       item.classList.add('is-open');
       header?.classList.add('has-mega-open');
@@ -670,6 +690,13 @@ function initNavbar() {
 
     if (trigger && sectionKey) {
       trigger.addEventListener('focus', openItem);
+      trigger.addEventListener('click', event => {
+        if (!isDesktopMegaEnabled() || sectionKey === 'home') {
+          return;
+        }
+        event.preventDefault();
+        toggleMegaItem(item, sectionKey);
+      });
     }
   });
 
@@ -681,6 +708,25 @@ function initNavbar() {
       }
     });
   }
+
+  document.addEventListener('click', event => {
+    if (!header?.contains(event.target)) {
+      closeMegaMenus();
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      closeMegaMenus();
+      closeDrawer();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (!isDesktopMegaEnabled()) {
+      closeMegaMenus();
+    }
+  });
 
   void hydrateNavbarMenus();
 

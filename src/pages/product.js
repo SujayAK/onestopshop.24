@@ -448,7 +448,7 @@ function initProductImageZoom() {
 
 export function ProductPage(id) {
   return `
-    <section class="section">
+    <section class="section section-compact product-page-section">
       <div class="container" id="product-page-root" data-product-id="${String(id || '').trim()}">
         <div class="profile-loading">Loading product...</div>
       </div>

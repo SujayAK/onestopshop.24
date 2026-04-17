@@ -12,6 +12,62 @@ import { cart } from '../utils/cart.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
 import { INVENTORY_STRUCTURE } from '../data/inventory-structure.js';
 
+const SHOP_CACHE_PREFIX = 'onestop.shop.catalog.cache.';
+const SHOP_CACHE_TTL_MS = 8 * 60 * 1000;
+
+function getShopCatalogCacheKey(category) {
+  return `${SHOP_CACHE_PREFIX}${String(category || 'all').toLowerCase()}`;
+}
+
+function readShopCatalogCache(category) {
+  const key = getShopCatalogCacheKey(category);
+  const now = Date.now();
+
+  for (const storage of [sessionStorage, localStorage]) {
+    try {
+      const raw = storage.getItem(key);
+      if (!raw) {
+        continue;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') {
+        continue;
+      }
+      if (now - Number(parsed.savedAt || 0) > SHOP_CACHE_TTL_MS) {
+        continue;
+      }
+      if (Array.isArray(parsed.products) && parsed.products.length > 0) {
+        return parsed.products;
+      }
+    } catch (_error) {
+      // Ignore malformed cache payloads.
+    }
+  }
+
+  return [];
+}
+
+function writeShopCatalogCache(category, products) {
+  if (!Array.isArray(products) || products.length === 0) {
+    return;
+  }
+
+  const key = getShopCatalogCacheKey(category);
+  const payload = JSON.stringify({ savedAt: Date.now(), products });
+
+  try {
+    sessionStorage.setItem(key, payload);
+  } catch (_error) {
+    // Ignore cache write failures.
+  }
+
+  try {
+    localStorage.setItem(key, payload);
+  } catch (_error) {
+    // Ignore cache write failures.
+  }
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -281,7 +337,7 @@ function renderSubcategoryBanner(items = []) {
   return items.map(item => `
     <a href="${item.href}" class="shop-subcategory-chip" data-subcategory-chip>
       <span class="shop-subcategory-chip-icon">
-        ${item.icon ? `<img src="${item.icon}" alt="${escapeHtml(item.name)}">` : `<span>${escapeHtml(item.name.charAt(0))}</span>`}
+        ${item.icon ? `<img src="${toThumbnailUrl(item.icon)}" alt="${escapeHtml(item.name)}" width="56" height="56" loading="lazy" decoding="async">` : `<span>${escapeHtml(item.name.charAt(0))}</span>`}
       </span>
       <span class="shop-subcategory-chip-label">${escapeHtml(item.name)}</span>
     </a>
@@ -460,7 +516,7 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
 
 export function ShopPage() {
   return `
-    <div class="container section shop-plp-shell">
+    <div class="container section section-compact shop-plp-shell">
       <div class="breadcrumbs">
         <a href="#/">Home</a> / <span>Bags</span>
       </div>
@@ -803,6 +859,7 @@ export async function initShopPage() {
     }
 
     catalogProducts = result.data;
+    writeShopCatalogCache(defaultCategory, catalogProducts);
     updateBanner(catalogProducts);
     updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
@@ -843,7 +900,19 @@ export async function initShopPage() {
     refreshProducts();
   };
 
-  // Load startup data in parallel.
+  updatePriceDisplay();
+
+  const cachedProducts = readShopCatalogCache(defaultCategory);
+  if (cachedProducts.length > 0) {
+    catalogProducts = cachedProducts;
+    updateBanner(catalogProducts);
+    updateColorFilter(catalogProducts);
+    renderResults(catalogProducts);
+  }
+
+  const initialProductsPromise = refreshProducts();
+
+  // Load taxonomy and wishlist without blocking the first products paint.
   const [taxonomyResult, wishlistResult] = await Promise.all([
     getTaxonomyTree(),
     getUserWishlist()
@@ -866,6 +935,9 @@ export async function initShopPage() {
       });
 
   wishlistIds = new Set((wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
+  if (catalogProducts.length > 0) {
+    renderResults(catalogProducts);
+  }
   const tree = buildTaxonomyTree(taxonomyRows);
   const rootItems = taxonomyRows.filter(row => row.depth === 1 || row.depth === undefined);
 
@@ -984,8 +1056,7 @@ export async function initShopPage() {
     unsubscribe();
   }, { once: true });
 
-  updatePriceDisplay();
-  refreshProducts();
+  await initialProductsPromise;
   unsubscribe = subscribeCatalogRealtime(async () => {
     await refreshProducts();
   });
