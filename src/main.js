@@ -246,14 +246,20 @@ function buildCategoryHref(sectionCategory, itemName = '') {
   return `#/shop?${params.toString()}`;
 }
 
-function renderMegaMenuLinks(section) {
+function renderDesktopDropdownLinks(section) {
+  const viewAll = `
+    <a class="nav-dropdown-item nav-dropdown-item-all" href="${buildCategoryHref(section.category)}">
+      <span>View All ${escapeHtml(section.label)}</span>
+    </a>
+  `;
+
   if (!section.items.length) {
-    return '<p class="nav-mega-empty">No subcategories available yet.</p>';
+    return `${viewAll}<p class="nav-mega-empty">No subcategories available yet.</p>`;
   }
 
-  return section.items.map(item => `
-    <a class="nav-mega-card" href="${buildCategoryHref(section.category, item.name)}">
-      <span class="nav-mega-card-label">${escapeHtml(item.name)}</span>
+  return viewAll + section.items.map(item => `
+    <a class="nav-dropdown-item" href="${buildCategoryHref(section.category, item.name)}">
+      <span>${escapeHtml(item.name)}</span>
     </a>
   `).join('');
 }
@@ -270,9 +276,9 @@ function renderDrawerLinks(section) {
 
 function renderNavbarMenus(sections) {
   sections.forEach(section => {
-    const megaGrid = document.querySelector(`[data-nav-panel-grid="${section.key}"]`);
-    if (megaGrid) {
-      megaGrid.innerHTML = renderMegaMenuLinks(section);
+    const desktopDropdown = document.querySelector(`[data-nav-dropdown-list="${section.key}"]`);
+    if (desktopDropdown) {
+      desktopDropdown.innerHTML = renderDesktopDropdownLinks(section);
     }
 
     const drawerGrid = document.querySelector(`[data-nav-drawer-grid="${section.key}"]`);
@@ -580,7 +586,6 @@ function initNavbar() {
   const drawer = document.getElementById('nav-drawer');
   const drawerOverlay = document.getElementById('nav-drawer-overlay');
   const drawerClose = document.getElementById('nav-drawer-close');
-  const navLinks = document.getElementById('nav-links');
   const megaItems = document.querySelectorAll('.nav-mega-item');
 
   const closeDrawer = () => {
@@ -648,26 +653,9 @@ function initNavbar() {
 
   const closeMegaMenus = () => {
     megaItems.forEach(item => item.classList.remove('is-open'));
-    header?.classList.remove('has-mega-open');
-    header?.removeAttribute('data-active-mega');
   };
 
   const isDesktopMegaEnabled = () => window.innerWidth > 900;
-
-  const toggleMegaItem = (item, sectionKey) => {
-    const alreadyOpen = item.classList.contains('is-open');
-    if (alreadyOpen) {
-      closeMegaMenus();
-      return;
-    }
-
-    closeMegaMenus();
-    item.classList.add('is-open');
-    header?.classList.add('has-mega-open');
-    if (sectionKey) {
-      header?.setAttribute('data-active-mega', sectionKey);
-    }
-  };
 
   megaItems.forEach(item => {
     const sectionKey = item.getAttribute('data-nav-section');
@@ -679,10 +667,6 @@ function initNavbar() {
       }
       closeMegaMenus();
       item.classList.add('is-open');
-      header?.classList.add('has-mega-open');
-      if (sectionKey) {
-        header?.setAttribute('data-active-mega', sectionKey);
-      }
     };
 
     item.addEventListener('mouseenter', openItem);
@@ -690,13 +674,6 @@ function initNavbar() {
 
     if (trigger && sectionKey) {
       trigger.addEventListener('focus', openItem);
-      trigger.addEventListener('click', event => {
-        if (!isDesktopMegaEnabled() || sectionKey === 'home') {
-          return;
-        }
-        event.preventDefault();
-        toggleMegaItem(item, sectionKey);
-      });
     }
   });
 

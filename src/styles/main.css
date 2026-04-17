@@ -1114,14 +1114,72 @@ header.main-header {
   transform: scaleX(1);
 }
 
-.nav-mega-panels {
+.nav-list-dropdown {
   position: absolute;
+  top: calc(100% + 0.5rem);
   left: 50%;
-  top: calc(100% + 0.45rem);
-  width: min(96vw, 1140px);
-  transform: translateX(-50%);
-  z-index: 980;
+  transform: translateX(-50%) translateY(-10px);
+  width: min(320px, 76vw);
+  border-radius: 16px;
+  border: 1px solid rgba(235, 198, 225, 0.85);
+  background: linear-gradient(180deg, rgba(255, 251, 254, 0.99) 0%, rgba(255, 244, 251, 0.98) 100%);
+  box-shadow: 0 16px 40px rgba(47, 16, 40, 0.16);
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transition: opacity 0.24s ease, transform 0.24s ease, visibility 0s linear 0.24s;
+  z-index: 985;
+}
+
+.nav-list-dropdown-inner {
+  padding: 0.42rem;
+  display: grid;
+  gap: 0.28rem;
+  max-height: min(56vh, 430px);
+  overflow-y: auto;
+}
+
+.nav-dropdown-item {
+  display: block;
+  padding: 0.64rem 0.72rem;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  color: #462f42;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: none;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-dropdown-item:hover {
+  color: #a02e76;
+  background: rgba(255, 105, 180, 0.1);
+  border-color: rgba(255, 105, 180, 0.26);
+  transform: translateX(3px);
+}
+
+.nav-dropdown-item-all {
+  color: #8a2f67;
+  border-color: rgba(233, 190, 220, 0.8);
+  background: rgba(255, 239, 250, 0.78);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.74rem;
+}
+
+.nav-mega-item.is-open .nav-list-dropdown,
+.nav-mega-item:hover .nav-list-dropdown,
+.nav-mega-item:focus-within .nav-list-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.nav-mega-panels {
+  display: none !important;
 }
 
 .nav-mega-panel {
@@ -1398,6 +1456,10 @@ body.nav-drawer-open {
   }
 
   .nav-mega-panels {
+    display: none;
+  }
+
+  .nav-list-dropdown {
     display: none;
   }
 

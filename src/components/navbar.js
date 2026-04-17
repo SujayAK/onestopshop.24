@@ -22,9 +22,19 @@ export function Navbar() {
             </li>
             <li class="nav-mega-item" data-nav-section="bags">
               <a href="#/shop?cat=Bags" class="nav-mega-link" data-nav-trigger="bags">BAGS</a>
+              <div class="nav-list-dropdown" data-nav-dropdown="bags" aria-label="Bags categories">
+                <div class="nav-list-dropdown-inner" data-nav-dropdown-list="bags">
+                  <span class="nav-mega-loading">Loading bag categories...</span>
+                </div>
+              </div>
             </li>
             <li class="nav-mega-item" data-nav-section="accessories">
               <a href="#/shop?cat=Accessories" class="nav-mega-link" data-nav-trigger="accessories">ACCESSORIES</a>
+              <div class="nav-list-dropdown" data-nav-dropdown="accessories" aria-label="Accessories categories">
+                <div class="nav-list-dropdown-inner" data-nav-dropdown-list="accessories">
+                  <span class="nav-mega-loading">Loading accessories...</span>
+                </div>
+              </div>
             </li>
           </ul>
         </nav>
@@ -42,34 +52,6 @@ export function Navbar() {
             <span></span>
             <span></span>
           </button>
-        </div>
-      </div>
-
-      <div class="nav-mega-panels" id="nav-mega-panels" aria-hidden="true">
-        <div class="nav-mega-panel" data-nav-panel="bags" aria-label="Bags categories">
-          <div class="nav-mega-panel-inner">
-            <div class="nav-mega-panel-copy">
-              <p class="nav-mega-kicker">Curated edit</p>
-              <h3>BAGS</h3>
-              <p>Browse the latest bag silhouettes and switch between color variants instantly.</p>
-            </div>
-            <div class="nav-mega-grid" data-nav-panel-grid="bags">
-              <span class="nav-mega-loading">Loading bag categories...</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="nav-mega-panel" data-nav-panel="accessories" aria-label="Accessories categories">
-          <div class="nav-mega-panel-inner">
-            <div class="nav-mega-panel-copy">
-              <p class="nav-mega-kicker">Curated edit</p>
-              <h3>ACCESSORIES</h3>
-              <p>Open the accessories grid to shop the matching finish, add-ons, and gifting pieces.</p>
-            </div>
-            <div class="nav-mega-grid" data-nav-panel-grid="accessories">
-              <span class="nav-mega-loading">Loading accessories...</span>
-            </div>
-          </div>
         </div>
       </div>
 
