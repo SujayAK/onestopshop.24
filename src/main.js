@@ -247,17 +247,11 @@ function buildCategoryHref(sectionCategory, itemName = '') {
 }
 
 function renderDesktopDropdownLinks(section) {
-  const viewAll = `
-    <a class="nav-dropdown-item nav-dropdown-item-all" href="${buildCategoryHref(section.category)}">
-      <span>View All ${escapeHtml(section.label)}</span>
-    </a>
-  `;
-
   if (!section.items.length) {
-    return `${viewAll}<p class="nav-mega-empty">No subcategories available yet.</p>`;
+    return '<p class="nav-mega-empty">No subcategories available yet.</p>';
   }
 
-  return viewAll + section.items.map(item => `
+  return section.items.map(item => `
     <a class="nav-dropdown-item" href="${buildCategoryHref(section.category, item.name)}">
       <span>${escapeHtml(item.name)}</span>
     </a>
@@ -807,7 +801,9 @@ function navigate() {
     renderPage(ForgotPasswordPage());
     initForgotPasswordPage();
   } else if (hash.startsWith('#/shop')) {
-    renderPage(ShopPage());
+    const categoryMatch = hash.match(/[?&]cat=([^&]+)/i);
+    const category = categoryMatch ? decodeURIComponent(categoryMatch[1].replace(/\+/g, ' ')) : 'Bags';
+    renderPage(ShopPage(category));
     initShopPage();
   } else if (hash === '#/stock-clearance') {
     renderPage(StockClearancePage());

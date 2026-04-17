@@ -514,20 +514,42 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
   `;
 }
 
-export function ShopPage() {
+function getCategoryCopy(category = 'Bags') {
+  const label = String(category || 'Bags').trim() || 'Bags';
+  const normalized = label.toLowerCase();
+
+  if (normalized === 'accessories') {
+    return {
+      label: 'Accessories',
+      kicker: 'Accessories Collection',
+      title: 'Discover the finishing details that complete the look',
+      copy: 'Explore refined add-ons, gifting pieces, and everyday accents curated for effortless styling.'
+    };
+  }
+
+  return {
+    label: 'Bags',
+    kicker: 'Bags Collection',
+    title: 'Discover your next signature carry',
+    copy: 'Explore the most relevant silhouettes and jump straight into the color, fit, and function you need.'
+  };
+}
+
+export function ShopPage(category = 'Bags') {
+  const categoryCopy = getCategoryCopy(category);
   return `
     <div class="container section section-compact shop-plp-shell">
       <div class="breadcrumbs">
-        <a href="#/">Home</a> / <span>Bags</span>
+        <a href="#/">Home</a> / <span>${escapeHtml(categoryCopy.label)}</span>
       </div>
 
-      <section class="shop-subcategory-banner" aria-label="Bags subcategories">
+      <section class="shop-subcategory-banner" aria-label="${escapeHtml(categoryCopy.label)} subcategories">
         <div class="shop-subcategory-banner-head">
           <div>
-            <p class="shop-banner-kicker">Bags Collection</p>
-            <h1>Discover your next signature carry</h1>
+            <p class="shop-banner-kicker">${escapeHtml(categoryCopy.kicker)}</p>
+            <h1>${escapeHtml(categoryCopy.title)}</h1>
           </div>
-          <p class="shop-banner-copy">Explore the most relevant silhouettes and jump straight into the color, fit, and function you need.</p>
+          <p class="shop-banner-copy">${escapeHtml(categoryCopy.copy)}</p>
         </div>
         <div id="shop-subcategory-banner-track" class="shop-subcategory-track">
           <div class="shop-subcategory-skeleton">Loading subcategories...</div>
