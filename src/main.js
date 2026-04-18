@@ -15,7 +15,7 @@ import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ForgotPasswordPage, initForgotPasswordPage } from './pages/forgot-password.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
 import { INVENTORY_STRUCTURE } from './data/inventory-structure.js';
-import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig, getTaxonomyTree } from './utils/cloudflare.js';
+import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig, getTaxonomyTree, getProductsCatalog } from './utils/cloudflare.js';
 import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
@@ -180,6 +180,48 @@ function buildTaxonomyIndex(rows = []) {
   return tree;
 }
 
+function categoriesMatch(sectionCategory, productCategory) {
+  const section = normalizeCategoryName(sectionCategory);
+  const product = normalizeCategoryName(productCategory);
+  if (!section || !product) {
+    return false;
+  }
+
+  return section === product || section.includes(product) || product.includes(section);
+}
+
+function buildSectionItemsFromProducts(products = [], section) {
+  const itemMap = new Map();
+
+  (Array.isArray(products) ? products : []).forEach(product => {
+    if (!product || product.active === false || Number(product.active) === 0) {
+      return;
+    }
+
+    if (!categoriesMatch(section.category, product.category)) {
+      return;
+    }
+
+    const subcategory = String(product.subcategory || '').trim();
+    if (!subcategory) {
+      return;
+    }
+
+    const key = normalizeCategoryName(subcategory);
+    if (!key || itemMap.has(key)) {
+      return;
+    }
+
+    itemMap.set(key, {
+      id: `${section.key}-${String(subcategory).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name: subcategory,
+      slug: String(subcategory).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    });
+  });
+
+  return [...itemMap.values()].sort((left, right) => left.name.localeCompare(right.name));
+}
+
 function collectDescendantNames(parentId, tree) {
   const children = tree.get(String(parentId)) || [];
   const items = [];
@@ -279,11 +321,27 @@ function renderNavbarMenus(sections) {
 
 async function hydrateNavbarMenus() {
   const fallback = !cloudflareConfig.apiBaseUrl;
-  const taxonomyResult = fallback ? { success: true, data: [] } : await getTaxonomyTree();
+  const [taxonomyResult, productsResult] = fallback
+    ? [{ success: true, data: [] }, { success: true, data: [] }]
+    : await Promise.all([
+        getTaxonomyTree(),
+        getProductsCatalog({ limit: 500, sort: 'name-asc', onlyActive: true })
+      ]);
+
   const sections = buildNavigationSections(
     taxonomyResult.success && Array.isArray(taxonomyResult.data) ? taxonomyResult.data : [],
     fallback
   );
+
+  if (productsResult.success && Array.isArray(productsResult.data) && productsResult.data.length > 0) {
+    sections.forEach(section => {
+      const itemsFromProducts = buildSectionItemsFromProducts(productsResult.data, section);
+      if (itemsFromProducts.length > 0) {
+        section.items = itemsFromProducts;
+      }
+    });
+  }
+
   renderNavbarMenus(sections);
 }
 
