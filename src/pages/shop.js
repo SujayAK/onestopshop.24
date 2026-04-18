@@ -545,8 +545,8 @@ function getCategoryCopy(category = 'Bags') {
   return {
     label: 'Bags',
     kicker: 'Bags Collection',
-    title: 'Discover your next signature carry',
-    copy: 'Explore the most relevant silhouettes and jump straight into the color, fit, and function you need.'
+    title: '',
+    copy: ''
   };
 }
 
@@ -562,9 +562,9 @@ export function ShopPage(category = 'Bags') {
         <div class="shop-subcategory-banner-head">
           <div>
             <p class="shop-banner-kicker">${escapeHtml(categoryCopy.kicker)}</p>
-            <h1>${escapeHtml(categoryCopy.title)}</h1>
+            ${categoryCopy.title ? `<h1>${escapeHtml(categoryCopy.title)}</h1>` : ''}
           </div>
-          <p class="shop-banner-copy">${escapeHtml(categoryCopy.copy)}</p>
+          ${categoryCopy.copy ? `<p class="shop-banner-copy">${escapeHtml(categoryCopy.copy)}</p>` : ''}
         </div>
         <div id="shop-subcategory-banner-track" class="shop-subcategory-track">
           <div class="shop-subcategory-skeleton">Loading subcategories...</div>
