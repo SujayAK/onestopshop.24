@@ -685,6 +685,46 @@ async function handleAuth(request, env, url, allowedOrigin) {
   return json({ success: false, error: 'Method not allowed' }, { status: 405, headers: corsHeaders(allowedOrigin) });
 }
 
+async function handleUsers(request, env, url, allowedOrigin) {
+  const segments = url.pathname.split('/').filter(Boolean);
+  const userId = segments[2];
+  const isProfileRoute = segments.length === 4 && segments[3] === 'profile';
+
+  if (!userId || !isProfileRoute) {
+    return json({ success: false, error: 'Route not found' }, { status: 404, headers: corsHeaders(allowedOrigin) });
+  }
+
+  if (request.method !== 'PUT') {
+    return json({ success: false, error: 'Method not allowed' }, { status: 405, headers: corsHeaders(allowedOrigin) });
+  }
+
+  const body = await readJson(request);
+  const existing = await env.DB.prepare('SELECT id, email, user_json FROM users WHERE id = ? LIMIT 1').bind(String(userId)).first();
+
+  if (!existing) {
+    return json({ success: false, error: 'User not found' }, { status: 404, headers: corsHeaders(allowedOrigin) });
+  }
+
+  const nextMetadata = {
+    ...parseJsonPayload(existing.user_json, {}),
+    ...body
+  };
+
+  await env.DB.prepare('UPDATE users SET user_json = ? WHERE id = ?').bind(JSON.stringify(nextMetadata), String(userId)).run();
+
+  return json(
+    {
+      success: true,
+      data: {
+        id: existing.id,
+        email: existing.email,
+        user_metadata: nextMetadata
+      }
+    },
+    { headers: corsHeaders(allowedOrigin) }
+  );
+}
+
 async function handleWishlist(request, env, url, allowedOrigin) {
   const user = await getSessionUser(request, env);
   if (!user) {
@@ -863,6 +903,10 @@ export default {
 
       if (pathname.startsWith('/api/auth')) {
         return handleAuth(request, env, url, allowedOrigin);
+      }
+
+      if (pathname.startsWith('/api/users/')) {
+        return handleUsers(request, env, url, allowedOrigin);
       }
 
       if (pathname === '/api/taxonomy') {

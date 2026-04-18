@@ -4,6 +4,15 @@ import { showInfoPopup } from '../utils/ui-popup.js'
 
 let wishlistCatalog = []
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
 function getStoredUser() {
   try {
     return JSON.parse(sessionStorage.getItem('user') || 'null')
@@ -34,6 +43,41 @@ function getUserDisplayName(user) {
     user?.email?.split('@')[0] ||
     'Guest User'
   )
+}
+
+function renderProfileDetails(user) {
+  const meta = user?.user_metadata || {}
+  const rows = [
+    ['First Name', meta.first_name],
+    ['Last Name', meta.last_name],
+    ['Display Name', meta.display_name],
+    ['Email', user?.email]
+  ].filter(([, value]) => Boolean(String(value || '').trim()))
+
+  if (!rows.length) {
+    return `
+      <div class="profile-empty-state">
+        <i class="fas fa-id-card"></i>
+        <h3>No profile details saved yet</h3>
+        <p>Complete your account setup to store profile fields in the users table.</p>
+      </div>
+    `
+  }
+
+  return `
+    <div class="profile-panel-grid">
+      ${rows
+        .map(
+          ([label, value]) => `
+            <article class="profile-panel">
+              <h3>${label}</h3>
+              <p>${escapeHtml(value)}</p>
+            </article>
+          `
+        )
+        .join('')}
+    </div>
+  `
 }
 
 function renderWishlistCards() {
@@ -166,6 +210,11 @@ export function ProfilePage(tab = 'overview') {
                 <p>Keep account details current and update security settings in one place.</p>
                 <a href="#/profile?tab=settings">Open Settings</a>
               </article>
+            </div>
+
+            <div class="profile-section-block">
+              <h3>Profile Details</h3>
+              ${renderProfileDetails(user)}
             </div>
 
             <div class="profile-section-block">

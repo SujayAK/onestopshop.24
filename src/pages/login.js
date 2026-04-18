@@ -51,22 +51,6 @@ export function LoginPage() {
           <a href="#/signup" class="btn btn-outline" style="width: 100%; text-align: center;">Create Account</a>
         </div>
 
-        <div style="margin-top: 2rem;">
-          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-            <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color);">
-            <span style="font-size: 0.85rem; color: var(--text-secondary);">OR</span>
-            <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color);">
-          </div>
-          
-          <button type="button" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit; margin-bottom: 1rem; transition: all 0.3s ease;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
-            <i class="fab fa-google" style="margin-right: 0.5rem;"></i> Continue with Google
-          </button>
-          
-          <button type="button" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit; transition: all 0.3s ease;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
-            <i class="fab fa-facebook" style="margin-right: 0.5rem; color: #1877F2;"></i> Continue with Facebook
-          </button>
-        </div>
-
         <div style="background: #E3F2FD; border-left: 4px solid #2196F3; padding: 1rem; margin-top: 2rem; border-radius: 4px; font-size: 0.85rem;">
           <p style="margin: 0; color: #1565C0;"><strong>Demo Credentials:</strong></p>
           <p style="margin: 0.3rem 0; color: #1565C0;">Email: demo@onestopshop.com</p>
