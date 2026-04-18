@@ -313,13 +313,16 @@ async function handleProducts(request, env, url, allowedOrigin) {
   if (request.method === 'POST') {
     const body = await readJson(request);
     const id = body.id || crypto.randomUUID();
-    const details = typeof body.details === 'string' ? body.details : JSON.stringify(body.details || {});
-    const variants = typeof body.variants === 'string' ? body.variants : JSON.stringify(body.variants || []);
-    const mediaGallery = typeof body.media_gallery === 'string' ? body.media_gallery : JSON.stringify(body.media_gallery || []);
-    const mediaJson = typeof body.media_json === 'string' ? body.media_json : JSON.stringify(body.media_json || body.media_gallery || body.variants || []);
     const mediaSchemaVersion = Number(body.media_schema_version || 1);
+    const activeValue = body.active;
+    const active = activeValue === false || Number(activeValue) === 0 ? 0 : 1;
+    const bestsellerValue = body.bestseller ?? body.best_seller;
+    const bestseller = bestsellerValue === true || Number(bestsellerValue) === 1 ? 1 : 0;
+    const newArrivalValue = body.new_arrival ?? body.new_arrivals;
+    const newArrival = newArrivalValue === true || Number(newArrivalValue) === 1 ? 1 : 0;
+
     await env.DB.prepare(
-      'INSERT INTO products (id, name, category, subcategory, price, image_url, description, details, variants, media_gallery, media_json, media_schema_version, stock, active, discount, taxonomy_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+      'INSERT INTO products (id, name, category, subcategory, price, image_url, description, stock, active, discount, taxonomy_id, created_at, media_schema_version, bestseller, new_arrival) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), ?, ?, ?)'
     ).bind(
       id,
       body.name || 'Product',
@@ -328,15 +331,13 @@ async function handleProducts(request, env, url, allowedOrigin) {
       Number(body.price || 0),
       body.image_url || body.image || '',
       body.description || '',
-      details,
-      variants,
-      mediaGallery,
-      mediaJson,
-      Number.isFinite(mediaSchemaVersion) ? mediaSchemaVersion : 1,
       Number(body.stock || 0),
-      body.active === false ? 0 : 1,
+      active,
       Number(body.discount || 0),
-      body.taxonomy_id || null
+      body.taxonomy_id || null,
+      Number.isFinite(mediaSchemaVersion) ? mediaSchemaVersion : 1,
+      bestseller,
+      newArrival
     ).run();
 
     const mediaRows = Array.isArray(body.product_media) ? body.product_media : [];

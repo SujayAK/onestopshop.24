@@ -22,19 +22,6 @@ const HERO_SLIDES = [
   }
 ];
 
-const CATEGORY_FALLBACK = [
-  {
-    name: 'Bags',
-    href: '#/shop?cat=Bags',
-    image: 'https://placehold.co/900x1100/f3f4f6/111111?text=Add+Bags+Image'
-  },
-  {
-    name: 'Accessories',
-    href: '#/shop?cat=Accessories',
-    image: 'https://placehold.co/900x1100/f3f4f6/111111?text=Add+Accessories+Image'
-  }
-];
-
 let heroSlideTimer = null;
 
 function escapeHtml(value) {
@@ -64,6 +51,9 @@ function parseJsonValue(value, fallback) {
 
 function normalizeProduct(row) {
   const id = String(row.id ?? '').trim();
+  const bestsellerValue = row.bestseller ?? row.best_seller ?? row.best_sellers;
+  const newArrivalValue = row.new_arrival ?? row.new_arrivals;
+
   return {
     id,
     name: row.name || 'Product',
@@ -73,6 +63,8 @@ function normalizeProduct(row) {
     image: row.image || row.image_url || 'https://placehold.co/800x1000?text=Product',
     description: row.description || '',
     stock: Number.isFinite(Number(row.stock)) ? Number(row.stock) : null,
+    bestseller: bestsellerValue === true || Number(bestsellerValue) === 1,
+    new_arrival: newArrivalValue === true || Number(newArrivalValue) === 1,
     variants: parseJsonValue(row.variants || row.media_json || row.media_gallery, []),
     colors: parseJsonValue(row.colors, [])
   };
@@ -123,30 +115,6 @@ function formatINR(value) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(Number(value || 0));
-}
-
-function renderCategoryCards(products = []) {
-  const categories = CATEGORY_FALLBACK.map(item => ({ ...item }));
-
-  if (Array.isArray(products) && products.length > 0) {
-    const bagProduct = products.find(product => String(product.category || '').toLowerCase() === 'bags');
-    const accessoryProduct = products.find(product => String(product.category || '').toLowerCase() === 'accessories');
-
-    if (bagProduct?.image) {
-      categories[0].image = bagProduct.image;
-    }
-
-    if (accessoryProduct?.image) {
-      categories[1].image = accessoryProduct.image;
-    }
-  }
-
-  return categories.map(item => `
-    <a href="${item.href}" class="home-category-card">
-      <span class="home-category-media"><img src="${item.image}" alt="${escapeHtml(item.name)}"></span>
-      <span class="home-category-name">${escapeHtml(item.name)}</span>
-    </a>
-  `).join('');
 }
 
 function renderHomeProductCard(product, wished = false) {
@@ -225,17 +193,6 @@ export function HomePage() {
       <button type="button" class="home-hero-arrow next" id="home-hero-next" aria-label="Next slide"><i class="fas fa-chevron-right"></i></button>
       <div class="home-hero-dots" id="home-hero-dots">
         ${HERO_SLIDES.map((_, index) => `<button type="button" class="home-hero-dot${index === 0 ? ' is-active' : ''}" data-hero-dot="${index}" aria-label="Slide ${index + 1}"></button>`).join('')}
-      </div>
-    </section>
-
-    <section class="section home-section">
-      <div class="container">
-        <div class="home-section-head centered">
-          <h2>SHOP BY CATEGORY</h2>
-        </div>
-        <div class="home-category-grid" id="home-category-grid">
-          <div class="profile-loading" style="grid-column: 1 / -1;">Loading categories...</div>
-        </div>
       </div>
     </section>
 
@@ -381,11 +338,10 @@ function bindHomeWishlistButtons(wishlistIds, allProducts) {
 export async function initHomePage() {
   initHomeHeroSlides();
 
-  const categoryGrid = document.getElementById('home-category-grid');
   const newArrivalsTrack = document.getElementById('home-new-arrivals-track');
   const bestSellersGrid = document.getElementById('home-best-sellers-grid');
 
-  if (!categoryGrid || !newArrivalsTrack || !bestSellersGrid) {
+  if (!newArrivalsTrack || !bestSellersGrid) {
     return;
   }
 
@@ -396,7 +352,6 @@ export async function initHomePage() {
   }
 
   if (products.length === 0) {
-    categoryGrid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>No products available</h3><p>Please check back soon.</p></div>';
     newArrivalsTrack.innerHTML = '<div class="profile-empty-state"><h3>No new arrivals yet</h3></div>';
     bestSellersGrid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>No best sellers available</h3></div>';
     return;
@@ -405,12 +360,15 @@ export async function initHomePage() {
   const wishlistResult = await getUserWishlist();
   const wishlistIds = new Set((wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
 
-  const newArrivals = products.slice(0, 12);
-  const bestSellers = [...products]
-    .sort((left, right) => Number(right.stock || 0) - Number(left.stock || 0) || Number(right.price || 0) - Number(left.price || 0))
-    .slice(0, 4);
+  const flaggedNewArrivals = products.filter(product => product.new_arrival);
+  const newArrivals = (flaggedNewArrivals.length > 0 ? flaggedNewArrivals : products).slice(0, 12);
 
-  categoryGrid.innerHTML = renderCategoryCards(products);
+  const flaggedBestSellers = products.filter(product => product.bestseller);
+  const bestSellerSource = flaggedBestSellers.length > 0
+    ? flaggedBestSellers
+    : [...products].sort((left, right) => Number(right.stock || 0) - Number(left.stock || 0) || Number(right.price || 0) - Number(left.price || 0));
+  const bestSellers = bestSellerSource.slice(0, 4);
+
   newArrivalsTrack.innerHTML = newArrivals.map(product => renderHomeProductCard(product, wishlistIds.has(product.id))).join('');
   bestSellersGrid.innerHTML = bestSellers.map(product => renderHomeProductCard(product, wishlistIds.has(product.id))).join('');
 

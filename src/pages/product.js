@@ -360,6 +360,7 @@ function renderProductTemplate(product, wished, compared) {
               <button type="button" data-qty-action="increase" data-qty-target="product-qty">+</button>
             </div>
             <button id="add-to-cart-btn" class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
+            <button id="buy-now-btn" class="btn btn-outline" data-product-id="${product.id}">Buy Now</button>
           </div>
 
           <div class="product-quick-actions">
@@ -396,6 +397,7 @@ function renderProductTemplate(product, wished, compared) {
             <button type="button" data-qty-action="increase" data-qty-target="sticky-product-qty">+</button>
           </div>
           <button id="sticky-add-to-cart-btn" class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
+          <button id="sticky-buy-now-btn" class="btn btn-outline" data-product-id="${product.id}">Buy Now</button>
         </div>
       </div>
   `;
@@ -513,7 +515,9 @@ export async function initProductPage(productId) {
   const qtyInput = document.getElementById('product-qty');
   const stickyQtyInput = document.getElementById('sticky-product-qty');
   const addToCartBtn = document.getElementById('add-to-cart-btn');
+  const buyNowBtn = document.getElementById('buy-now-btn');
   const stickyAddToCartBtn = document.getElementById('sticky-add-to-cart-btn');
+  const stickyBuyNowBtn = document.getElementById('sticky-buy-now-btn');
   const wishlistBtn = document.getElementById('product-wishlist-btn');
   const compareBtn = document.getElementById('product-compare-btn');
   const colorRail = document.getElementById('product-color-rail');
@@ -673,9 +677,9 @@ export async function initProductPage(productId) {
     input.addEventListener('input', () => setQuantity(input.value));
   });
 
-  const addSelectedVariantToCart = button => {
+  const addSelectedVariantToCart = (button, options = {}) => {
     if (!button || button.disabled || button.dataset.stockBlocked === 'true') {
-      return;
+      return false;
     }
 
     const color = getActiveColor();
@@ -692,10 +696,14 @@ export async function initProductPage(productId) {
       selected_view: view.label
     }, state.quantity);
 
-    button.textContent = 'Added';
-    setTimeout(() => {
-      button.textContent = button.dataset.defaultLabel || 'Add to Cart';
-    }, 900);
+    if (!options.silent) {
+      button.textContent = 'Added';
+      setTimeout(() => {
+        button.textContent = button.dataset.defaultLabel || 'Add to Cart';
+      }, 900);
+    }
+
+    return true;
   };
 
   if (addToCartBtn) {
@@ -704,6 +712,27 @@ export async function initProductPage(productId) {
 
   if (stickyAddToCartBtn) {
     stickyAddToCartBtn.addEventListener('click', () => addSelectedVariantToCart(stickyAddToCartBtn));
+  }
+
+  const handleBuyNow = button => {
+    if (!button || button.disabled || button.dataset.stockBlocked === 'true') {
+      return;
+    }
+
+    const added = addSelectedVariantToCart(button, { silent: true });
+    if (!added) {
+      return;
+    }
+
+    window.location.hash = '#/checkout';
+  };
+
+  if (buyNowBtn) {
+    buyNowBtn.addEventListener('click', () => handleBuyNow(buyNowBtn));
+  }
+
+  if (stickyBuyNowBtn) {
+    stickyBuyNowBtn.addEventListener('click', () => handleBuyNow(stickyBuyNowBtn));
   }
 
   if (wishlistBtn) {
