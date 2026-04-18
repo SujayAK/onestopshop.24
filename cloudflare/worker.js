@@ -245,12 +245,12 @@ function applyProductFilters(sql, query, options = {}) {
   const bindings = [];
 
   if (query.get('category')) {
-    conditions.push('LOWER(category) = LOWER(?)');
+    conditions.push('LOWER(TRIM(category)) = LOWER(TRIM(?))');
     bindings.push(query.get('category'));
   }
 
   if (query.get('subcategory')) {
-    conditions.push('LOWER(subcategory) = LOWER(?)');
+    conditions.push('LOWER(TRIM(subcategory)) = LOWER(TRIM(?))');
     bindings.push(query.get('subcategory'));
   }
 

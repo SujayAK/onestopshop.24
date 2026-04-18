@@ -699,6 +699,7 @@ export async function initShopPage() {
   const colorFilterContainer = document.getElementById('shop-color-filter');
   const routeFilters = parseShopRouteFilters();
   const defaultCategory = routeFilters.category || 'Bags';
+  const hasExplicitRouteCategory = Boolean(routeFilters.category);
   let catalogProducts = [];
   let wishlistIds = new Set();
   let selectedColor = 'all';
@@ -931,8 +932,27 @@ export async function initShopPage() {
       category: defaultCategory
     });
 
-    if (!result.success || !Array.isArray(result.data)) {
-      if (cloudflareConfig.apiBaseUrl && !result.success) {
+    let finalResult = result;
+    if (
+      !hasExplicitRouteCategory
+      && result.success
+      && Array.isArray(result.data)
+      && result.data.length === 0
+    ) {
+      const fallbackResult = await getProductsCatalogAdvanced({
+        minPrice,
+        maxPrice,
+        sort: backendSort,
+        prioritizeDisplayOrder,
+        limit: 240
+      });
+      if (fallbackResult.success) {
+        finalResult = fallbackResult;
+      }
+    }
+
+    if (!finalResult.success || !Array.isArray(finalResult.data)) {
+      if (cloudflareConfig.apiBaseUrl && !finalResult.success) {
         grid.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
             <i class="fas fa-triangle-exclamation" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
@@ -945,7 +965,7 @@ export async function initShopPage() {
       return;
     }
 
-    catalogProducts = result.data;
+    catalogProducts = finalResult.data;
     writeShopCatalogCache(defaultCategory, catalogProducts);
     updateCategoryFilters(catalogProducts);
     updateBanner(catalogProducts);
