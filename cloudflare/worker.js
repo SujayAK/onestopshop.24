@@ -245,13 +245,13 @@ function applyProductFilters(sql, query, options = {}) {
   const bindings = [];
 
   if (query.get('category')) {
-    conditions.push('LOWER(TRIM(category)) = LOWER(TRIM(?))');
-    bindings.push(query.get('category'));
+    conditions.push('(LOWER(TRIM(category)) = LOWER(TRIM(?)) OR INSTR(LOWER(TRIM(category)), LOWER(TRIM(?))) > 0 OR INSTR(LOWER(TRIM(?)), LOWER(TRIM(category))) > 0)');
+    bindings.push(query.get('category'), query.get('category'), query.get('category'));
   }
 
   if (query.get('subcategory')) {
-    conditions.push('LOWER(TRIM(subcategory)) = LOWER(TRIM(?))');
-    bindings.push(query.get('subcategory'));
+    conditions.push('(LOWER(TRIM(subcategory)) = LOWER(TRIM(?)) OR INSTR(LOWER(TRIM(subcategory)), LOWER(TRIM(?))) > 0 OR INSTR(LOWER(TRIM(?)), LOWER(TRIM(subcategory))) > 0)');
+    bindings.push(query.get('subcategory'), query.get('subcategory'), query.get('subcategory'));
   }
 
   if (query.get('search')) {

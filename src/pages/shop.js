@@ -699,7 +699,6 @@ export async function initShopPage() {
   const colorFilterContainer = document.getElementById('shop-color-filter');
   const routeFilters = parseShopRouteFilters();
   const defaultCategory = routeFilters.category || 'Bags';
-  const hasExplicitRouteCategory = Boolean(routeFilters.category);
   let catalogProducts = [];
   let wishlistIds = new Set();
   let selectedColor = 'all';
@@ -934,10 +933,10 @@ export async function initShopPage() {
 
     let finalResult = result;
     if (
-      !hasExplicitRouteCategory
-      && result.success
+      result.success
       && Array.isArray(result.data)
       && result.data.length === 0
+      && defaultCategory
     ) {
       const fallbackResult = await getProductsCatalogAdvanced({
         minPrice,
