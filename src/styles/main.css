@@ -159,34 +159,41 @@ button {
   border: 1px solid rgba(236, 207, 225, 0.72);
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(255, 243, 249, 0.96), rgba(255, 232, 244, 0.9));
+  gap: 0.72rem;
+  align-items: start;
 }
-.shop-plp-shell .shop-subcategory-banner-head {
+
+.shop-plp-shell .shop-sidebar {
+  border: 1px solid #ecd7e6;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 252, 254, 0.98) 0%, rgba(255, 246, 250, 0.95) 100%);
+.shop-plp-shell .shop-stock-badge.is-low {
+  color: #8b4e00;
+  background: rgba(243, 183, 101, 0.24);
+}
+
+.shop-plp-shell .shop-stock-badge.is-out {
+  color: #9d1432;
+  background: rgba(224, 118, 143, 0.2);
+}
+
+.shop-plp-shell .shop-card-buttons {
+  margin-top: 0.32rem;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
-  align-items: end;
-  gap: 0.85rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
 }
-.shop-plp-shell .shop-banner-kicker {
-  margin: 0;
-  font-size: 0.68rem;
-  letter-spacing: 1.3px;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: #c03e83;
+
+.shop-plp-shell .shop-card-buttons .btn,
+.shop-plp-shell .shop-card-buttons .btn.btn-sm {
+  min-height: 32px;
+  padding: 8px 10px;
+  font-size: 0.66rem;
 }
-.shop-plp-shell .shop-subcategory-banner h1 {
-  margin: 0.16rem 0 0;
-  font-size: clamp(1.08rem, 2.15vw, 1.45rem);
-  line-height: 1.2;
+  min-width: 0;
 }
-.shop-plp-shell .shop-banner-copy {
-  margin: 0;
-  font-size: 0.84rem;
-  color: #6e5666;
-}
-.shop-plp-shell .shop-subcategory-track {
-  margin-top: 0.65rem;
-  display: grid;
+
+.product-page-section .product-page-layout {
   grid-auto-flow: column;
   grid-auto-columns: max-content;
   gap: 0.5rem;
@@ -201,28 +208,20 @@ button {
   display: grid;
   grid-template-columns: minmax(240px, 280px) 1fr;
   gap: 0.85rem;
-  align-items: start;
+  font-size: 0.64rem;
 }
 .shop-plp-shell .shop-sidebar {
-  position: sticky;
+  padding: 0.12rem 0.45rem;
   top: 86px;
   max-height: calc(100vh - 104px);
   overflow: auto;
   scrollbar-width: thin;
 }
 .shop-plp-shell .shop-main {
+
   min-width: 0;
 }
-.shop-plp-shell .shop-grid {
-  margin-top: 0;
-  align-content: start;
-}
-.product-page-section .container {
-  position: relative;
-  z-index: 2;
-}
 .product-page-section .product-page-layout {
-  display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
   gap: 0.95rem;
   align-items: start;
@@ -350,7 +349,7 @@ button {
 .shop-plp-shell .shop-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
+  gap: 0.72rem;
 }
 
 .shop-plp-shell .shop-grid.is-grid-2 {
@@ -379,7 +378,7 @@ button {
 .shop-plp-shell .shop-card-image-stack {
   position: relative;
   display: block;
-  aspect-ratio: 4 / 4.35;
+  aspect-ratio: 4 / 3.92;
   background: #f7f2f6;
   overflow: hidden;
 }
@@ -423,9 +422,9 @@ button {
 }
 
 .shop-plp-shell .shop-card-info {
-  padding: 0.56rem 0.68rem 0.7rem;
+  padding: 0.45rem 0.62rem 0.58rem;
   display: grid;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .shop-plp-shell .shop-card-meta-line {
@@ -433,7 +432,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.28rem;
+  margin-bottom: 0.18rem;
 }
 
 .shop-plp-shell .shop-card-category {
@@ -455,22 +454,22 @@ button {
 }
 
 .shop-plp-shell .shop-card-title {
-  font-size: 1.02rem;
-  line-height: 1.28;
-  margin: 0 0 0.28rem;
+  font-size: 0.96rem;
+  line-height: 1.22;
+  margin: 0 0 0.18rem;
 }
 
 .shop-plp-shell .shop-card-price {
-  margin: 0 0 0.34rem;
+  margin: 0 0 0.24rem;
   color: #df3e86;
-  font-size: 1.02rem;
+  font-size: 0.96rem;
   font-weight: 700;
 }
 
 .shop-plp-shell .shop-card-colors {
   display: flex;
   gap: 0.28rem;
-  margin-bottom: 0.38rem;
+  margin-bottom: 0.28rem;
 }
 
 .shop-plp-shell .shop-card-swatch {
@@ -495,7 +494,6 @@ button {
   color: #24622a;
   background: rgba(109, 199, 138, 0.17);
 }
-
 .shop-plp-shell .shop-stock-badge.is-low {
   color: #8b4e00;
   background: rgba(243, 183, 101, 0.24);
@@ -507,6 +505,23 @@ button {
 }
 
 .shop-plp-shell .shop-card-buttons {
+  margin-top: 0.32rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.shop-plp-shell .shop-card-buttons .btn,
+.shop-plp-shell .shop-card-buttons .btn.btn-sm {
+  min-height: 32px;
+  padding: 8px 10px;
+  font-size: 0.66rem;
+}
+
+.shop-plp-shell .shop-card-buttons .btn.btn-outline {
+  background: rgba(255, 255, 255, 0.92);
+}
+
   margin-top: 0.42rem;
   display: grid;
   gap: 0.42rem;
@@ -1909,10 +1924,7 @@ header.main-header {
 .nav-mega-item:focus-within .nav-list-dropdown {
   opacity: 1;
   visibility: visible;
-  pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
-  transition: opacity 0.24s ease, transform 0.24s ease;
-}
+
 
 .nav-mega-panels {
   display: none !important;
@@ -4076,7 +4088,6 @@ footer.main-footer {
   color: #24622a;
   background: rgba(87, 178, 109, 0.16);
 }
-
 .shop-stock-pill.is-low {
   color: #8b4e00;
   background: rgba(243, 183, 101, 0.24);
@@ -4086,12 +4097,19 @@ footer.main-footer {
   color: #9d1432;
   background: rgba(224, 118, 143, 0.2);
 }
-
-.shop-listing-actions {
-  opacity: 1;
-  max-height: 400px;
-  overflow: visible;
-  transition: opacity 0.2s ease;
+  background: rgba(224, 118, 143, 0.2);
+}
+.shop-plp-shell .shop-card-buttons {
+  margin-top: 0.32rem;
+.shop-plp-shell .shop-card-buttons {
+  margin-top: 0.32rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.5rem;
