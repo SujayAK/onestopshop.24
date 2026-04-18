@@ -255,9 +255,9 @@ function applyProductFilters(sql, query, options = {}) {
   }
 
   if (query.get('search')) {
-    conditions.push('(LOWER(name) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?))');
+    conditions.push('(LOWER(name) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(category) LIKE LOWER(?) OR LOWER(subcategory) LIKE LOWER(?))');
     const pattern = `%${query.get('search')}%`;
-    bindings.push(pattern, pattern);
+    bindings.push(pattern, pattern, pattern, pattern);
   }
 
   if (query.get('minPrice')) {

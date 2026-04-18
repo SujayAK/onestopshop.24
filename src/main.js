@@ -14,6 +14,7 @@ import { LoginPage, initLoginPage } from './pages/login.js';
 import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ForgotPasswordPage, initForgotPasswordPage } from './pages/forgot-password.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
+import { SearchPage, initSearchPage } from './pages/search.js';
 import { INVENTORY_STRUCTURE } from './data/inventory-structure.js';
 import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig, getTaxonomyTree, getProductsCatalog } from './utils/cloudflare.js';
 import { cart } from './utils/cart.js';
@@ -952,16 +953,13 @@ function navigate() {
   } else if (hash === '#/wishlist') {
     window.location.hash = '#/profile?tab=wishlist';
     return;
-  } else if (hash === '#/search') {
-    const pageName = hash.substring(2).charAt(0).toUpperCase() + hash.substring(3);
-    renderPage(`
-      <div class="container section" style="text-align: center; min-height: 50vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-        <i class="fas fa-tools" style="font-size: 4rem; color: var(--accent-pink); margin-bottom: 2rem;"></i>
-        <h1>${pageName} Feature Coming Soon</h1>
-        <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem;">We are currently working on the ${pageName} experience to make it perfect for you. Stay tuned!</p>
-        <a href="#/shop" class="btn">Continue Shopping</a>
-      </div>
-    `);
+  } else if (hash.startsWith('#/search')) {
+    const queryString = hash.includes('?') ? hash.split('?').slice(1).join('?') : '';
+    const params = new URLSearchParams(queryString);
+    const searchQuery = String(params.get('q') || '').trim();
+
+    renderPage(SearchPage(searchQuery));
+    initSearchPage(searchQuery);
   } else {
     renderPage(`<div class="container section" style="text-align:center;"><h1>404 Page Not Found</h1><a href="#/" class="btn">Back Home</a></div>`);
   }
