@@ -1,5 +1,6 @@
 import { getOrders, getProductsCatalog, signOut } from '../utils/cloudflare.js'
 import { cart } from '../utils/cart.js'
+import { showInfoPopup } from '../utils/ui-popup.js'
 
 let wishlistCatalog = []
 
@@ -442,12 +443,12 @@ export function initProfilePage(initialTab = 'overview') {
     button.addEventListener('click', () => {
       const action = button.dataset.action || ''
       if (action.startsWith('address-')) {
-        alert('Address management UI will be enabled next. For now, place orders with checkout form address fields.')
+        showInfoPopup('Address management UI will be enabled next. For now, place orders with checkout form address fields.')
         return
       }
 
       if (action === 'settings-profile') {
-        alert('Profile details update screen is coming next. Basic account data is already saved at signup.')
+        showInfoPopup('Profile details update screen is coming next. Basic account data is already saved at signup.')
         return
       }
 
@@ -457,7 +458,7 @@ export function initProfilePage(initialTab = 'overview') {
       }
 
       if (action === 'settings-notifications' || action === 'settings-privacy') {
-        alert('This settings module is planned. Core shopping/account flows are active now.')
+        showInfoPopup('This settings module is planned. Core shopping/account flows are active now.')
       }
     })
   })

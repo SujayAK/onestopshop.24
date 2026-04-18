@@ -7,6 +7,7 @@ import {
   toggleCompareProductSync
 } from '../utils/cloudflare.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl, toFullImageUrl } from '../utils/image-optimization.js';
+import { showAuthRequiredPopup, showInfoPopup } from '../utils/ui-popup.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -739,7 +740,11 @@ export async function initProductPage(productId) {
     wishlistBtn.addEventListener('click', async () => {
       const result = await toggleWishlistProductSync(id);
       if (!result.success) {
-        alert(result.error === 'Please login first' ? 'Please login to add items to your wishlist' : 'Unable to update wishlist');
+        if (result.error === 'Please login first') {
+          showAuthRequiredPopup('Sign in to add items to your wishlist and keep them saved.');
+        } else {
+          showInfoPopup('Unable to update wishlist right now. Please try again.');
+        }
         return;
       }
       wishlistBtn.classList.toggle('is-active', result.active);
@@ -752,11 +757,11 @@ export async function initProductPage(productId) {
       const result = await toggleCompareProductSync(id);
       if (!result.success) {
         if (result.error === 'Please login first') {
-          alert('Please login to compare products');
+          showAuthRequiredPopup('Sign in to compare products across sessions.');
         } else if (result.error && result.error.toLowerCase().includes('limit')) {
-          alert('You can compare up to 4 products at once.');
+          showInfoPopup('You can compare up to 4 products at once.');
         } else {
-          alert('Unable to update compare list');
+          showInfoPopup('Unable to update compare list right now.');
         }
         return;
       }

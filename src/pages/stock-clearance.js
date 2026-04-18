@@ -9,6 +9,7 @@ import {
 } from '../utils/cloudflare.js';
 import { cart } from '../utils/cart.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
+import { showAuthRequiredPopup, showInfoPopup } from '../utils/ui-popup.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -346,7 +347,7 @@ export async function initStockClearancePage() {
             btn.classList.remove('is-active');
           }
         } else if (result.error === 'Please login first') {
-          alert('Please login to add items to your wishlist');
+          showAuthRequiredPopup('Sign in to add items to your wishlist and sync it across devices.');
         }
       });
     });
@@ -369,9 +370,9 @@ export async function initStockClearancePage() {
             btn.classList.remove('is-active');
           }
         } else if (result.error && result.error.includes('limit')) {
-          alert('You can compare up to 4 products');
+          showInfoPopup('You can compare up to 4 products.');
         } else if (result.error === 'Please login first') {
-          alert('Please login to compare products');
+          showAuthRequiredPopup('Sign in to compare products across sessions.');
         }
       });
     });

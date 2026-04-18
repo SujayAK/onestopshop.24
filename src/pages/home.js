@@ -1,5 +1,6 @@
 import { getProductsCatalog, cloudflareConfig, getUserWishlist, toggleWishlistProductSync } from '../utils/cloudflare.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
+import { showAuthRequiredPopup } from '../utils/ui-popup.js';
 
 const HERO_SLIDES = [
   {
@@ -309,7 +310,7 @@ function bindHomeWishlistButtons(wishlistIds, allProducts) {
       const result = await toggleWishlistProductSync(productId);
       if (!result.success) {
         if (result.error === 'Please login first') {
-          alert('Please login to add items to your wishlist');
+          showAuthRequiredPopup('Sign in to add items to your wishlist and sync it across devices.');
         }
         return;
       }

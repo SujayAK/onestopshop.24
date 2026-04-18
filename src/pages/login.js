@@ -78,6 +78,7 @@ export function LoginPage() {
 }
 
 import { signIn } from '../utils/cloudflare.js';
+import { showInfoPopup } from '../utils/ui-popup.js';
 
 export function initLoginPage() {
   const passwordInput = document.getElementById('login-password');
@@ -106,7 +107,7 @@ export function initLoginPage() {
 
       // Validation
       if (!email || !password) {
-        alert('Please fill in all fields');
+        showInfoPopup('Please fill in all fields.');
         return;
       }
 

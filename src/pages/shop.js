@@ -11,6 +11,7 @@ import {
 import { cart } from '../utils/cart.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
 import { INVENTORY_STRUCTURE } from '../data/inventory-structure.js';
+import { showAuthRequiredPopup } from '../utils/ui-popup.js';
 
 const SHOP_CACHE_PREFIX = 'onestop.shop.catalog.cache.';
 const SHOP_CACHE_TTL_MS = 8 * 60 * 1000;
@@ -909,7 +910,7 @@ export async function initShopPage() {
             btn.classList.remove('is-active');
           }
         } else if (result.error === 'Please login first') {
-          alert('Please login to add items to your wishlist');
+          showAuthRequiredPopup('Sign in to add items to your wishlist and sync it across devices.');
         }
       });
     });

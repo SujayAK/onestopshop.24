@@ -1,6 +1,7 @@
 import { cart } from '../utils/cart.js';
 import { razorpayPayment } from '../utils/razorpay.js';
 import { createOrder, getCurrentUser, validateCoupon, redeemCoupon, getInventoryByProductIds, reserveInventory, releaseInventory } from '../utils/cloudflare.js';
+import { showAuthRequiredPopup, showInfoPopup } from '../utils/ui-popup.js';
 
 export function CheckoutPage() {
   const items = cart.getItems();
@@ -140,15 +141,14 @@ export function initCheckoutPage() {
       // Validate form
       const form = document.getElementById('checkout-form');
       if (!form.checkValidity()) {
-        alert('Please fill in all required fields');
+        showInfoPopup('Please fill in all required fields.');
         return;
       }
 
       // Check if user is logged in
       const userStr = sessionStorage.getItem('user');
       if (!userStr) {
-        alert('Please log in to complete your purchase');
-        window.location.hash = '#/login';
+        showAuthRequiredPopup('Sign in to complete your purchase and keep order tracking in your account.');
         return;
       }
 
@@ -183,7 +183,7 @@ export function initCheckoutPage() {
         // Pre-check inventory to avoid placing orders for out-of-stock quantities.
         const inventoryResult = await getInventoryByProductIds(items.map(item => item.id));
         if (!inventoryResult.success) {
-          alert('Could not verify live inventory right now. Please try again.');
+          showInfoPopup('Could not verify live inventory right now. Please try again.');
           proceedBtn.disabled = false;
           proceedBtn.textContent = 'Proceed to Payment';
           return;
@@ -199,7 +199,7 @@ export function initCheckoutPage() {
         });
 
         if (unavailableItem) {
-          alert(`${unavailableItem.name} has only ${inventoryMap.get(String(unavailableItem.id)) || 0} left in stock. Please update your cart.`);
+          showInfoPopup(`${unavailableItem.name} has only ${inventoryMap.get(String(unavailableItem.id)) || 0} left in stock. Please update your cart.`);
           window.location.hash = '#/cart';
           proceedBtn.disabled = false;
           proceedBtn.textContent = 'Proceed to Payment';
@@ -212,7 +212,7 @@ export function initCheckoutPage() {
         );
 
         if (!reserveResult.success || !reserveResult.data) {
-          alert('Some items just went out of stock. Please review your cart and try again.');
+          showInfoPopup('Some items just went out of stock. Please review your cart and try again.');
           window.location.hash = '#/cart';
           proceedBtn.disabled = false;
           proceedBtn.textContent = 'Proceed to Payment';
@@ -229,7 +229,7 @@ export function initCheckoutPage() {
 
         if (!orderResult.success) {
           await releaseInventory(items.map(item => ({ id: item.id, quantity: item.quantity })));
-          alert('Failed to create order: ' + orderResult.error);
+          showInfoPopup(`Failed to create order: ${orderResult.error}`);
           proceedBtn.disabled = false;
           proceedBtn.textContent = 'Proceed to Payment';
           return;
@@ -273,7 +273,7 @@ export function initCheckoutPage() {
         await razorpayPayment.initiatePayment(paymentDetails);
       } catch (error) {
         console.error('Checkout error:', error);
-        alert('Error processing checkout: ' + error.message);
+        showInfoPopup(`Error processing checkout: ${error.message}`);
         proceedBtn.disabled = false;
         proceedBtn.textContent = 'Proceed to Payment';
       }

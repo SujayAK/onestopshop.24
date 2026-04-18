@@ -104,6 +104,7 @@ export function SignupPage() {
 
 import { signUp, updateUserProfile } from '../utils/cloudflare.js';
 import { sendWelcomeEmail } from '../utils/email.js';
+import { showInfoPopup } from '../utils/ui-popup.js';
 
 export function initSignupPage() {
   const signupPasswordInput = document.getElementById('signup-password');
@@ -147,7 +148,7 @@ export function initSignupPage() {
 
       // Validation
       if (!fname || !lname || !email || !password || !confirmPassword) {
-        alert('Please fill in all fields');
+        showInfoPopup('Please fill in all fields.');
         return;
       }
 
@@ -165,7 +166,7 @@ export function initSignupPage() {
       }
 
       if (!termsAgree) {
-        alert('Please agree to Terms & Conditions');
+        showInfoPopup('Please agree to Terms & Conditions.');
         return;
       }
 
@@ -222,7 +223,7 @@ export function initSignupPage() {
           return;
         }
 
-        alert('Account created successfully. Please verify your email, then sign in.');
+        showInfoPopup('Account created successfully. Please verify your email, then sign in.');
         window.location.hash = '#/login';
       } catch (error) {
         console.error('Signup error:', error);
