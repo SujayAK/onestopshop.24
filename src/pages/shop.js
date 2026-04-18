@@ -1,5 +1,4 @@
 import {
-  getTaxonomyTree,
   getProductsCatalogAdvanced,
   getUserWishlist,
   getUserCompare,
@@ -10,7 +9,6 @@ import {
 } from '../utils/cloudflare.js';
 import { cart } from '../utils/cart.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
-import { INVENTORY_STRUCTURE } from '../data/inventory-structure.js';
 import { showAuthRequiredPopup } from '../utils/ui-popup.js';
 
 const SHOP_CACHE_PREFIX = 'onestop.shop.catalog.cache.';
@@ -307,28 +305,44 @@ function deriveFilterColors(products = []) {
   return [...palette.values()].slice(0, 12);
 }
 
-function buildBagsBannerItems(taxonomyRows = [], products = []) {
-  const category = 'Bags';
-  const rootRows = Array.isArray(taxonomyRows) ? taxonomyRows.filter(row => normalizeText(row.name).toLowerCase() === category.toLowerCase() && (row.depth === 1 || row.parent_id === null)) : [];
-  const rootId = rootRows[0]?.id || 'bags';
-  const childRows = Array.isArray(taxonomyRows)
-    ? taxonomyRows.filter(row => String(row.parent_id || '').trim() === String(rootId).trim() || normalizeText(row.category).toLowerCase() === category.toLowerCase())
-    : [];
+function deriveSubcategoryOptions(products = [], category = '') {
+  const normalizedCategory = normalizeLookup(category);
+  const scopedProducts = products.filter(product => {
+    if (!normalizedCategory) {
+      return true;
+    }
+    return normalizeLookup(product.category) === normalizedCategory;
+  });
 
-  const subcategories = childRows.length > 0
-    ? childRows
-    : (INVENTORY_STRUCTURE.Bags || []).map((name, index) => ({ id: `bags-${normalizeSlug(name)}`, name, slug: normalizeSlug(name), sort_order: index + 1 }));
+  const map = new Map();
+  scopedProducts.forEach(product => {
+    const subcategory = normalizeText(product.subcategory);
+    if (!subcategory) {
+      return;
+    }
 
-  return subcategories.map(item => {
-    const match = products.find(product => normalizeText(product.subcategory).toLowerCase() === normalizeText(item.name).toLowerCase());
+    const key = subcategory.toLowerCase();
+    const entry = map.get(key) || { name: subcategory, count: 0 };
+    entry.count += 1;
+    map.set(key, entry);
+  });
+
+  return [...map.values()].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function buildBagsBannerItems(products = [], category = 'Bags') {
+  const options = deriveSubcategoryOptions(products, category);
+
+  return options.map(item => {
+    const match = products.find(product => normalizeLookup(product.subcategory) === normalizeLookup(item.name));
     const media = getPrimaryProductMedia(match || products[0] || {});
     const icon = media.primaryView?.url || media.hoverView?.url || '';
 
     return {
-      id: String(item.id || item.slug || item.name),
+      id: String(item.name),
       name: item.name,
-      slug: item.slug || normalizeSlug(item.name),
-      href: `#/shop?cat=Bags&subcat=${encodeURIComponent(item.name)}`,
+      slug: normalizeSlug(item.name),
+      href: `#/shop?cat=${encodeURIComponent(category)}&subcat=${encodeURIComponent(item.name)}`,
       icon
     };
   });
@@ -570,6 +584,7 @@ export function ShopPage(category = 'Bags') {
         <label class="shop-sort-wrap">
           <span>Sort By:</span>
           <select id="shop-sort">
+            <option value="featured-first">Featured First</option>
             <option value="newest">Newest</option>
             <option value="price-asc">Price: Low to High</option>
             <option value="price-desc">Price: High to Low</option>
@@ -595,7 +610,6 @@ export function ShopPage(category = 'Bags') {
             <div class="shop-filter-accordion-panel">
               <div class="shop-filter-options">
                 ${renderFilterCheckbox('In stock', 'in-stock')}
-                ${renderFilterCheckbox('Low stock', 'low-stock')}
                 ${renderFilterCheckbox('Out of stock', 'out-of-stock')}
               </div>
             </div>
@@ -685,11 +699,11 @@ export async function initShopPage() {
   const colorFilterContainer = document.getElementById('shop-color-filter');
   const routeFilters = parseShopRouteFilters();
   const defaultCategory = routeFilters.category || 'Bags';
-  let taxonomyRows = [];
   let catalogProducts = [];
   let wishlistIds = new Set();
   let selectedColor = 'all';
   let selectedAvailability = new Set();
+  let selectedSubcategories = new Set(routeFilters.subcategory ? [normalizeLookup(routeFilters.subcategory)] : []);
   let currentLayout = localStorage.getItem('shop.layout') || 'grid-3';
   let unsubscribe = () => {};
 
@@ -758,12 +772,19 @@ export async function initShopPage() {
 
     const stock = Number(product.stock || 0);
     const checks = {
-      'in-stock': stock > 3,
-      'low-stock': stock > 0 && stock <= 3,
+      'in-stock': stock > 0,
       'out-of-stock': stock <= 0
     };
 
     return [...selectedAvailability].some(key => Boolean(checks[key]));
+  };
+
+  const matchesSubcategory = product => {
+    if (selectedSubcategories.size === 0) {
+      return true;
+    }
+
+    return selectedSubcategories.has(normalizeLookup(product.subcategory));
   };
 
   const updateCategorySummary = () => {
@@ -771,13 +792,59 @@ export async function initShopPage() {
       return;
     }
 
-    const labels = Array.from(document.querySelectorAll('.shop-tax-checkbox:checked'))
-      .map(cb => cb.closest('.shop-tax-label')?.textContent?.trim())
+    const labels = Array.from(document.querySelectorAll('.shop-subcategory-checkbox:checked'))
+      .map(cb => cb.getAttribute('data-subcategory-label') || cb.value)
       .filter(Boolean);
 
     categorySummary.textContent = labels.length > 0
       ? labels.slice(0, 3).join(', ') + (labels.length > 3 ? ` +${labels.length - 3}` : '')
       : 'All categories';
+  };
+
+  const updateCategoryFilters = products => {
+    const options = deriveSubcategoryOptions(products, defaultCategory);
+
+    if (options.length === 0) {
+      taxonomyContainer.innerHTML = '<p class="shop-filter-helper">No subcategories available yet.</p>';
+      selectedSubcategories = new Set();
+      updateCategorySummary();
+      return;
+    }
+
+    selectedSubcategories = new Set(
+      [...selectedSubcategories].filter(selected => options.some(option => normalizeLookup(option.name) === selected))
+    );
+
+    taxonomyContainer.innerHTML = options.map(option => {
+      const normalized = normalizeLookup(option.name);
+      const checked = selectedSubcategories.has(normalized);
+      return `
+        <label class="shop-filter-check">
+          <input
+            type="checkbox"
+            class="shop-subcategory-checkbox"
+            data-subcategory-label="${escapeHtml(option.name)}"
+            value="${escapeHtml(option.name)}"
+            ${checked ? 'checked' : ''}
+          >
+          <span>${escapeHtml(option.name)}</span>
+          <small style="margin-left:auto;color:#87677a;">${option.count}</small>
+        </label>
+      `;
+    }).join('');
+
+    taxonomyContainer.querySelectorAll('.shop-subcategory-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        selectedSubcategories = new Set(
+          Array.from(taxonomyContainer.querySelectorAll('.shop-subcategory-checkbox:checked'))
+            .map(node => normalizeLookup(node.value))
+            .filter(Boolean)
+        );
+        updateFilters();
+      });
+    });
+
+    updateCategorySummary();
   };
 
   const updateColorFilter = products => {
@@ -811,16 +878,12 @@ export async function initShopPage() {
   };
 
   const updateBanner = products => {
-    const items = buildBagsBannerItems(taxonomyRows, products);
+    const items = buildBagsBannerItems(products, defaultCategory);
     bannerTrack.innerHTML = renderSubcategoryBanner(items);
   };
 
-  const getCheckedTaxonomyIds = () => Array.from(document.querySelectorAll('.shop-tax-checkbox:checked'))
-    .map(cb => String(cb.getAttribute('data-taxonomy-id') || '').trim())
-    .filter(Boolean);
-
   const renderResults = products => {
-    const visibleProducts = products.filter(product => matchesAvailability(product) && matchesColorFilter(product));
+    const visibleProducts = products.filter(product => matchesAvailability(product) && matchesColorFilter(product) && matchesSubcategory(product));
     if (visibleProducts.length === 0) {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
@@ -853,16 +916,17 @@ export async function initShopPage() {
   };
 
   const refreshProducts = async () => {
-    const taxonomyIds = getCheckedTaxonomyIds();
     const minPrice = Number(minPriceInput.value) || 0;
     const maxPrice = Number(maxPriceInput.value) || 100000;
     const sort = sortSelect.value || 'newest';
+    const prioritizeDisplayOrder = sort === 'featured-first';
+    const backendSort = prioritizeDisplayOrder ? 'newest' : sort;
 
     const result = await getProductsCatalogAdvanced({
-      taxonomyIds: taxonomyIds.length > 0 ? taxonomyIds : undefined,
       minPrice,
       maxPrice,
-      sort,
+      sort: backendSort,
+      prioritizeDisplayOrder,
       limit: 240,
       category: defaultCategory
     });
@@ -883,6 +947,7 @@ export async function initShopPage() {
 
     catalogProducts = result.data;
     writeShopCatalogCache(defaultCategory, catalogProducts);
+    updateCategoryFilters(catalogProducts);
     updateBanner(catalogProducts);
     updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
@@ -917,7 +982,7 @@ export async function initShopPage() {
   };
 
   const updateFilters = () => {
-    selectedAvailability = new Set(Array.from(document.querySelectorAll('.shop-filter-check input:checked')).map(input => input.value).filter(Boolean));
+    selectedAvailability = new Set(Array.from(document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input:checked')).map(input => input.value).filter(Boolean));
     updatePriceDisplay();
     updateCategorySummary();
     refreshProducts();
@@ -935,66 +1000,15 @@ export async function initShopPage() {
 
   const initialProductsPromise = refreshProducts();
 
-  // Load taxonomy and wishlist without blocking the first products paint.
-  const [taxonomyResult, wishlistResult] = await Promise.all([
-    getTaxonomyTree(),
-    getUserWishlist()
-  ]);
-
-  taxonomyRows = taxonomyResult.success && Array.isArray(taxonomyResult.data) && taxonomyResult.data.length > 0
-    ? taxonomyResult.data
-    : Object.entries(INVENTORY_STRUCTURE).flatMap(([category, subcategories], categoryIndex) => {
-        const categoryId = `local-${category.toLowerCase().replace(/[^a-z0-9]+/g, '-') || categoryIndex}`;
-        return [
-          { id: categoryId, name: category, parent_id: null, depth: 1, active: true },
-          ...(subcategories || []).map((subcategory, index) => ({
-            id: `${categoryId}-${String(subcategory).toLowerCase().replace(/[^a-z0-9]+/g, '-') || index}`,
-            name: subcategory,
-            parent_id: categoryId,
-            depth: 2,
-            active: true
-          }))
-        ];
-      });
+  // Load wishlist without blocking the first products paint.
+  const wishlistResult = await getUserWishlist();
 
   wishlistIds = new Set((wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
   if (catalogProducts.length > 0) {
+    updateCategoryFilters(catalogProducts);
     renderResults(catalogProducts);
   }
-  const tree = buildTaxonomyTree(taxonomyRows);
-  const rootItems = taxonomyRows.filter(row => row.depth === 1 || row.depth === undefined);
-
-  taxonomyContainer.innerHTML = rootItems.map(item => `
-    <div class="shop-tax-item" data-depth="0" data-id="${item.id}">
-      <div class="shop-tax-row">
-        <label class="shop-tax-label">
-          <input type="checkbox" class="shop-tax-checkbox" data-taxonomy-id="${item.id}" value="${item.id}">
-          <span><strong>${escapeHtml(item.name)}</strong></span>
-        </label>
-        ${tree[item.id] ? `<button type="button" class="shop-tax-toggle" data-taxonomy-toggle="${item.id}" aria-expanded="false" aria-label="Expand ${escapeHtml(item.name)}">+ ${getTaxonomyChildrenCount(item.id, tree)}</button>` : ''}
-      </div>
-      ${tree[item.id] ? `<div class="shop-tax-children is-collapsed" data-taxonomy-children="${item.id}">${renderTaxonomyLevel(item.id, tree, 1)}</div>` : ''}
-    </div>
-  `).join('');
-
-  document.querySelectorAll('.shop-tax-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const taxonomyId = btn.getAttribute('data-taxonomy-toggle');
-      const children = document.querySelector(`[data-taxonomy-children="${taxonomyId}"]`);
-      if (!children) {
-        return;
-      }
-
-      const isCollapsed = children.classList.toggle('is-collapsed');
-      btn.setAttribute('aria-expanded', String(!isCollapsed));
-      btn.textContent = isCollapsed ? '+' : '−';
-    });
-  });
-
-  document.querySelectorAll('.shop-tax-checkbox').forEach(cb => cb.addEventListener('change', updateFilters));
-  document.querySelectorAll('.shop-filter-check input').forEach(input => input.addEventListener('change', updateFilters));
-
-  applyRouteTaxonomyFilters(routeFilters);
+  document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input').forEach(input => input.addEventListener('change', updateFilters));
 
   layoutButtons.forEach(button => {
     button.addEventListener('click', () => setLayout(button.getAttribute('data-layout') || 'grid-3'));
@@ -1055,19 +1069,21 @@ export async function initShopPage() {
   sortSelect.addEventListener('change', updateFilters);
 
   resetBtn.addEventListener('click', () => {
-    document.querySelectorAll('.shop-tax-checkbox').forEach(cb => { cb.checked = false; });
-    document.querySelectorAll('.shop-filter-check input').forEach(input => { input.checked = false; });
+    selectedSubcategories = new Set();
+    document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input').forEach(input => { input.checked = false; });
     minPriceInput.value = '0';
     maxPriceInput.value = '100000';
-    sortSelect.value = 'newest';
+    sortSelect.value = 'featured-first';
     selectedColor = 'all';
+    updateCategoryFilters(catalogProducts);
     updatePriceDisplay();
     updateFilters();
   });
 
   if (clearCategoriesBtn) {
     clearCategoriesBtn.addEventListener('click', () => {
-      document.querySelectorAll('.shop-tax-checkbox').forEach(cb => { cb.checked = false; });
+      selectedSubcategories = new Set();
+      updateCategoryFilters(catalogProducts);
       routeFilters.category = '';
       routeFilters.subcategory = '';
       updateFilters();

@@ -239,7 +239,8 @@ function hydrateMediaVariants(product, mediaRows = []) {
   };
 }
 
-function applyProductFilters(sql, query) {
+function applyProductFilters(sql, query, options = {}) {
+  const { includeDisplayOrder = true } = options;
   const conditions = [];
   const bindings = [];
 
@@ -282,18 +283,29 @@ function applyProductFilters(sql, query) {
     sql += ` WHERE ${conditions.join(' AND ')}`;
   }
 
+  const prioritizeDisplayOrder = query.get('prioritizeDisplayOrder') === 'true';
   const sort = query.get('sort') || 'newest';
-  if (sort === 'price-asc') {
-    sql += ' ORDER BY price ASC';
-  } else if (sort === 'price-desc') {
-    sql += ' ORDER BY price DESC';
-  } else if (sort === 'name-asc') {
-    sql += ' ORDER BY name ASC';
-  } else if (sort === 'name-desc') {
-    sql += ' ORDER BY name DESC';
-  } else {
-    sql += ' ORDER BY datetime(created_at) DESC';
+  const orderParts = [];
+
+  if (prioritizeDisplayOrder && includeDisplayOrder) {
+    orderParts.push('CASE WHEN display_order IS NULL THEN 1 ELSE 0 END ASC');
+    orderParts.push('display_order ASC');
   }
+
+  if (sort === 'price-asc') {
+    orderParts.push('price ASC');
+  } else if (sort === 'price-desc') {
+    orderParts.push('price DESC');
+  } else if (sort === 'name-asc') {
+    orderParts.push('name ASC');
+  } else if (sort === 'name-desc') {
+    orderParts.push('name DESC');
+  } else {
+    orderParts.push('datetime(created_at) DESC');
+  }
+
+  orderParts.push('id ASC');
+  sql += ` ORDER BY ${orderParts.join(', ')}`;
 
   const limit = Number(query.get('limit') || 20);
   const offset = Number(query.get('offset') || 0);
@@ -305,15 +317,29 @@ function applyProductFilters(sql, query) {
 
 async function handleProducts(request, env, url, allowedOrigin) {
   if (request.method === 'GET') {
-    const { sql, bindings } = applyProductFilters(productBaseQuery(), url.searchParams);
-    const result = await env.DB.prepare(sql).bind(...bindings).all();
-    return json({ success: true, data: result.results || [] }, { headers: corsHeaders(allowedOrigin) });
+    try {
+      const { sql, bindings } = applyProductFilters(productBaseQuery(), url.searchParams, { includeDisplayOrder: true });
+      const result = await env.DB.prepare(sql).bind(...bindings).all();
+      return json({ success: true, data: result.results || [] }, { headers: corsHeaders(allowedOrigin) });
+    } catch (error) {
+      const message = String(error?.message || error || '');
+      const requestedDisplayPriority = url.searchParams.get('prioritizeDisplayOrder') === 'true';
+      if (requestedDisplayPriority && /no such column:\s*display_order/i.test(message)) {
+        const fallback = applyProductFilters(productBaseQuery(), url.searchParams, { includeDisplayOrder: false });
+        const result = await env.DB.prepare(fallback.sql).bind(...fallback.bindings).all();
+        return json({ success: true, data: result.results || [] }, { headers: corsHeaders(allowedOrigin) });
+      }
+
+      return json({ success: false, error: message || 'Failed to fetch products' }, { status: 500, headers: corsHeaders(allowedOrigin) });
+    }
   }
 
   if (request.method === 'POST') {
     const body = await readJson(request);
     const id = body.id || crypto.randomUUID();
     const mediaSchemaVersion = Number(body.media_schema_version || 1);
+    const rawDisplayOrder = Number(body.display_order);
+    const displayOrder = Number.isInteger(rawDisplayOrder) && rawDisplayOrder > 0 ? rawDisplayOrder : null;
     const activeValue = body.active;
     const active = activeValue === false || Number(activeValue) === 0 ? 0 : 1;
     const bestsellerValue = body.bestseller ?? body.best_seller;
@@ -322,7 +348,7 @@ async function handleProducts(request, env, url, allowedOrigin) {
     const newArrival = newArrivalValue === true || Number(newArrivalValue) === 1 ? 1 : 0;
 
     await env.DB.prepare(
-      'INSERT INTO products (id, name, category, subcategory, price, image_url, description, stock, active, discount, taxonomy_id, created_at, media_schema_version, bestseller, new_arrival) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), ?, ?, ?)'
+      'INSERT INTO products (id, name, category, subcategory, price, image_url, description, stock, active, discount, taxonomy_id, created_at, media_schema_version, bestseller, new_arrival, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), ?, ?, ?, ?)'
     ).bind(
       id,
       body.name || 'Product',
@@ -337,7 +363,8 @@ async function handleProducts(request, env, url, allowedOrigin) {
       body.taxonomy_id || null,
       Number.isFinite(mediaSchemaVersion) ? mediaSchemaVersion : 1,
       bestseller,
-      newArrival
+      newArrival,
+      displayOrder
     ).run();
 
     const mediaRows = Array.isArray(body.product_media) ? body.product_media : [];

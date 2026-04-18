@@ -509,6 +509,7 @@ function normalizeOptions(options = {}) {
     minPrice: options.minPrice,
     maxPrice: options.maxPrice,
     sort: options.sort || 'newest',
+    prioritizeDisplayOrder: options.prioritizeDisplayOrder === true,
     onlyActive: options.onlyActive !== false,
     taxonomyIds: options.taxonomyIds,
     clearance: Boolean(options.clearance)

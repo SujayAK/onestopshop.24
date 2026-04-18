@@ -522,11 +522,6 @@ button {
   background: rgba(255, 255, 255, 0.92);
 }
 
-  margin-top: 0.42rem;
-  display: grid;
-  gap: 0.42rem;
-}
-
 .app-popup-overlay {
   position: fixed;
   inset: 0;
@@ -869,6 +864,23 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+.shop-plp-shell .shop-taxonomy-actions .btn,
+.shop-plp-shell #shop-reset-filters {
+  min-height: 34px;
+  padding: 8px 10px;
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+}
+
+.shop-plp-shell #shop-clear-categories {
+  flex: 0 0 auto;
+}
+
+.shop-plp-shell #shop-reset-filters {
+  margin-top: 0.55rem;
+  width: 100%;
 }
 
 .shop-plp-shell .shop-category-summary {
@@ -1924,6 +1936,7 @@ header.main-header {
 .nav-mega-item:focus-within .nav-list-dropdown {
   opacity: 1;
   visibility: visible;
+}
 
 
 .nav-mega-panels {
@@ -4097,19 +4110,19 @@ footer.main-footer {
   color: #9d1432;
   background: rgba(224, 118, 143, 0.2);
 }
-  background: rgba(224, 118, 143, 0.2);
-}
-.shop-plp-shell .shop-card-buttons {
-  margin-top: 0.32rem;
+
 .shop-plp-shell .shop-card-buttons {
   margin-top: 0.32rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
 }
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-}
+
+.shop-listing-actions {
+  opacity: 1;
+  max-height: 400px;
+  overflow: visible;
+  transition: opacity 0.2s ease;
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.5rem;
