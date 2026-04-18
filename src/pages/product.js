@@ -62,8 +62,25 @@ function parseDetails(product) {
 }
 
 function buildMissingImageUrl(colorName, viewName) {
-  const label = `Add ${colorName} ${viewName} image.webp`;
-  return `https://placehold.co/920x1150/f7edf3/7b5a6f?text=${encodeURIComponent(label)}`;
+  const label = `${String(colorName || 'Product')} ${String(viewName || 'view')}`.trim();
+  const safeLabel = escapeHtml(label);
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="920" height="1150" viewBox="0 0 920 1150">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f8edf3" />
+          <stop offset="100%" stop-color="#ead3df" />
+        </linearGradient>
+      </defs>
+      <rect width="920" height="1150" rx="36" fill="url(#g)" />
+      <rect x="170" y="230" width="580" height="580" rx="64" fill="#ffffff" opacity="0.55" />
+      <path d="M305 600c52-94 104-141 155-141s103 47 155 141" fill="none" stroke="#c79aae" stroke-width="22" stroke-linecap="round" />
+      <circle cx="400" cy="455" r="42" fill="#c79aae" opacity="0.65" />
+      <text x="460" y="910" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#7b5a6f">${safeLabel}</text>
+      <text x="460" y="960" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#8e7281">Image coming soon</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.trim())}`;
 }
 
 function normalizeViewLabel(value, fallback) {
@@ -507,7 +524,7 @@ export async function initProductPage(productId) {
         name: product.name || 'Product',
         category: product.category || 'General',
         price: Number(product.price || 0),
-        image: media[0]?.views?.[0]?.url || product.image || product.image_url || 'https://placehold.co/900x1125?text=Add+product+image.webp',
+        image: media[0]?.views?.[0]?.url || product.image || product.image_url || buildMissingImageUrl('Product', 'primary'),
         description: product.description || ''
       }]
     }

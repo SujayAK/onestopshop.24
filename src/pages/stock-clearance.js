@@ -88,18 +88,20 @@ function renderProductCard(product, wished, compared) {
   return `
     <div class="shop-product-card" data-product-id="${product.id}">
       <div class="shop-card-image">
-        <img
-          class="lazy-image"
-          src="${image.placeholder}"
-          data-src="${image.src}"
-          data-srcset="${image.srcset}"
-          sizes="${image.sizes}"
-          width="800"
-          height="1000"
-          alt="${escapeHtml(product.name)}"
-          decoding="async"
-          loading="lazy"
-        >
+        <a href="#/product/${product.id}" class="shop-card-image-link">
+          <img
+            class="lazy-image"
+            src="${image.placeholder}"
+            data-src="${image.src}"
+            data-srcset="${image.srcset}"
+            sizes="${image.sizes}"
+            width="800"
+            height="1000"
+            alt="${escapeHtml(product.name)}"
+            decoding="async"
+            loading="lazy"
+          >
+        </a>
         <div class="shop-card-actions">
           <button class="shop-heart-icon${wished ? ' is-active' : ''}" data-product-id="${product.id}" data-action="wishlist" title="${wished ? 'Remove from wishlist' : 'Add to wishlist'}">
             <i class="fas fa-heart"></i>
@@ -116,10 +118,6 @@ function renderProductCard(product, wished, compared) {
         ${colorSwatches ? `<div class="shop-card-colors">${colorSwatches}</div>` : ''}
         ${sizeDisplay}
         <span class="shop-stock-badge ${stock.css}">${stock.text}</span>
-        <div class="shop-card-buttons">
-          <button class="btn btn-sm add-to-cart-btn" data-product-id="${product.id}">Add to Cart</button>
-          <a href="#/product/${product.id}" class="btn btn-sm btn-outline">Details</a>
-        </div>
       </div>
     </div>
   `;

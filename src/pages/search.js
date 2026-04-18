@@ -60,6 +60,7 @@ function renderSearchCard(product, wished = false) {
   return `
     <article class="shop-collection-card" data-product-id="${product.id}">
       <div class="shop-collection-media">
+        <a href="#/product/${product.id}" class="shop-collection-media-link">
         <img
           class="lazy-image product-image"
           src="${media.primary.placeholder}"
@@ -72,6 +73,7 @@ function renderSearchCard(product, wished = false) {
           loading="lazy"
           decoding="async"
         >
+        </a>
         <button type="button" class="search-wishlist-btn wishlist-toggle${wished ? ' is-active' : ''}" data-product-id="${product.id}">
           ${wished ? 'In Wishlist' : 'Add to Wishlist'}
         </button>
@@ -81,10 +83,6 @@ function renderSearchCard(product, wished = false) {
         <a href="#/product/${product.id}" class="shop-collection-title">${escapeHtml(product.name)}</a>
         <p class="shop-collection-price">${formatINR(product.price)}</p>
         ${colors.length > 0 ? `<div class="shop-collection-swatches">${colors.map(color => `<span style="--swatch:${escapeHtml(color.hex)}" title="${escapeHtml(color.name)}"></span>`).join('')}</div>` : ''}
-        <div class="shop-collection-actions">
-          <button class="btn btn-sm add-to-cart-btn" data-product-id="${product.id}">Add to Cart</button>
-          <a href="#/product/${product.id}" class="btn btn-sm btn-outline">Details</a>
-        </div>
       </div>
     </article>
   `;

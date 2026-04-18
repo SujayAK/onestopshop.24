@@ -12,8 +12,8 @@
   --white: #FFFF;
   
   /* Typography */
-  --font-heading: 'Montserrat', sans-serif;
-  --font-body: 'Montserrat', sans-serif;
+  --font-heading: 'Inter', 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
   
   /* Spacing */
   --spacing-xs: 0.5rem;
@@ -572,6 +572,10 @@ button {
   place-items: center;
   padding: 1rem;
 }
+.shop-plp-shell .shop-card-image-link,
+.search-page-shell .shop-collection-media-link {
+  display: block;
+}
 
 .app-popup-backdrop {
   position: absolute;
@@ -583,15 +587,19 @@ button {
 .app-popup-dialog {
   position: relative;
   width: min(520px, calc(100vw - 2rem));
+  text-align: center;
   border-radius: 18px;
   border: 1px solid #efcfdf;
   padding: 1.2rem;
   background: linear-gradient(180deg, #fff 0%, #fff3f8 100%);
   box-shadow: 0 24px 60px rgba(28, 6, 20, 0.34);
-  animation: popupIn 0.18s ease-out;
+  justify-content: center;
 }
 
 .app-popup-title {
+.shop-plp-shell .shop-card-meta-line .shop-featured-pill {
+  margin-left: 0.15rem;
+}
   margin: 0 0 0.45rem;
   font-size: 1.2rem;
   color: #3f2434;
@@ -604,6 +612,10 @@ button {
 }
 
 .app-popup-actions {
+.shop-plp-shell .shop-card-colors,
+.shop-plp-shell .shop-stock-badge {
+  justify-self: center;
+}
   margin-top: 1rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -611,6 +623,25 @@ button {
 }
 
 .app-popup-actions .btn,
+.search-page-shell .shop-collection-body {
+  text-align: center;
+}
+
+.search-page-shell .shop-listing-meta {
+  text-align: center;
+}
+
+.search-page-shell .shop-collection-title {
+  text-align: center;
+}
+
+.search-page-shell .shop-collection-price {
+  text-align: center;
+}
+
+.search-page-shell .shop-collection-swatches {
+  justify-content: center;
+}
 .app-popup-actions .btn-outline,
 .app-popup-soft-btn {
   width: 100%;
@@ -4567,17 +4598,61 @@ footer.main-footer {
 .search-page-shell {
   display: grid;
   gap: 1.3rem;
+  position: relative;
+  isolation: isolate;
+}
+
+.search-page-shell::before,
+.search-page-shell::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.search-page-shell::before {
+  width: 260px;
+  height: 260px;
+  top: -90px;
+  right: -60px;
+  background: radial-gradient(circle, rgba(255, 210, 227, 0.6) 0%, rgba(255, 210, 227, 0) 70%);
+  filter: blur(10px);
+}
+
+.search-page-shell::after {
+  width: 320px;
+  height: 320px;
+  bottom: 120px;
+  left: -140px;
+  background: radial-gradient(circle, rgba(249, 227, 235, 0.78) 0%, rgba(249, 227, 235, 0) 72%);
+  filter: blur(12px);
 }
 
 .search-page-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
-  gap: 1rem;
+  gap: 1.2rem;
   align-items: end;
-  padding: 1.3rem;
-  border: 1px solid #f0e3ea;
-  background: linear-gradient(135deg, #fff7fb 0%, #ffffff 56%, #fff4f8 100%);
-  box-shadow: 0 18px 40px rgba(44, 12, 32, 0.05);
+  position: relative;
+  padding: 1.45rem;
+  border: 1px solid rgba(238, 218, 228, 0.95);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 251, 0.94) 0%, rgba(255, 255, 255, 0.98) 54%, rgba(255, 240, 246, 0.92) 100%);
+  box-shadow: 0 20px 42px rgba(44, 12, 32, 0.06);
+  overflow: hidden;
+}
+
+.search-page-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -80px -80px auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 192, 217, 0.35) 0%, rgba(255, 192, 217, 0) 70%);
+  pointer-events: none;
 }
 
 .search-page-kicker {
@@ -4597,12 +4672,16 @@ footer.main-footer {
 .search-page-copy {
   max-width: 52ch;
   color: #6d5966;
+  line-height: 1.6;
 }
 
 .search-page-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.7rem;
+  align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .search-page-form input {
@@ -4612,7 +4691,14 @@ footer.main-footer {
   border-radius: 999px;
   padding: 0 1rem;
   background: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 20px rgba(38, 14, 32, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.search-page-form input:focus {
+  outline: none;
+  border-color: #d58eae;
+  box-shadow: 0 0 0 4px rgba(221, 65, 127, 0.12), 0 10px 22px rgba(38, 14, 32, 0.05);
 }
 
 .search-page-meta {
@@ -4621,7 +4707,7 @@ footer.main-footer {
   justify-content: space-between;
   align-items: center;
   gap: 0.8rem;
-  padding: 0.25rem 0.1rem;
+  padding: 0.15rem 0.05rem 0.2rem;
   color: #6d5966;
 }
 
@@ -4640,13 +4726,19 @@ footer.main-footer {
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .search-chip:hover {
   transform: translateY(-1px);
   border-color: #d79ab7;
   box-shadow: 0 8px 18px rgba(38, 14, 32, 0.06);
+  color: #dd417f;
+}
+
+.search-chip:focus-visible {
+  outline: 2px solid rgba(221, 65, 127, 0.28);
+  outline-offset: 2px;
 }
 
 .search-page-shell .search-wishlist-btn {
@@ -4670,12 +4762,28 @@ footer.main-footer {
 }
 
 .search-page-shell .shop-products-grid {
-  margin-top: 0.1rem;
+  margin-top: 0.2rem;
+  padding-bottom: 0.15rem;
+}
+
+.search-page-shell .shop-collection-card {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(38, 14, 32, 0.04);
+}
+
+.search-page-shell .shop-collection-card:hover {
+  box-shadow: 0 16px 34px rgba(38, 14, 32, 0.1);
+}
+
+.search-page-shell .shop-collection-body {
+  padding: 0.15rem 0.15rem 0.2rem;
 }
 
 @media (max-width: 900px) {
   .search-page-hero {
     grid-template-columns: 1fr;
+    padding: 1.15rem;
   }
 
   .search-page-form {
@@ -4684,6 +4792,24 @@ footer.main-footer {
 
   .search-page-meta {
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .search-page-shell {
+    gap: 1rem;
+  }
+
+  .search-page-hero {
+    border-radius: 20px;
+  }
+
+  .search-page-hero h1 {
+    font-size: 1.65rem;
+  }
+
+  .search-page-meta {
+    gap: 0.7rem;
   }
 }
 

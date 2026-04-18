@@ -477,39 +477,39 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
   return `
     <article class="shop-product-card${featuredClass}${cardLayoutClass}" data-product-id="${product.id}">
       <div class="shop-card-image">
-        <div class="shop-card-image-stack${mediaPair.hasHover ? ' has-hover' : ''}">
-          <img
-            class="lazy-image shop-card-image-primary"
-            src="${mediaPair.primary.placeholder}"
-            data-src="${mediaPair.primary.src}"
-            data-srcset="${mediaPair.primary.srcset}"
-            sizes="${mediaPair.primary.sizes}"
-            width="800"
-            height="1000"
-            alt="${escapeHtml(product.name)}"
-            decoding="async"
-            loading="lazy"
-          >
-          ${mediaPair.hasHover ? `
+        <a href="#/product/${product.id}" class="shop-card-image-link">
+          <div class="shop-card-image-stack${mediaPair.hasHover ? ' has-hover' : ''}">
             <img
-              class="lazy-image shop-card-image-hover"
-              src="${mediaPair.hover.placeholder}"
-              data-src="${mediaPair.hover.src}"
-              data-srcset="${mediaPair.hover.srcset}"
-              sizes="${mediaPair.hover.sizes}"
+              class="lazy-image shop-card-image-primary"
+              src="${mediaPair.primary.placeholder}"
+              data-src="${mediaPair.primary.src}"
+              data-srcset="${mediaPair.primary.srcset}"
+              sizes="${mediaPair.primary.sizes}"
               width="800"
               height="1000"
-              alt="${escapeHtml(product.name)} alternate angle"
+              alt="${escapeHtml(product.name)}"
               decoding="async"
               loading="lazy"
             >
-          ` : ''}
-        </div>
-        <div class="shop-card-actions">
-          <button class="shop-heart-icon${wished ? ' is-active' : ''}" data-product-id="${product.id}" data-action="wishlist" title="${wished ? 'Remove from wishlist' : 'Add to wishlist'}">
-            <i class="fas fa-heart"></i>
-          </button>
-        </div>
+            ${mediaPair.hasHover ? `
+              <img
+                class="lazy-image shop-card-image-hover"
+                src="${mediaPair.hover.placeholder}"
+                data-src="${mediaPair.hover.src}"
+                data-srcset="${mediaPair.hover.srcset}"
+                sizes="${mediaPair.hover.sizes}"
+                width="800"
+                height="1000"
+                alt="${escapeHtml(product.name)} alternate angle"
+                decoding="async"
+                loading="lazy"
+              >
+            ` : ''}
+          </div>
+        </a>
+        <button class="shop-heart-icon${wished ? ' is-active' : ''}" data-product-id="${product.id}" data-action="wishlist" title="${wished ? 'Remove from wishlist' : 'Add to wishlist'}">
+          <i class="fas fa-heart"></i>
+        </button>
       </div>
       <div class="shop-card-info">
         <div class="shop-card-meta-line">
@@ -520,10 +520,6 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
         <p class="shop-card-price">${formatINR(product.price)}</p>
         ${colorSwatches ? `<div class="shop-card-colors">${colorSwatches}</div>` : ''}
         <span class="shop-stock-badge ${stock.css}">${stock.text}</span>
-        <div class="shop-card-buttons">
-          <button class="btn btn-sm add-to-cart-btn" data-product-id="${product.id}">Add to Cart</button>
-          <a href="#/product/${product.id}" class="btn btn-sm btn-outline">Details</a>
-        </div>
       </div>
     </article>
   `;
