@@ -636,6 +636,14 @@ function initNavbar() {
   const drawerClose = document.getElementById('nav-drawer-close');
   const megaItems = document.querySelectorAll('.nav-mega-item');
 
+  // Prevent multiple listener attachments
+  if (hamburger && hamburger.dataset.navInitialized) {
+    return;
+  }
+  if (hamburger) {
+    hamburger.dataset.navInitialized = 'true';
+  }
+
   const closeDrawer = () => {
     if (!drawer || !drawerOverlay || !hamburger) {
       return;
@@ -661,7 +669,9 @@ function initNavbar() {
   };
 
   if (hamburger && drawer) {
-    hamburger.addEventListener('click', () => {
+    hamburger.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (drawer.classList.contains('is-open')) {
         closeDrawer();
       } else {
@@ -671,16 +681,24 @@ function initNavbar() {
   }
 
   if (drawerOverlay) {
-    drawerOverlay.addEventListener('click', closeDrawer);
+    drawerOverlay.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
   }
 
   if (drawerClose) {
-    drawerClose.addEventListener('click', closeDrawer);
+    drawerClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
   }
 
   if (drawer) {
     drawer.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', closeDrawer);
+      link.addEventListener('click', (e) => {
+        closeDrawer();
+      });
     });
   }
 
