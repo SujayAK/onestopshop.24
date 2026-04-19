@@ -172,6 +172,9 @@ button {
   border: 1px solid #ecd7e6;
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(255, 252, 254, 0.98) 0%, rgba(255, 246, 250, 0.95) 100%);
+  min-width: 0;
+}
+
 .shop-plp-shell .shop-stock-badge.is-low {
   color: #8b4e00;
   background: rgba(243, 183, 101, 0.24);
@@ -194,8 +197,6 @@ button {
   min-height: 32px;
   padding: 8px 10px;
   font-size: 0.66rem;
-}
-  min-width: 0;
 }
 
 .product-page-section .product-page-layout {
@@ -4463,6 +4464,8 @@ footer.main-footer {
     grid-template-columns: 1fr;
   }
 
+}
+
 
 /* Collection-style shop layout */
 .shop-collection-header {
@@ -5587,10 +5590,12 @@ footer.main-footer {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
   .auth-card {
     padding: 2rem;
   }
-  
+
   .auth-card h1 {
     font-size: 1.5rem;
   }
