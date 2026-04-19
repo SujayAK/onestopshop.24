@@ -34,9 +34,9 @@ export function CheckoutPage() {
 
       <h1 style="margin-bottom: 3rem;">Checkout</h1>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+      <div class="checkout-layout-grid">
         <div>
-          <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 2rem; margin-bottom: 2rem; border-radius: 4px;">
+          <div class="checkout-form-panel">
             <h2 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Billing Information</h2>
             
             <form id="checkout-form">
@@ -60,7 +60,7 @@ export function CheckoutPage() {
                 <input type="text" id="customer-address" placeholder="123 Main Street" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;" required>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="checkout-fields-grid">
                 <div>
                   <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">City *</label>
                   <input type="text" id="customer-city" placeholder="New York" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;" required>
@@ -80,14 +80,14 @@ export function CheckoutPage() {
             </form>
           </div>
 
-          <div style="display: flex; gap: 1rem;">
+          <div class="checkout-actions-row">
             <a href="#/cart" class="btn btn-outline" style="flex: 1; text-align: center;">Back to Cart</a>
             <button id="proceed-payment-btn" class="btn" style="flex: 1;">Proceed to Payment</button>
           </div>
         </div>
 
         <div>
-          <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 2rem; border-radius: 4px; position: sticky; top: 2rem;">
+          <div class="checkout-summary-panel">
             <h2 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Order Summary</h2>
             
             <div style="margin-bottom: 2rem; max-height: 300px; overflow-y: auto;">

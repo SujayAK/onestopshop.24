@@ -898,7 +898,7 @@ function navigate() {
     renderPage(`
       <div class="container section">
         <h1 style="text-align: center; margin-bottom: 3rem;">Contact Us</h1>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem;">
           <div>
             <h3>Get in Touch</h3>
             <p style="margin-bottom: 2rem;">Have a question about an order or a product? We're here to help.</p>

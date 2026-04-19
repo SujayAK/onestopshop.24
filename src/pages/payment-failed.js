@@ -4,7 +4,7 @@ export function PaymentFailedPage() {
   const lastError = JSON.parse(localStorage.getItem('lastPaymentError') || '{}');
 
   return `
-    <div class="container section" style="max-width: 600px; margin: 4rem auto;">
+    <div class="container section payment-status-shell" style="max-width: 600px; margin: 4rem auto;">
       <div style="text-align: center;">
         <div style="font-size: 4rem; color: #f44336; margin-bottom: 1.5rem;">
           <i class="fas fa-times-circle"></i>
@@ -44,7 +44,7 @@ export function PaymentFailedPage() {
           </ul>
         </div>
 
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <div class="payment-status-action-row" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
           <a href="#/checkout" class="btn" style="text-decoration: none;">Try Payment Again</a>
           <a href="#/cart" class="btn btn-outline" style="text-decoration: none;">Back to Cart</a>
           <a href="#/" class="btn btn-outline" style="text-decoration: none;">Back to Home</a>

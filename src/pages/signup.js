@@ -8,7 +8,7 @@ export function SignupPage() {
         </div>
 
         <form id="signup-form" style="display: grid; gap: 1.5rem;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="signup-name-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div>
               <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">First Name *</label>
               <input 

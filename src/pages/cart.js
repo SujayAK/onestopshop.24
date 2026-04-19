@@ -15,22 +15,22 @@ export function CartPage() {
   }
 
   const cartItemsHtml = items.map(item => `
-    <div style="display: grid; grid-template-columns: 100px 1fr auto; gap: 2rem; align-items: center; padding: 2rem; border-bottom: 1px solid var(--border-color);">
-      <img src="${item.image}" alt="${item.name}" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid var(--border-color);">
+    <div class="cart-item-row">
+      <img src="${item.image}" alt="${item.name}" class="cart-item-image">
       
-      <div>
-        <h3 style="margin-bottom: 0.5rem;">${item.name}</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">${item.category}</p>
-        <p style="color: var(--accent-pink); font-weight: 700;">₹${item.price.toFixed(2)}</p>
+      <div class="cart-item-meta">
+        <h3 class="cart-item-name">${item.name}</h3>
+        <p class="cart-item-category">${item.category}</p>
+        <p class="cart-item-price">₹${item.price.toFixed(2)}</p>
       </div>
 
-      <div style="text-align: right;">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+      <div class="cart-item-controls-wrap">
+        <div class="cart-item-qty-controls">
           <button class="qty-decrease" data-product-id="${item.id}" style="padding: 5px 10px; border: 1px solid var(--border-color); background: var(--bg-primary); cursor: pointer;">-</button>
-          <span style="min-width: 30px; text-align: center;">${item.quantity}</span>
+          <span class="cart-item-qty-value">${item.quantity}</span>
           <button class="qty-increase" data-product-id="${item.id}" style="padding: 5px 10px; border: 1px solid var(--border-color); background: var(--bg-primary); cursor: pointer;">+</button>
         </div>
-        <p style="font-weight: 700; margin-bottom: 1rem;">₹${(item.price * item.quantity).toFixed(2)}</p>
+        <p class="cart-item-line-total">₹${(item.price * item.quantity).toFixed(2)}</p>
         <button class="btn-remove" data-product-id="${item.id}" style="background: none; border: none; color: var(--accent-pink); cursor: pointer; text-decoration: underline;">Remove</button>
       </div>
     </div>
@@ -44,12 +44,12 @@ export function CartPage() {
 
       <h1 style="margin-bottom: 3rem;">Shopping Cart</h1>
 
-      <div style="display: grid; grid-template-columns: 1fr 350px; gap: 3rem;">
-        <div style="background: var(--bg-primary); border: 1px solid var(--border-color);">
+      <div class="cart-layout-grid">
+        <div class="cart-items-panel">
           ${cartItemsHtml}
         </div>
 
-        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 2rem; height: fit-content;">
+        <div class="cart-summary-panel">
           <h2 style="margin-bottom: 2rem; font-size: 1.3rem;">Order Summary</h2>
           
           <div style="margin-bottom: 1.5rem;">

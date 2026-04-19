@@ -8,7 +8,7 @@ export function PaymentSuccessPage() {
   );
 
   return `
-    <div class="container section" style="max-width: 600px; margin: 4rem auto;">
+    <div class="container section payment-status-shell" style="max-width: 600px; margin: 4rem auto;">
       <div style="text-align: center;">
         <div style="font-size: 4rem; color: #4CAF50; margin-bottom: 1.5rem;">
           <i class="fas fa-check-circle"></i>
@@ -23,32 +23,32 @@ export function PaymentSuccessPage() {
         <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 2rem; border-radius: 4px; margin-bottom: 2rem; text-align: left;">
           <h2 style="margin-bottom: 1.5rem; font-size: 1.1rem; text-align: center;">Order Details</h2>
           
-          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+          <div class="payment-status-detail-row" style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <span style="font-weight: 600;">Order ID:</span>
             <span>${currentOrder.orderId || 'N/A'}</span>
           </div>
 
-          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+          <div class="payment-status-detail-row" style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <span style="font-weight: 600;">Payment ID:</span>
             <span style="font-size: 0.9rem; word-break: break-all;">${lastPayment.paymentId || 'N/A'}</span>
           </div>
 
-          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+          <div class="payment-status-detail-row" style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <span style="font-weight: 600;">Amount:</span>
             <span style="color: var(--accent-pink); font-weight: 700;">₹${(currentOrder.amount || 0).toFixed(2)}</span>
           </div>
 
-          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+          <div class="payment-status-detail-row" style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <span style="font-weight: 600;">Customer Name:</span>
             <span>${currentOrder.customerName || 'N/A'}</span>
           </div>
 
-          <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+          <div class="payment-status-detail-row" style="margin-bottom: 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <span style="font-weight: 600;">Email:</span>
             <span>${currentOrder.customerEmail || 'N/A'}</span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; padding-bottom: 1rem;">
+          <div class="payment-status-detail-row" style="display: flex; justify-content: space-between; padding-bottom: 1rem;">
             <span style="font-weight: 600;">Date & Time:</span>
             <span>${new Date(lastPayment.timestamp).toLocaleString() || 'N/A'}</span>
           </div>
@@ -63,7 +63,7 @@ export function PaymentSuccessPage() {
           </p>
         </div>
 
-        <div style="display: flex; gap: 1rem; justify-content: center;">
+        <div class="payment-status-action-row" style="display: flex; gap: 1rem; justify-content: center;">
           <a href="#/" class="btn" style="text-decoration: none;">Back to Home</a>
           <a href="#/shop" class="btn btn-outline" style="text-decoration: none;">Continue Shopping</a>
         </div>
