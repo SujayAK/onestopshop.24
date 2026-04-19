@@ -26,6 +26,11 @@
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -43,14 +48,11 @@ body {
   position: relative;
   overflow-x: hidden;
   width: 100%;
-  max-width: 100vw;
   overscroll-behavior-x: none;
 }
 
 body.nav-drawer-open {
   overflow: hidden;
-  width: 100vw;
-  height: 100vh;
 }
 
 /* Animated background overlay with floating elements */
@@ -2476,6 +2478,7 @@ body.nav-drawer-open {
 .home-section {
   background: linear-gradient(180deg, rgba(255, 240, 245, 0.88) 0%, rgba(255, 248, 253, 0.96) 100%);
   padding-block: 4.5rem;
+  width: 100%;
 }
 
 .home-section-alt {
@@ -2763,6 +2766,10 @@ body.nav-drawer-open {
     min-width: 100%;
   }
 }
+
+  main#main-content {
+    width: 100%;
+  }
 
 .whatsapp-floater {
   position: fixed;
