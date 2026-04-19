@@ -2721,32 +2721,34 @@ body.nav-drawer-open {
   .home-category-grid {
     grid-template-columns: none;
     grid-auto-flow: column;
-    grid-auto-columns: calc(100vw - 2rem);
+    grid-auto-columns: minmax(0, 82%);
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     overscroll-behavior-x: contain;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    padding-left: 1rem;
-    padding-right: 1rem;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   .home-category-card {
     scroll-snap-align: start;
-    min-width: calc(100vw - 2rem);
+    min-width: 0;
   }
 
   .home-products-carousel {
-    grid-auto-columns: calc(100vw - 2rem);
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    padding-left: 1rem;
-    padding-right: 1rem;
+    grid-auto-columns: minmax(0, 86%);
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .home-product-card {
-    min-width: calc(100vw - 2rem);
+    min-width: 0;
   }
 
   .home-best-grid {
