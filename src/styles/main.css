@@ -2369,7 +2369,7 @@ body.nav-drawer-open {
   min-height: 420px;
   margin-top: 0;
   overflow: hidden;
-  background: #000;
+  background: var(--bg-primary);
 }
 
 .home-hero-slides,
@@ -2380,11 +2380,12 @@ body.nav-drawer-open {
 
 .home-hero-slide {
   opacity: 0;
-  transform: scale(1.04);
-  transition: opacity 0.55s ease, transform 5.2s linear;
+  transform: none;
+  transition: opacity 0.35s ease;
   background-image: var(--hero-image);
   background-position: center;
-  background-size: cover;
+  background-size: contain;
+  background-repeat: no-repeat;
 }
 
 .home-hero-slide.is-active {
@@ -2393,11 +2394,7 @@ body.nav-drawer-open {
 }
 
 .home-hero-overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(108deg, rgba(35, 12, 28, 0.66) 0%, rgba(55, 24, 63, 0.36) 46%, rgba(255, 105, 180, 0.16) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.3) 100%);
+  display: none;
 }
 
 .home-hero-content {

@@ -25,18 +25,6 @@ export function HomePage() {
           <div class="home-hero-slide${index === 0 ? ' is-active' : ''}" data-hero-index="${index}" style="--hero-image:url('${slide.image}')"></div>
         `).join('')}
       </div>
-      <div class="home-hero-overlay"></div>
-      <div class="container home-hero-content" id="home-hero-content">
-        <p class="home-hero-kicker">New Season Edit</p>
-        <h1 id="home-hero-title">${escapeHtml(HERO_SLIDES[0].title)}</h1>
-        <p id="home-hero-subtitle">${escapeHtml(HERO_SLIDES[0].subtitle)}</p>
-        <a href="${HERO_SLIDES[0].ctaHref}" id="home-hero-cta" class="btn home-hero-cta">Shop Now</a>
-      </div>
-      <button type="button" class="home-hero-arrow prev" id="home-hero-prev" aria-label="Previous slide"><i class="fas fa-chevron-left"></i></button>
-      <button type="button" class="home-hero-arrow next" id="home-hero-next" aria-label="Next slide"><i class="fas fa-chevron-right"></i></button>
-      <div class="home-hero-dots" id="home-hero-dots">
-        ${HERO_SLIDES.map((_, index) => `<button type="button" class="home-hero-dot${index === 0 ? ' is-active' : ''}" data-hero-dot="${index}" aria-label="Slide ${index + 1}"></button>`).join('')}
-      </div>
     </section>
   `;
 }
