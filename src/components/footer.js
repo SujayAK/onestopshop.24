@@ -4,9 +4,12 @@ export function Footer() {
       <div class="container">
         <div class="footer-grid">
           <div class="footer-column">
-            <h4 class="logo-text">OneStopShop</h4>
-            <p style="color: rgba(255,255,255,0.7); margin-bottom: 1.5rem;">Your one-stop destination for premium fashion, bags & accessories. Curated with care for the modern lifestyle.</p>
-            <div style="display: flex; gap: 1rem; font-size: 1.2rem;">
+            <a href="#/" class="footer-brand" aria-label="OneStopShop home">
+              <img src="/IMG_6725-thumb.webp" alt="OneStopShop" class="footer-logo" width="120" height="120" loading="lazy" decoding="async">
+              <h4 class="logo-text">OneStopShop</h4>
+            </a>
+            <p class="footer-brand-copy">Your one-stop destination for premium fashion, bags, and accessories.</p>
+            <div class="footer-socials">
               <a href="https://www.instagram.com/onestopshop.24" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
               
             </div>
@@ -31,10 +34,10 @@ export function Footer() {
           </div>
           <div class="footer-column">
             <h4>Newsletter</h4>
-            <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 1rem;">Subscribe to get special offers and once-in-a-lifetime deals.</p>
-            <form style="display: flex; gap: 5px;">
-              <input type="email" placeholder="Your email" style="padding: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white; flex: 1; font-size: 0.8rem;">
-              <button class="btn" style="padding: 10px 15px; font-size: 0.7rem;">Join</button>
+            <p class="footer-news-copy">Subscribe to get special offers and once-in-a-lifetime deals.</p>
+            <form class="footer-news-form">
+              <input type="email" placeholder="Your email" class="footer-news-input">
+              <button class="btn footer-news-btn">Join</button>
             </form>
           </div>
         </div>
