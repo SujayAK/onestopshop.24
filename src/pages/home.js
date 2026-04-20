@@ -8,6 +8,31 @@ const HERO_SLIDES = [
   }
 ];
 
+const COLLECTION_COLUMNS = [
+  {
+    title: 'Bags',
+    description: 'Signature styles and everyday carry pieces.',
+    autoplayClass: 'is-left',
+    items: [
+      { alt: 'img', src: '/Website%20Banners.webp' },
+      { alt: 'img2', src: '/Website%20Banners.webp' },
+      { alt: 'img3', src: '/Website%20Banners.webp' },
+      { alt: 'img4', src: '/Website%20Banners.webp' }
+    ]
+  },
+  {
+    title: 'Accessories',
+    description: 'Finishing touches for polished everyday looks.',
+    autoplayClass: 'is-right',
+    items: [
+      { alt: 'img', src: '/Website%20Banners.webp' },
+      { alt: 'img2', src: '/Website%20Banners.webp' },
+      { alt: 'img3', src: '/Website%20Banners.webp' },
+      { alt: 'img4', src: '/Website%20Banners.webp' }
+    ]
+  }
+];
+
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -39,6 +64,36 @@ export function HomePage() {
             </picture>
           </div>
         `).join('')}
+      </div>
+    </section>
+
+    <section class="home-collections section" aria-label="Bags and accessories collections">
+      <div class="container">
+        <div class="home-collections-grid">
+          ${COLLECTION_COLUMNS.map(column => `
+            <article class="home-collection-card ${column.autoplayClass}">
+              <div class="home-collection-header">
+                <p class="home-collection-kicker">Collection</p>
+                <h2>${escapeHtml(column.title)}</h2>
+                <p>${escapeHtml(column.description)}</p>
+              </div>
+              <div class="home-collection-marquee" aria-label="${escapeHtml(column.title)} image slider">
+                <div class="home-collection-track">
+                  ${[...column.items, ...column.items].map((item, index) => `
+                    <div class="home-collection-slide" aria-hidden="${index >= column.items.length ? 'true' : 'false'}">
+                      <img
+                        src="${item.src}"
+                        alt="${escapeHtml(item.alt)}"
+                        loading="lazy"
+                        decoding="async"
+                      >
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </article>
+          `).join('')}
+        </div>
       </div>
     </section>
   `;
