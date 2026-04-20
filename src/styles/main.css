@@ -2364,7 +2364,8 @@ body.nav-drawer-open {
 
 .home-hero {
   position: relative;
-  aspect-ratio: 2 / 1;
+  aspect-ratio: 24 / 9;
+  max-height: 420px;
   height: auto;
   margin-top: 0;
   overflow: hidden;
@@ -2396,8 +2397,9 @@ body.nav-drawer-open {
 }
 
 .home-hero-image {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
+  background: var(--bg-primary);
 }
 
 .home-hero-overlay {
@@ -2717,8 +2719,8 @@ body.nav-drawer-open {
 
 @media (max-width: 768px) {
   .home-hero {
-    aspect-ratio: 4 / 5;
-    max-height: 80vh;
+    aspect-ratio: 16 / 9;
+    max-height: 260px;
   }
 
   .home-hero-content {
