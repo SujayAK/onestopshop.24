@@ -11,7 +11,7 @@ export function Navbar() {
     <header class="main-header">
       <div class="container nav-container">
         <a href="#/" class="logo-link" style="display: flex; align-items: center; gap: 10px;">
-          <img src="/OSS%20logo.png" alt="OneStopShop" class="logo-img" width="68" height="68" decoding="async" fetchpriority="high" loading="eager">
+          <img src="/IMG_6728-thumb.webp" alt="OneStopShop" class="logo-img" width="180" height="63" decoding="async" fetchpriority="high" loading="eager">
         </a>
 
         <nav class="nav-center" aria-label="Primary navigation">
@@ -58,7 +58,7 @@ export function Navbar() {
       <aside class="nav-drawer" id="nav-drawer" aria-label="Mobile navigation" aria-hidden="true">
         <div class="nav-drawer-header">
           <a href="#/" class="logo-link nav-drawer-logo" style="display: flex; align-items: center; gap: 10px;">
-            <img src="/OSS%20logo.png" alt="OneStopShop" class="logo-img" width="68" height="68" decoding="async" loading="lazy">
+            <img src="/IMG_6728-thumb.webp" alt="OneStopShop" class="logo-img" width="180" height="63" decoding="async" loading="lazy">
           </a>
           <button class="nav-drawer-close" id="nav-drawer-close" type="button" aria-label="Close navigation">&times;</button>
         </div>

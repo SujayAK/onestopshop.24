@@ -5,7 +5,7 @@ export function Footer() {
         <div class="footer-grid">
           <div class="footer-column">
             <a href="#/" class="footer-brand" aria-label="OneStopShop home">
-              <img src="/OSS%20logo.png" alt="OneStopShop" class="footer-logo" width="120" height="120" loading="lazy" decoding="async">
+              <img src="/IMG_6728-thumb.webp" alt="OneStopShop" class="footer-logo" width="180" height="63" loading="lazy" decoding="async">
             </a>
             <p class="footer-brand-copy">Your one-stop destination for premium fashion, bags, and accessories.</p>
             <div class="footer-socials">
