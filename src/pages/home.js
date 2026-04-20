@@ -1,21 +1,9 @@
 const HERO_SLIDES = [
   {
-    title: 'The Season of Signature Bags',
-    subtitle: 'Premium silhouettes for workdays, travel days, and every in-between moment.',
-    ctaHref: '#/shop?cat=Bags',
-    image: 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=2000&auto=format&fit=crop'
-  },
-  {
-    title: 'Accessories That Finish The Look',
-    subtitle: 'Layered details, modern accents, and effortless gifting picks.',
-    ctaHref: '#/shop?cat=Accessories',
-    image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=2000&auto=format&fit=crop'
-  },
-  {
-    title: 'New Launches Every Week',
-    subtitle: 'Fresh drops with elevated textures and timeless color stories.',
+    title: 'One Stop Shop',
+    subtitle: 'Curated bags and accessories for everyday elegance.',
     ctaHref: '#/shop',
-    image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=1600&auto=format&fit=crop'
+    image: '/Website%20Banners.webp'
   }
 ];
 
