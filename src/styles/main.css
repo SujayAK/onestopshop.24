@@ -1,14 +1,14 @@
 :root {
-  /* Pink-forward palette */
-  --bg-primary: #FFF7FB;
-  --bg-secondary: #FCE8F2;
+  /* Warm neutral palette */
+  --bg-primary: #F6F3EF;
+  --bg-secondary: #E9E2D9;
   --text-primary: #1A1A1A;
-  --text-secondary: #6E3B5C;
-  --accent-pink: #E87FB2;
-  --accent-blue: #F5D7E8;
-  --accent-purple: #B85E9A;
-  --accent-yellow: #F1A7C8;
-  --border-color: #F0C9DB;
+  --text-secondary: #6E6359;
+  --accent-pink: #D3A79E;
+  --accent-blue: #D8CEC4;
+  --accent-purple: #C2A878;
+  --accent-yellow: #C2A878;
+  --border-color: #CBBFB3;
   --white: #ffffff;
   
   /* Typography */
@@ -2529,11 +2529,11 @@ body.nav-drawer-open {
 }
 
 .home-collection-card {
-  border: 1px solid rgba(239, 177, 208, 0.82);
+  border: 1px solid #ecd6e8;
   border-radius: 24px;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 240, 247, 0.96) 100%);
-  box-shadow: 0 16px 32px rgba(232, 127, 178, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 246, 251, 0.96) 100%);
+  box-shadow: 0 16px 32px rgba(214, 89, 162, 0.08);
 }
 
 .home-collection-header {
@@ -2545,18 +2545,18 @@ body.nav-drawer-open {
   text-transform: uppercase;
   letter-spacing: 0.18em;
   font-size: 0.72rem;
-  color: #c54f88;
+  color: #8c2f69;
 }
 
 .home-collection-header h2 {
   margin: 0;
   font-size: clamp(1.35rem, 2vw, 1.8rem);
-  color: #5a204a;
+  color: #4a2942;
 }
 
 .home-collection-header p {
   margin: 0.45rem 0 0;
-  color: #7c4664;
+  color: var(--text-secondary);
 }
 
 .home-collection-marquee {
@@ -2584,8 +2584,8 @@ body.nav-drawer-open {
   aspect-ratio: 4 / 5;
   border-radius: 18px;
   overflow: hidden;
-  background: #fff4fa;
-  border: 1px solid rgba(239, 177, 208, 0.42);
+  background: #f7f7f8;
+  border: 1px solid rgba(212, 169, 197, 0.35);
   flex: 0 0 auto;
 }
 
