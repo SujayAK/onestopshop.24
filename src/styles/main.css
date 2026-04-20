@@ -1518,7 +1518,7 @@ header.main-header {
   background: rgba(246, 243, 239, 0.96);
   backdrop-filter: blur(10px);
   border-bottom: 2px solid var(--border-color);
-  padding: 0.3rem 0.85rem;
+  padding: 0.2rem 0.75rem;
   animation: slideInLeft 0.6s ease-out;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -1527,7 +1527,7 @@ header.main-header.is-scrolled {
   background: rgba(246, 243, 239, 0.985);
   border-bottom-color: rgba(203, 191, 179, 0.72);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
-  padding: 0.24rem 0.85rem;
+  padding: 0.16rem 0.75rem;
 }
 
 /* Navigation Container */
@@ -1538,6 +1538,14 @@ header.main-header.is-scrolled {
   width: 100%;
   padding: 0;
   gap: 0.45rem;
+  min-height: 48px;
+}
+
+.logo-link,
+.nav-drawer-logo {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
 }
 
 .nav-container nav {
@@ -1572,20 +1580,22 @@ header.main-header.is-scrolled {
 }
 
 .logo-img {
-  width: clamp(88px, 8.5vw, 116px);
+  width: clamp(86px, 8.2vw, 110px);
   height: auto;
-  max-width: 28vw;
+  max-width: 26vw;
   animation: none;
   transition: var(--transition-smooth);
-  border-radius: 4px;
-  mix-blend-mode: multiply;
-  opacity: 0.92;
+  border-radius: 0;
+  mix-blend-mode: normal;
+  opacity: 1;
+  background: transparent;
+  filter: drop-shadow(0 1px 1px rgba(26, 26, 26, 0.12));
 }
 
 .logo-img:hover {
   animation: none;
   transform: none;
-  filter: brightness(1.02);
+  filter: drop-shadow(0 1px 1px rgba(26, 26, 26, 0.16));
 }
 
 /* Tablet navbar optimizations */
@@ -1596,7 +1606,7 @@ header.main-header.is-scrolled {
   }
 
   .logo-img {
-    width: clamp(84px, 13vw, 106px);
+    width: clamp(82px, 12.5vw, 100px);
   }
 
   .nav-links {
@@ -1611,7 +1621,7 @@ header.main-header.is-scrolled {
 
 @media (max-width: 640px) {
   header.main-header {
-    padding: 0.28rem 0.75rem;
+    padding: 0.16rem 0.6rem;
   }
 
   .logo-text {
@@ -1620,7 +1630,7 @@ header.main-header.is-scrolled {
   }
 
   .logo-img {
-    width: clamp(76px, 22vw, 96px);
+    width: clamp(72px, 20vw, 88px);
   }
 
   .nav-container {
@@ -3233,11 +3243,11 @@ footer.main-footer {
 .footer-logo {
   width: 112px;
   height: auto;
-  border-radius: 4px;
+  border-radius: 0;
   object-fit: contain;
-  background: #f1f2f4;
-  padding: 3px 5px;
-  opacity: 0.96;
+  background: transparent;
+  padding: 0;
+  opacity: 1;
   mix-blend-mode: normal;
 }
 
