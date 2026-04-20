@@ -2364,7 +2364,7 @@ body.nav-drawer-open {
 
 .home-hero {
   position: relative;
-  aspect-ratio: 3 / 1;
+  aspect-ratio: 2 / 1;
   height: auto;
   min-height: 0;
   margin-top: 0;
@@ -2384,7 +2384,7 @@ body.nav-drawer-open {
   transition: opacity 0.35s ease;
   background-image: var(--hero-image);
   background-position: center;
-  background-size: cover;
+  background-size: contain;
   background-repeat: no-repeat;
 }
 
@@ -2710,7 +2710,7 @@ body.nav-drawer-open {
 
 @media (max-width: 768px) {
   .home-hero {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 2 / 1;
   }
 
   .home-hero-slide {
