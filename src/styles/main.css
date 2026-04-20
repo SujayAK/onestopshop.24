@@ -2363,10 +2363,10 @@ body.nav-drawer-open {
 }
 
 .home-hero {
-  --home-hero-height: 62%;
   position: relative;
-  height: min(calc(100vh * (var(--home-hero-height) / 100%)), 620px);
-  min-height: 420px;
+  aspect-ratio: 3 / 1;
+  height: auto;
+  min-height: 0;
   margin-top: 0;
   overflow: hidden;
   background: var(--bg-primary);
@@ -2384,7 +2384,7 @@ body.nav-drawer-open {
   transition: opacity 0.35s ease;
   background-image: var(--hero-image);
   background-position: center;
-  background-size: contain;
+  background-size: cover;
   background-repeat: no-repeat;
 }
 
@@ -2709,10 +2709,12 @@ body.nav-drawer-open {
 }
 
 @media (max-width: 768px) {
-  .home-hero,
-  .home-hero-content {
-    --home-hero-height: 52%;
-    min-height: 340px;
+  .home-hero {
+    aspect-ratio: 4 / 5;
+  }
+
+  .home-hero-slide {
+    background-image: var(--hero-image-mobile, var(--hero-image));
   }
 
   .home-hero-content {

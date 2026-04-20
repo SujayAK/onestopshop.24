@@ -3,7 +3,8 @@ const HERO_SLIDES = [
     title: 'One Stop Shop',
     subtitle: 'Curated bags and accessories for everyday elegance.',
     ctaHref: '#/shop',
-    image: '/Website%20Banners.webp'
+    imageDesktop: '/Website%20Banners.webp',
+    imageMobile: '/Website%20Banners.webp'
   }
 ];
 
@@ -22,7 +23,7 @@ export function HomePage() {
     <section class="home-hero" aria-label="Hero slider">
       <div class="home-hero-slides" id="home-hero-slides">
         ${HERO_SLIDES.map((slide, index) => `
-          <div class="home-hero-slide${index === 0 ? ' is-active' : ''}" data-hero-index="${index}" style="--hero-image:url('${slide.image}')"></div>
+          <div class="home-hero-slide${index === 0 ? ' is-active' : ''}" data-hero-index="${index}" style="--hero-image:url('${slide.imageDesktop}'); --hero-image-mobile:url('${slide.imageMobile || slide.imageDesktop}')"></div>
         `).join('')}
       </div>
     </section>
