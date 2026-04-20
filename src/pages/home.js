@@ -3,8 +3,8 @@ const HERO_SLIDES = [
     title: 'One Stop Shop',
     subtitle: 'Curated bags and accessories for everyday elegance.',
     ctaHref: '#/shop',
-    imageDesktop: '/banner1.png',
-    imageMobile: '/banner1.png'
+    imageDesktop: '/banner1.webp',
+    imageMobile: '/banner1.webp'
   }
 ];
 
