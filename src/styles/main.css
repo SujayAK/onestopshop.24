@@ -2538,6 +2538,7 @@ body.nav-drawer-open {
 
 .home-collection-header {
   padding: 1.1rem 1.1rem 0.9rem;
+  text-align: center;
 }
 
 .home-collection-kicker {
@@ -2552,6 +2553,11 @@ body.nav-drawer-open {
   margin: 0;
   font-size: clamp(1.35rem, 2vw, 1.8rem);
   color: #4a2942;
+  display: block;
+}
+
+.home-collection-header h2::after {
+  display: none;
 }
 
 .home-collection-header p {
