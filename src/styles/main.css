@@ -1572,7 +1572,7 @@ header.main-header.is-scrolled {
 }
 
 .logo-img {
-  height: 58px;
+  height: 84px;
   width: auto;
   animation: none;
   transition: var(--transition-smooth);
@@ -1595,7 +1595,7 @@ header.main-header.is-scrolled {
   }
 
   .logo-img {
-    height: 50px;
+    height: 70px;
   }
 
   .nav-links {
@@ -1619,7 +1619,7 @@ header.main-header.is-scrolled {
   }
 
   .logo-img {
-    height: 40px;
+    height: 56px;
   }
 
   .nav-container {
@@ -3229,8 +3229,8 @@ footer.main-footer {
 }
 
 .footer-logo {
-  width: 52px;
-  height: 52px;
+  width: 78px;
+  height: 78px;
   border-radius: 4px;
   object-fit: cover;
   opacity: 0.96;
