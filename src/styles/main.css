@@ -2366,8 +2366,6 @@ body.nav-drawer-open {
   position: relative;
   aspect-ratio: 2 / 1;
   height: auto;
-  max-height: 500px;
-  min-height: 0;
   margin-top: 0;
   overflow: hidden;
   background: var(--bg-primary);
@@ -2712,7 +2710,6 @@ body.nav-drawer-open {
 @media (max-width: 768px) {
   .home-hero {
     aspect-ratio: 2 / 1;
-    max-height: 280px;
   }
 
   .home-hero-slide {
