@@ -30,6 +30,10 @@ function getAllowedOrigin(requestOrigin, env) {
     return normalizedOrigin;
   }
 
+  const appOrigin = String(env.APP_ORIGIN || '').trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+  const appOriginWithoutWww = appOrigin.replace(/^www\./i, '');
+  const appOriginWithWww = appOriginWithoutWww ? `www.${appOriginWithoutWww}` : '';
+
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
@@ -37,15 +41,16 @@ function getAllowedOrigin(requestOrigin, env) {
     'http://127.0.0.1:5173',
     'http://localhost:5175',
     'http://127.0.0.1:5175',
-    env.APP_ORIGIN,
-    `https://${env.APP_ORIGIN}`
+    appOrigin ? `https://${appOrigin}` : '',
+    appOriginWithoutWww ? `https://${appOriginWithoutWww}` : '',
+    appOriginWithWww ? `https://${appOriginWithWww}` : ''
   ];
   
   if (allowedOrigins.includes(normalizedOrigin)) {
     return normalizedOrigin;
   }
   
-  return env.APP_ORIGIN ? `https://${env.APP_ORIGIN}` : '*';
+  return appOrigin ? `https://${appOrigin}` : '*';
 }
 
 function sessionCookieAttributes(origin, token) {

@@ -19,8 +19,6 @@ const HERO_SLIDES = [
   }
 ];
 
-let heroSlideTimer = null;
-
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -89,28 +87,12 @@ function initHomeHeroSlides() {
     render(nextIndex);
   };
 
-  const startAuto = () => {
-    if (heroSlideTimer) {
-      clearInterval(heroSlideTimer);
-    }
-    heroSlideTimer = setInterval(() => {
-      if (!document.body.contains(title)) {
-        clearInterval(heroSlideTimer);
-        heroSlideTimer = null;
-        return;
-      }
-      goNext(1);
-    }, 4800);
-  };
-
   prev.addEventListener('click', () => {
     goNext(-1);
-    startAuto();
   });
 
   next.addEventListener('click', () => {
     goNext(1);
-    startAuto();
   });
 
   dots.forEach(dot => {
@@ -118,12 +100,9 @@ function initHomeHeroSlides() {
       const index = Number(dot.getAttribute('data-hero-dot'));
       if (Number.isFinite(index)) {
         render(index);
-        startAuto();
       }
     });
   });
-
-  startAuto();
 }
 
 export async function initHomePage() {

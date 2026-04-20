@@ -7,7 +7,7 @@ account_id = "871e37cff095f0e6e3803f97dcaaff7c"
 vars = { APP_ORIGIN = "localhost:3000", R2_PUBLIC_URL = "https://871e37cff095f0e6e3803f97dcaaff7c.r2.cloudflarestorage.com/onestopshop24-media" }
 
 [env.production]
-vars = { APP_ORIGIN = "onestopshop24.in", R2_PUBLIC_URL = "" }
+vars = { APP_ORIGIN = "www.onestopshop24.in", R2_PUBLIC_URL = "" }
 
 [env.production.assets]
 directory = "../dist"
@@ -24,7 +24,7 @@ binding = "MEDIA_BUCKET"
 bucket_name = "onestopshop24-media"
 
 [vars]
-APP_ORIGIN = "onestopshop24.in"
+APP_ORIGIN = "www.onestopshop24.in"
 R2_PUBLIC_URL = ""
 
 [[d1_databases]]

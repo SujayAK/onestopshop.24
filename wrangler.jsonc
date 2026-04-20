@@ -7,7 +7,7 @@
     "enabled": true
   },
   "vars": {
-    "APP_ORIGIN": "onestopshop24.in",
+    "APP_ORIGIN": "www.onestopshop24.in",
     "R2_PUBLIC_URL": ""
   },
   "d1_databases": [
