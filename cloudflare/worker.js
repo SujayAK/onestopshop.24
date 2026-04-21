@@ -841,6 +841,60 @@ function isAuthorizedR2Purge(request, env) {
   return headerSecret === secret || bearerSecret === secret;
 }
 
+async function handleOrderNotifications(request, env, url, allowedOrigin) {
+  if (request.method === 'POST' && url.pathname.endsWith('/create')) {
+    const body = await readJson(request);
+    const notificationId = crypto.randomUUID();
+    
+    await env.DB.prepare(
+      'INSERT INTO order_notifications (id, order_id, user_id, notification_type, status, email_sent, message, customer_name, customer_email, total_amount, items_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"))'
+    ).bind(
+      notificationId,
+      String(body.orderId || ''),
+      String(body.userId || ''),
+      String(body.notificationType || 'new_order'),
+      'pending',
+      0,
+      String(body.message || ''),
+      String(body.customerName || ''),
+      String(body.customerEmail || ''),
+      Number(body.totalAmount || 0),
+      JSON.stringify(body.items || [])
+    ).run();
+
+    return json({ success: true, data: { id: notificationId } }, { status: 201, headers: corsHeaders(allowedOrigin) });
+  }
+
+  if (request.method === 'GET' && url.pathname.endsWith('/pending')) {
+    const userId = url.searchParams.get('userId');
+    const result = await env.DB.prepare(
+      'SELECT * FROM order_notifications WHERE user_id = ? AND status = "pending" ORDER BY created_at DESC LIMIT 50'
+    ).bind(String(userId || '')).all();
+
+    const notifications = (result.results || []).map(notification => ({
+      ...notification,
+      items: JSON.parse(notification.items_json || '[]')
+    }));
+
+    return json({ success: true, data: notifications }, { headers: corsHeaders(allowedOrigin) });
+  }
+
+  if (request.method === 'PUT' && url.pathname.includes('/mark-sent')) {
+    const notificationId = url.pathname.split('/').find(part => !part.startsWith('mark'));
+    if (!notificationId) {
+      return json({ success: false, error: 'Notification ID required' }, { status: 400, headers: corsHeaders(allowedOrigin) });
+    }
+
+    await env.DB.prepare(
+      'UPDATE order_notifications SET email_sent = 1, status = "sent", sent_at = datetime("now"), updated_at = datetime("now") WHERE id = ?'
+    ).bind(notificationId).run();
+
+    return json({ success: true }, { headers: corsHeaders(allowedOrigin) });
+  }
+
+  return json({ success: false, error: 'Method not allowed' }, { status: 405, headers: corsHeaders(allowedOrigin) });
+}
+
 async function handleR2Purge(request, env, url, allowedOrigin) {
   if (request.method !== 'POST') {
     return json({ success: false, error: 'Method not allowed' }, { status: 405, headers: corsHeaders(allowedOrigin) });
@@ -951,9 +1005,13 @@ export default {
         return handleOrders(request, env, url, allowedOrigin);
       }
 
-      if (pathname.startsWith('/api/orders/')) {
+      if (pathname.startsWith('/api/orders/') && !pathname.includes('notifications')) {
         const orderId = pathname.split('/').pop();
         return handleOrderById(request, env, url, orderId, allowedOrigin);
+      }
+
+      if (pathname.startsWith('/api/order-notifications')) {
+        return handleOrderNotifications(request, env, url, allowedOrigin);
       }
 
       if (pathname === '/api/coupons/validate' || pathname === '/api/coupons/redeem') {

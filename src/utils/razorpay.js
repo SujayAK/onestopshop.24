@@ -3,18 +3,66 @@ export class RazorpayPayment {
     this.keyId =
       config.keyId ||
       import.meta.env.VITE_RAZORPAY_KEY_ID ||
-      '';
+      'rzp_test_placeholder_key';
+    this.keySecret = config.keySecret || import.meta.env.VITE_RAZORPAY_KEY_SECRET || '';
     this.successUrl = config.successUrl || '#/payment-success';
     this.failureUrl = config.failureUrl || '#/payment-failed';
+    this.isDummy = !this.keyId || this.keyId === 'rzp_test_placeholder_key';
   }
 
   async initiatePayment(orderDetails) {
     try {
-      return await this.openDummyCheckout(orderDetails);
+      if (this.isDummy) {
+        return await this.openDummyCheckout(orderDetails);
+      } else {
+        return await this.openRealCheckout(orderDetails);
+      }
     } catch (error) {
       console.error('Payment initiation error:', error);
       return { status: 'error', message: error.message };
     }
+  }
+
+  async openRealCheckout(orderDetails) {
+    // Load Razorpay script
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => {
+        const options = {
+          key: this.keyId,
+          amount: Math.round(Number(orderDetails.amount || 0) * 100),
+          currency: 'INR',
+          name: orderDetails.customerName || 'OneStop Shop',
+          description: `Order ${orderDetails.orderId}`,
+          order_id: orderDetails.razorpayOrderId || undefined,
+          prefill: {
+            name: orderDetails.customerName || '',
+            email: orderDetails.customerEmail || '',
+            contact: orderDetails.customerPhone || ''
+          },
+          handler: (response) => {
+            this.handlePaymentSuccess(response, orderDetails);
+            resolve({ status: 'success' });
+          },
+          modal: {
+            ondismiss: () => {
+              this.handlePaymentDismiss(orderDetails);
+              resolve({ status: 'dismissed' });
+            }
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      };
+      script.onerror = () => {
+        console.error('Failed to load Razorpay script');
+        reject(new Error('Failed to load Razorpay script'));
+      };
+      document.head.appendChild(script);
+    });
   }
 
   openDummyCheckout(orderDetails) {
@@ -80,7 +128,7 @@ export class RazorpayPayment {
     
     const paymentData = {
       paymentId: response.razorpay_payment_id,
-      orderId: response.razorpay_order_id,
+      orderId: response.razorpay_order_id || orderDetails.orderId,
       signature: response.razorpay_signature,
       orderDetails: orderDetails,
       timestamp: new Date().toISOString(),
@@ -89,6 +137,16 @@ export class RazorpayPayment {
 
     // Store payment data
     localStorage.setItem('lastPayment', JSON.stringify(paymentData));
+    localStorage.setItem('currentOrder', JSON.stringify({
+      orderId: orderDetails.orderId,
+      customerName: orderDetails.customerName,
+      customerEmail: orderDetails.customerEmail,
+      customerPhone: orderDetails.customerPhone,
+      amount: orderDetails.amount,
+      items: orderDetails.items,
+      shippingAddress: orderDetails.shippingAddress,
+      paymentId: response.razorpay_payment_id
+    }));
     
     // Emit success event
     window.dispatchEvent(new CustomEvent('paymentSuccess', { detail: paymentData }));
@@ -131,6 +189,25 @@ export class RazorpayPayment {
     localStorage.setItem('lastPaymentError', JSON.stringify(errorData));
     window.dispatchEvent(new CustomEvent('paymentDismissed', { detail: orderDetails }));
     window.location.hash = '#/payment-failed';
+  }
+
+  // Helper to create Razorpay order on backend
+  async createRazorpayOrder(amount, orderId) {
+    try {
+      const response = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount, orderId })
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Failed to create Razorpay order:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   // Verify payment on backend (call from your server)

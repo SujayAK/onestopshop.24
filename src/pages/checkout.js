@@ -1,6 +1,7 @@
 import { cart } from '../utils/cart.js';
 import { razorpayPayment } from '../utils/razorpay.js';
-import { createOrder, getCurrentUser, validateCoupon, redeemCoupon, getInventoryByProductIds, reserveInventory, releaseInventory } from '../utils/cloudflare.js';
+import { createOrder, getCurrentUser, validateCoupon, redeemCoupon, getInventoryByProductIds, reserveInventory, releaseInventory, updateOrder } from '../utils/cloudflare.js';
+import { sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail } from '../utils/email.js';
 import { showAuthRequiredPopup, showInfoPopup } from '../utils/ui-popup.js';
 
 export function CheckoutPage() {
@@ -66,9 +67,14 @@ export function CheckoutPage() {
                   <input type="text" id="customer-city" placeholder="New York" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;" required>
                 </div>
                 <div>
-                  <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Postal Code *</label>
-                  <input type="text" id="customer-postal" placeholder="10001" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;" required>
+                  <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">State *</label>
+                  <input type="text" id="customer-state" placeholder="NY" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;" required>
                 </div>
+              </div>
+
+              <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Postal Code (PIN) *</label>
+                <input type="text" id="customer-postal" placeholder="10001" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;" required>
               </div>
 
               <div style="margin-bottom: 2rem;">
@@ -158,6 +164,7 @@ export function initCheckoutPage() {
       const phone = document.getElementById('customer-phone').value;
       const address = document.getElementById('customer-address').value;
       const city = document.getElementById('customer-city').value;
+      const state = document.getElementById('customer-state').value;
       const postal = document.getElementById('customer-postal').value;
 
       const items = cart.getItems();
@@ -173,6 +180,7 @@ export function initCheckoutPage() {
         phone,
         address,
         city,
+        state,
         postal_code: postal
       };
 
@@ -279,4 +287,104 @@ export function initCheckoutPage() {
       }
     });
   }
+
+  // Listen for payment success
+  window.addEventListener('paymentSuccess', async (event) => {
+    try {
+      const paymentData = event.detail;
+      const orderId = paymentData.orderId;
+      const orderDetails = paymentData.orderDetails;
+
+      console.log('Processing successful payment for order:', orderId);
+
+      // Update order with payment details
+      const updateResult = await updateOrder(orderId, {
+        status: 'confirmed',
+        payment_status: 'completed',
+        razorpay_payment_id: paymentData.paymentId,
+        razorpay_order_id: paymentData.orderId
+      });
+
+      if (updateResult.success) {
+        console.log('Order updated with payment details');
+
+        // Send confirmation email to customer
+        const customerFirstName = (orderDetails.customerName || '').split(' ')[0];
+        const customerLastName = (orderDetails.customerName || '').split(' ').slice(1).join(' ');
+        
+        await sendOrderConfirmationEmail({
+          email: orderDetails.customerEmail,
+          firstName: customerFirstName,
+          lastName: customerLastName,
+          orderId: orderId,
+          amount: orderDetails.amount,
+          items: orderDetails.products || orderDetails.items,
+          shippingAddress: orderDetails.customData || {
+            address: orderDetails.shippingAddress?.address,
+            city: orderDetails.shippingAddress?.city,
+            state: orderDetails.shippingAddress?.state,
+            postal_code: orderDetails.shippingAddress?.postal_code,
+            phone: orderDetails.customerPhone
+          }
+        });
+
+        // Send owner notification
+        const ownerEmail = String(import.meta.env.VITE_OWNER_EMAIL || 'owner@onestopshop.com').trim();
+        await sendOwnerOrderNotificationEmail({
+          ownerEmail: ownerEmail,
+          orderId: orderId,
+          customerName: orderDetails.customerName,
+          customerEmail: orderDetails.customerEmail,
+          amount: orderDetails.amount,
+          items: orderDetails.products || orderDetails.items,
+          shippingAddress: orderDetails.customData || {
+            address: orderDetails.shippingAddress?.address,
+            city: orderDetails.shippingAddress?.city,
+            state: orderDetails.shippingAddress?.state,
+            postal_code: orderDetails.shippingAddress?.postal_code,
+            phone: orderDetails.customerPhone
+          }
+        });
+
+        // Clear cart
+        cart.clear();
+
+        console.log('Payment processed successfully - confirmation emails sent');
+      } else {
+        console.error('Failed to update order after payment');
+      }
+    } catch (error) {
+      console.error('Error processing payment success:', error);
+    }
+  });
+
+  // Listen for payment failure/dismissal to release inventory
+  window.addEventListener('paymentFailed', async (event) => {
+    try {
+      const errorData = event.detail;
+      const orderDetails = errorData.orderDetails || {};
+      const items = orderDetails.products || orderDetails.items || [];
+
+      if (items.length > 0) {
+        console.log('Releasing reserved inventory due to payment failure');
+        await releaseInventory(items.map(item => ({ id: item.id, quantity: item.quantity })));
+      }
+    } catch (error) {
+      console.error('Error releasing inventory after payment failure:', error);
+    }
+  });
+
+  window.addEventListener('paymentDismissed', async (event) => {
+    try {
+      const orderDetails = event.detail || {};
+      const items = orderDetails.products || orderDetails.items || [];
+
+      if (items.length > 0) {
+        console.log('Releasing reserved inventory due to payment dismissal');
+        await releaseInventory(items.map(item => ({ id: item.id, quantity: item.quantity })));
+      }
+    } catch (error) {
+      console.error('Error releasing inventory after payment dismissal:', error);
+    }
+  });
 }
