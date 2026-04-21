@@ -22,10 +22,258 @@ import { cart } from './utils/cart.js';
 
 const app = document.getElementById('app');
 const DEFAULT_ANNOUNCEMENT_MESSAGE = 'FREE SHIPPING ON ORDERS OVER ₹100 • NEW ARRIVALS JUST LANDED';
+const SEO_SITE_URL = String(import.meta.env.VITE_SITE_URL || 'https://onestopshop.in').trim().replace(/\/$/, '');
 let scrollHandlerAttached = false;
 let productGuardAttached = false;
 let unsubscribeInventorySync = null;
 const productCatalogById = new Map();
+
+function clampText(value, maxLength = 160) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength - 1).trim()}…`;
+}
+
+function ensureMetaTag(key, value, isProperty = false) {
+  if (!document.head) {
+    return;
+  }
+  const selector = isProperty ? `meta[property="${key}"]` : `meta[name="${key}"]`;
+  let meta = document.head.querySelector(selector);
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute(isProperty ? 'property' : 'name', key);
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute('content', value);
+}
+
+function ensureCanonicalLink(href) {
+  if (!document.head) {
+    return;
+  }
+  let link = document.head.querySelector('link[rel="canonical"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    document.head.appendChild(link);
+  }
+  link.setAttribute('href', href);
+}
+
+function setSeoSchema(schemaObject) {
+  const script = document.getElementById('seo-schema-json');
+  if (!script) {
+    return;
+  }
+
+  try {
+    script.textContent = JSON.stringify(schemaObject, null, 2);
+  } catch (_error) {
+    // Keep existing schema if serialization fails.
+  }
+}
+
+function buildDefaultSchema(url, title, description) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description,
+    url,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'OneStopShop',
+      url: `${SEO_SITE_URL}/`
+    }
+  };
+}
+
+function applySeoMeta(payload = {}) {
+  const title = payload.title || 'OneStopShop | Bags and Accessories Boutique';
+  const description = clampText(
+    payload.description || 'Shop curated bags and accessories at OneStopShop. Discover shoulder bags, sling bags, totes, and statement accessories for everyday elegance.',
+    170
+  );
+  const robots = payload.robots || 'index,follow,max-image-preview:large';
+  const image = payload.image || `${SEO_SITE_URL}/Website%20Banners.webp`;
+  const url = payload.url || `${SEO_SITE_URL}/`;
+  const canonical = payload.canonical || `${SEO_SITE_URL}/`;
+
+  document.title = title;
+  ensureMetaTag('description', description);
+  ensureMetaTag('robots', robots);
+
+  ensureMetaTag('og:type', payload.ogType || 'website', true);
+  ensureMetaTag('og:site_name', 'OneStopShop', true);
+  ensureMetaTag('og:title', title, true);
+  ensureMetaTag('og:description', description, true);
+  ensureMetaTag('og:url', url, true);
+  ensureMetaTag('og:image', image, true);
+
+  ensureMetaTag('twitter:card', 'summary_large_image');
+  ensureMetaTag('twitter:title', title);
+  ensureMetaTag('twitter:description', description);
+  ensureMetaTag('twitter:image', image);
+
+  ensureCanonicalLink(canonical);
+
+  setSeoSchema(payload.schema || buildDefaultSchema(url, title, description));
+}
+
+function getRouteSeoPayload(hashValue) {
+  const hash = String(hashValue || '#/').trim() || '#/';
+  const [routePart, queryPart = ''] = hash.split('?');
+  const params = new URLSearchParams(queryPart);
+  const category = decodeURIComponent(String(params.get('cat') || 'Bags').replace(/\+/g, ' '));
+  const searchQuery = String(params.get('q') || '').trim();
+  const hashUrl = `${SEO_SITE_URL}/${hash.startsWith('#') ? hash : `#${hash}`}`;
+
+  if (routePart === '#/' || routePart === '#') {
+    return {
+      title: 'OneStopShop | Bags and Accessories Boutique',
+      description: 'Shop curated bags and accessories at OneStopShop. Discover shoulder bags, sling bags, totes, and statement accessories for everyday elegance.',
+      url: `${SEO_SITE_URL}/`,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (routePart.startsWith('#/shop')) {
+    return {
+      title: `${category} Collection | OneStopShop`,
+      description: `Browse ${category} at OneStopShop. Discover curated designs, premium materials, and everyday elegance in every piece.`,
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (routePart.startsWith('#/search')) {
+    return {
+      title: searchQuery ? `Search “${searchQuery}” | OneStopShop` : 'Search Products | OneStopShop',
+      description: searchQuery ? `Search results for ${searchQuery} in the OneStopShop catalog.` : 'Search bags and accessories by name, category, or style at OneStopShop.',
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (routePart === '#/about') {
+    return {
+      title: 'About Us | OneStopShop',
+      description: 'Learn about OneStopShop, our curation philosophy, and our commitment to quality bags and accessories.',
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (routePart === '#/stock-clearance') {
+    return {
+      title: 'Stock Clearance | OneStopShop',
+      description: 'Explore limited-time stock clearance deals on selected bags and accessories.',
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (routePart === '#/contact') {
+    return {
+      title: 'Contact Us | OneStopShop',
+      description: 'Get in touch with OneStopShop for product help, orders, and customer support.',
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (routePart === '#/shipping' || routePart === '#/returns') {
+    return {
+      title: 'Policies | OneStopShop',
+      description: 'Read shipping, delivery, and returns policy information for OneStopShop orders.',
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (routePart.startsWith('#/product/')) {
+    return {
+      title: 'Product Details | OneStopShop',
+      description: 'View product details, images, pricing, and availability on OneStopShop.',
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  if (
+    routePart === '#/login'
+    || routePart === '#/signup'
+    || routePart === '#/forgot-password'
+    || routePart.startsWith('#/profile')
+    || routePart === '#/cart'
+    || routePart === '#/checkout'
+    || routePart === '#/payment-success'
+    || routePart === '#/payment-failed'
+  ) {
+    return {
+      title: 'Account | OneStopShop',
+      description: 'Manage your OneStopShop account, cart, and checkout securely.',
+      robots: 'noindex,nofollow',
+      url: hashUrl,
+      canonical: `${SEO_SITE_URL}/`
+    };
+  }
+
+  return {
+    title: 'Page Not Found | OneStopShop',
+    description: 'The page you are looking for could not be found.',
+    robots: 'noindex,nofollow',
+    url: hashUrl,
+    canonical: `${SEO_SITE_URL}/`
+  };
+}
+
+function applyProductSeo(payload = {}) {
+  const id = String(payload.id || '').trim();
+  const name = String(payload.name || 'Product').trim();
+  const description = clampText(
+    payload.description || `Explore ${name} on OneStopShop.`,
+    170
+  );
+  const price = Number(payload.price || 0);
+  const image = String(payload.image || `${SEO_SITE_URL}/Website%20Banners.webp`).trim();
+  const imageUrl = /^https?:\/\//i.test(image)
+    ? image
+    : `${SEO_SITE_URL}/${String(image).replace(/^\/+/, '')}`;
+  const url = `${SEO_SITE_URL}/#/product/${encodeURIComponent(id || 'item')}`;
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name,
+    description,
+    image: [imageUrl],
+    brand: {
+      '@type': 'Brand',
+      name: 'OneStopShop'
+    },
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: Number.isFinite(price) ? String(Math.max(0, price)) : '0',
+      availability: 'https://schema.org/InStock',
+      url
+    }
+  };
+
+  applySeoMeta({
+    title: `${name} | OneStopShop`,
+    description,
+    image: imageUrl,
+    url,
+    canonical: `${SEO_SITE_URL}/`,
+    ogType: 'product',
+    schema
+  });
+}
 
 function normalizeCatalogProduct(product) {
   if (!product) {
@@ -852,6 +1100,7 @@ function initTestimonialSlider() {
 
 function navigate() {
   const hash = window.location.hash || '#/';
+  applySeoMeta(getRouteSeoPayload(hash));
   
   if (hash === '#/' || hash === '') {
     renderPage(HomePage());
@@ -979,6 +1228,21 @@ window.addEventListener('catalogHydrated', event => {
   initWishlistButtons();
   initAddToCartButtons();
   initLiveInventorySync();
+});
+
+window.addEventListener('seoProductUpdate', event => {
+  const payload = event.detail || {};
+  if (payload.notFound) {
+    applySeoMeta({
+      title: 'Product Not Found | OneStopShop',
+      description: 'The requested product is unavailable or no longer active.',
+      robots: 'noindex,nofollow',
+      url: `${SEO_SITE_URL}/${window.location.hash || '#/'}`,
+      canonical: `${SEO_SITE_URL}/`
+    });
+    return;
+  }
+  applyProductSeo(payload);
 });
 
 initProductAccessGuard();

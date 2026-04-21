@@ -485,6 +485,7 @@ export async function initProductPage(productId) {
   const id = String(productId || '').trim();
   if (!id) {
     root.innerHTML = renderProductNotFound();
+    window.dispatchEvent(new CustomEvent('seoProductUpdate', { detail: { notFound: true, id: productId } }));
     return;
   }
 
@@ -496,6 +497,7 @@ export async function initProductPage(productId) {
 
   if (!productResult.success || !productResult.data) {
     root.innerHTML = renderProductNotFound();
+    window.dispatchEvent(new CustomEvent('seoProductUpdate', { detail: { notFound: true, id } }));
     return;
   }
 
@@ -513,6 +515,16 @@ export async function initProductPage(productId) {
   };
 
   root.innerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
+
+  window.dispatchEvent(new CustomEvent('seoProductUpdate', {
+    detail: {
+      id,
+      name: product.name || 'Product',
+      description: product.description || `Explore ${product.name || 'this product'} at OneStopShop.`,
+      image: media[0]?.views?.[0]?.url || product.image || product.image_url || '',
+      price: Number(product.price || 0)
+    }
+  }));
   
   initLazyLoading();
   initProductImageZoom();

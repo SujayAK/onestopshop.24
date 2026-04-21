@@ -1,3 +1,5 @@
+import { getProductsCatalogAdvanced } from '../utils/cloudflare.js';
+
 const HERO_SLIDES = [
   {
     title: 'One Stop Shop',
@@ -14,10 +16,10 @@ const COLLECTION_COLUMNS = [
     description: 'Signature styles and everyday carry pieces.',
     autoplayClass: 'is-left',
     items: [
-      { alt: 'img', src: '/Website%20Banners.webp' },
-      { alt: 'img2', src: '/Website%20Banners.webp' },
-      { alt: 'img3', src: '/Website%20Banners.webp' },
-      { alt: 'img4', src: '/Website%20Banners.webp' }
+      { alt: 'Rhinestone Bag', src: '/Website%20Banners.webp', bagTarget: 'rhinestone-bag' },
+      { alt: 'Office Bag', src: '/Website%20Banners.webp', bagTarget: 'office-bag' },
+      { alt: 'Stunner', src: '/Website%20Banners.webp', bagTarget: 'stunner' },
+      { alt: 'Cloud Tote', src: '/Website%20Banners.webp', bagTarget: 'cloud-tote' }
     ]
   },
   {
@@ -90,6 +92,7 @@ export function HomePage() {
                       <img
                         src="${item.src}"
                         alt="${escapeHtml(item.alt)}"
+                        ${item.bagTarget ? `data-bag-target="${escapeHtml(item.bagTarget)}"` : ''}
                         loading="lazy"
                         decoding="async"
                       >
@@ -173,6 +176,72 @@ function initHomeHeroSlides() {
   });
 }
 
+const BAG_IMAGE_TARGETS = [
+  { key: 'rhinestone-bag', terms: ['rhinestone bag', 'rhinestone'] },
+  { key: 'office-bag', terms: ['office bag', 'office'] },
+  { key: 'stunner', terms: ['stunner'] },
+  { key: 'cloud-tote', terms: ['cloud tote', 'cloud', 'tote'] }
+];
+
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function resolveBagImageMap(products = []) {
+  const normalizedProducts = (Array.isArray(products) ? products : [])
+    .map(product => ({
+      name: normalizeText(product?.name),
+      image: String(product?.image || product?.image_url || '').trim()
+    }))
+    .filter(product => product.name && product.image);
+
+  return BAG_IMAGE_TARGETS.reduce((map, target) => {
+    const match = normalizedProducts.find(product => target.terms.some(term => product.name.includes(term)));
+    if (match) {
+      map.set(target.key, match.image);
+    }
+    return map;
+  }, new Map());
+}
+
+async function initHomeBagCollectionImages() {
+  const bagImages = document.querySelectorAll('.home-collection-card.is-left img[data-bag-target]');
+  if (!bagImages.length) {
+    return;
+  }
+
+  const result = await getProductsCatalogAdvanced({
+    category: 'Bags',
+    limit: 120,
+    sort: 'featured-first',
+    prioritizeDisplayOrder: true,
+    onlyActive: true
+  });
+
+  if (!result?.success || !Array.isArray(result.data) || result.data.length === 0) {
+    return;
+  }
+
+  const imageMap = resolveBagImageMap(result.data);
+  if (imageMap.size === 0) {
+    return;
+  }
+
+  bagImages.forEach(image => {
+    const target = String(image.getAttribute('data-bag-target') || '').trim();
+    const source = imageMap.get(target);
+    if (!source) {
+      return;
+    }
+    image.src = source;
+  });
+}
+
 export async function initHomePage() {
   initHomeHeroSlides();
+  await initHomeBagCollectionImages();
 }
