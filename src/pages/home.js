@@ -33,6 +33,12 @@ const COLLECTION_COLUMNS = [
   }
 ];
 
+const HOME_ABOUT_PREVIEW = {
+  title: 'About OneStop',
+  copy: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer volutpat, nibh non interdum tincidunt, mauris turpis mattis augue, et posuere lectus est a justo. Sed vel justo non risus interdum feugiat at in urna. Donec in mi sapien. Integer malesuada dolor vel sem fermentum, at feugiat tellus vulputate.',
+  image: '/about%20us.webp'
+};
+
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -94,6 +100,22 @@ export function HomePage() {
             </article>
           `).join('')}
         </div>
+      </div>
+    </section>
+
+    <section class="home-about-preview section" aria-label="About OneStop preview">
+      <div class="container">
+        <article class="home-about-preview-card">
+          <div class="home-about-preview-media">
+            <img src="${HOME_ABOUT_PREVIEW.image}" alt="About OneStop" loading="lazy" decoding="async">
+          </div>
+          <div class="home-about-preview-copy">
+            <p class="home-about-preview-kicker">About Us</p>
+            <h2>${escapeHtml(HOME_ABOUT_PREVIEW.title)}</h2>
+            <p>${escapeHtml(HOME_ABOUT_PREVIEW.copy)}</p>
+            <a href="#/about" class="btn btn-outline home-about-preview-link">Read more...</a>
+          </div>
+        </article>
       </div>
     </section>
   `;

@@ -15,6 +15,7 @@ import { SignupPage, initSignupPage } from './pages/signup.js';
 import { ForgotPasswordPage, initForgotPasswordPage } from './pages/forgot-password.js';
 import { ProfilePage, initProfilePage } from './pages/profile.js';
 import { SearchPage, initSearchPage } from './pages/search.js';
+import { AboutPage, initAboutPage } from './pages/about.js';
 import { INVENTORY_STRUCTURE } from './data/inventory-structure.js';
 import { getAnnouncementBarMessage, getInventoryByProductIds, subscribeToInventoryUpdates, getCurrentUser, cloudflareConfig, getTaxonomyTree, getProductsCatalog } from './utils/cloudflare.js';
 import { cart } from './utils/cart.js';
@@ -897,18 +898,8 @@ function navigate() {
     renderPage(PaymentFailedPage());
     initPaymentFailedPage();
   } else if (hash === '#/about') {
-    renderPage(`
-      <div class="container section">
-        <h1 style="text-align: center; margin-bottom: 3rem;">About OneStop</h1>
-        <div style="max-width: 800px; margin: 0 auto; line-height: 2;">
-          <p style="margin-bottom: 2rem;">Welcome to <strong>onestopshop</strong>, your curated destination for the finest fashion, bags, and accessories. We believe that style should be effortless, elegant, and accessible.</p>
-          <p style="margin-bottom: 2rem;">Our boutique was born out of a passion for high-quality craftsmanship and timeless design. Every product in our collection is handpicked to ensure it meets our high standards of quality and style.</p>
-          <h2 style="margin-top: 3rem;">Our Commitment to You</h2>
-          <p style="margin-bottom: 2rem;">We know that shopping online requires trust. That's why we prioritize transparency, real product photography, and secure checkout processes. We want you to shop with the confidence that what you see is exactly what you will receive.</p>
-          <p>Join our growing community on Instagram and see why thousands of customers trust OneStop for their everyday elegance.</p>
-        </div>
-      </div>
-    `);
+    renderPage(AboutPage());
+    initAboutPage();
   } else if (hash === '#/contact') {
     const storeEmail = import.meta.env.VITE_STORE_EMAIL || 'contact@onestopshop.com';
     const supportPhone = import.meta.env.VITE_SUPPORT_PHONE || '+1 (234) 567-890';
