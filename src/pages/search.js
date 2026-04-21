@@ -19,6 +19,164 @@ function formatINR(value) {
   }).format(Number(value || 0));
 }
 
+const SEARCH_STOP_WORDS = new Set(['for', 'the', 'and', 'with', 'from', 'new', 'all']);
+
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokenizeQuery(value) {
+  const seen = new Set();
+  return normalizeSearchText(value)
+    .split(' ')
+    .map(token => token.trim())
+    .filter(token => token.length > 1 && !SEARCH_STOP_WORDS.has(token))
+    .filter(token => {
+      if (seen.has(token)) {
+        return false;
+      }
+      seen.add(token);
+      return true;
+    });
+}
+
+function levenshteinDistance(left, right, maxDistance = 2) {
+  if (left === right) {
+    return 0;
+  }
+
+  const leftLength = left.length;
+  const rightLength = right.length;
+
+  if (!leftLength) {
+    return rightLength;
+  }
+  if (!rightLength) {
+    return leftLength;
+  }
+  if (Math.abs(leftLength - rightLength) > maxDistance) {
+    return maxDistance + 1;
+  }
+
+  const row = Array.from({ length: rightLength + 1 }, (_, index) => index);
+
+  for (let i = 1; i <= leftLength; i += 1) {
+    let prevDiagonal = row[0];
+    row[0] = i;
+    let bestInRow = row[0];
+
+    for (let j = 1; j <= rightLength; j += 1) {
+      const temp = row[j];
+      const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+      row[j] = Math.min(
+        row[j] + 1,
+        row[j - 1] + 1,
+        prevDiagonal + cost
+      );
+      prevDiagonal = temp;
+      if (row[j] < bestInRow) {
+        bestInRow = row[j];
+      }
+    }
+
+    if (bestInRow > maxDistance) {
+      return maxDistance + 1;
+    }
+  }
+
+  return row[rightLength];
+}
+
+function fuzzyTokenMatch(queryToken, candidateValue) {
+  const candidateTokens = normalizeSearchText(candidateValue).split(' ').filter(Boolean);
+  return candidateTokens.some(token => {
+    const lengthDiff = Math.abs(token.length - queryToken.length);
+    if (lengthDiff > 1) {
+      return false;
+    }
+    const threshold = queryToken.length <= 4 ? 1 : 2;
+    return levenshteinDistance(queryToken, token, threshold) <= threshold;
+  });
+}
+
+function scoreAgainstField(term, fieldValue, weight) {
+  const field = normalizeSearchText(fieldValue);
+  if (!term || !field) {
+    return 0;
+  }
+
+  if (field === term) {
+    return weight * 8;
+  }
+  if (field.startsWith(term)) {
+    return weight * 6;
+  }
+  if (field.includes(` ${term}`)) {
+    return weight * 4;
+  }
+  if (field.includes(term)) {
+    return weight * 3;
+  }
+  if (term.length >= 3 && fuzzyTokenMatch(term, field)) {
+    return weight * 2;
+  }
+  return 0;
+}
+
+function scoreProduct(product, query) {
+  const phrase = normalizeSearchText(query);
+  const terms = tokenizeQuery(query);
+
+  if (!phrase || terms.length === 0) {
+    return 0;
+  }
+
+  const colors = getProductColors(product).map(color => color.name).join(' ');
+  const fields = [
+    { value: product.name, weight: 10 },
+    { value: product.subcategory, weight: 7 },
+    { value: product.category, weight: 6 },
+    { value: colors, weight: 3 },
+    { value: product.description, weight: 2 }
+  ];
+
+  let score = 0;
+
+  fields.forEach(field => {
+    score += scoreAgainstField(phrase, field.value, field.weight);
+  });
+
+  let coveredTerms = 0;
+
+  terms.forEach(term => {
+    let bestTermScore = 0;
+    fields.forEach(field => {
+      const nextScore = scoreAgainstField(term, field.value, field.weight);
+      if (nextScore > bestTermScore) {
+        bestTermScore = nextScore;
+      }
+    });
+
+    if (bestTermScore > 0) {
+      coveredTerms += 1;
+    }
+
+    score += bestTermScore;
+  });
+
+  const coverageRatio = coveredTerms / terms.length;
+  score += Math.round(coverageRatio * 40);
+  if (coveredTerms === terms.length) {
+    score += 20;
+  }
+
+  return score;
+}
+
 function normalizeProduct(row) {
   return {
     id: String(row.id || '').trim(),
@@ -148,34 +306,13 @@ export async function initSearchPage(initialQuery = '') {
   let activeQuery = String(initialQuery || input.value || '').trim();
   let searchTimer = null;
 
-  const scoreProduct = (product, query) => {
-    const term = String(query || '').trim().toLowerCase();
-    if (!term) {
-      return 0;
-    }
-
-    const name = String(product.name || '').toLowerCase();
-    const category = String(product.category || '').toLowerCase();
-    const subcategory = String(product.subcategory || '').toLowerCase();
-    const description = String(product.description || '').toLowerCase();
-
-    if (name === term) return 100;
-    if (name.startsWith(term)) return 80;
-    if (subcategory === term) return 70;
-    if (category === term) return 60;
-    if (name.includes(term)) return 50;
-    if (subcategory.includes(term)) return 45;
-    if (category.includes(term)) return 40;
-    if (description.includes(term)) return 20;
-    return 0;
-  };
-
   const fetchResults = async (query) => {
     const term = String(query || '').trim();
     resultCount.textContent = term ? `Searching for “${term}”...` : 'Start typing to search products.';
 
-    if (!term) {
-      grid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>Search your catalog</h3><p>Type at least one word to find products from the live products table.</p></div>';
+    if (!term || term.length < 2) {
+      grid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>Search your catalog</h3><p>Type at least 2 characters to find products from the live products table.</p></div>';
+      resultCount.textContent = 'Type at least 2 characters to search.';
       return;
     }
 
@@ -194,9 +331,14 @@ export async function initSearchPage(initialQuery = '') {
       return;
     }
 
-    const products = result.data
+    const ranked = result.data
       .map(normalizeProduct)
-      .sort((left, right) => scoreProduct(right, term) - scoreProduct(left, term) || String(left.name || '').localeCompare(String(right.name || '')));
+      .map(product => ({ product, score: scoreProduct(product, term) }))
+      .sort((left, right) => right.score - left.score || String(left.product.name || '').localeCompare(String(right.product.name || '')));
+
+    const minimumScore = 14;
+    const filtered = ranked.filter(entry => entry.score >= minimumScore);
+    const products = (filtered.length ? filtered : ranked).map(entry => entry.product);
 
     if (products.length === 0) {
       grid.innerHTML = '<div class="profile-empty-state" style="grid-column: 1 / -1;"><h3>No products found</h3><p>Try a different keyword, category, or subcategory.</p></div>';
@@ -205,7 +347,7 @@ export async function initSearchPage(initialQuery = '') {
     }
 
     grid.innerHTML = products.map(product => renderSearchCard(product, wishlistIds.has(product.id))).join('');
-    resultCount.textContent = `${products.length} result${products.length === 1 ? '' : 's'} for “${term}”`;
+    resultCount.textContent = `${products.length} ranked result${products.length === 1 ? '' : 's'} for “${term}”`;
 
     initLazyLoading();
     window.dispatchEvent(new CustomEvent('catalogHydrated', { detail: { products } }));
