@@ -16,10 +16,10 @@ const COLLECTION_COLUMNS = [
     description: 'Signature styles and everyday carry pieces.',
     autoplayClass: 'is-left',
     items: [
-      { alt: 'Rhinestone Bag', src: '/Website%20Banners.webp', bagTarget: 'rhinestone-bag' },
-      { alt: 'Office Bag', src: '/Website%20Banners.webp', bagTarget: 'office-bag' },
-      { alt: 'Stunner', src: '/Website%20Banners.webp', bagTarget: 'stunner' },
-      { alt: 'Cloud Tote', src: '/Website%20Banners.webp', bagTarget: 'cloud-tote' }
+      { alt: 'Rhinestone Bag', src: '/Website%20Banners.webp', bagTarget: 'rhinestone-bag', href: '#/shop?cat=Bags' },
+      { alt: 'Office Bag', src: '/Website%20Banners.webp', bagTarget: 'office-bag', href: '#/shop?cat=Bags' },
+      { alt: 'Stunner', src: '/Website%20Banners.webp', bagTarget: 'stunner', href: '#/shop?cat=Bags' },
+      { alt: 'Cloud Tote', src: '/Website%20Banners.webp', bagTarget: 'cloud-tote', href: '#/shop?cat=Bags' }
     ]
   },
   {
@@ -27,10 +27,10 @@ const COLLECTION_COLUMNS = [
     description: 'Finishing touches for polished everyday looks.',
     autoplayClass: 'is-right',
     items: [
-      { alt: 'img', src: '/Website%20Banners.webp' },
-      { alt: 'img2', src: '/Website%20Banners.webp' },
-      { alt: 'img3', src: '/Website%20Banners.webp' },
-      { alt: 'img4', src: '/Website%20Banners.webp' }
+      { alt: 'img', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'img2', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'img3', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'img4', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' }
     ]
   }
 ];
@@ -88,7 +88,7 @@ export function HomePage() {
               <div class="home-collection-marquee" aria-label="${escapeHtml(column.title)} image slider">
                 <div class="home-collection-track">
                   ${[...column.items, ...column.items].map((item, index) => `
-                    <div class="home-collection-slide" aria-hidden="${index >= column.items.length ? 'true' : 'false'}">
+                    <a class="home-collection-slide" href="${item.href || '#/shop'}" aria-label="View ${escapeHtml(item.alt)} details" aria-hidden="${index >= column.items.length ? 'true' : 'false'}">
                       <img
                         src="${item.src}"
                         alt="${escapeHtml(item.alt)}"
@@ -96,7 +96,7 @@ export function HomePage() {
                         loading="lazy"
                         decoding="async"
                       >
-                    </div>
+                    </a>
                   `).join('')}
                 </div>
               </div>
@@ -238,6 +238,16 @@ async function initHomeBagCollectionImages() {
       return;
     }
     image.src = source;
+
+    const tile = image.closest('.home-collection-slide');
+    const matchedProduct = (Array.from(result.data || [])).find(product => {
+      const normalizedName = normalizeText(product?.name);
+      return BAG_IMAGE_TARGETS.find(targetConfig => targetConfig.key === target)?.terms.some(term => normalizedName.includes(term));
+    });
+
+    if (tile && matchedProduct?.id) {
+      tile.setAttribute('href', `#/product/${encodeURIComponent(String(matchedProduct.id).trim())}`);
+    }
   });
 }
 
