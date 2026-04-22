@@ -1,5 +1,3 @@
-import { getProductsCatalogAdvanced } from '../utils/cloudflare.js';
-
 const HERO_SLIDES = [
   {
     title: 'One Stop Shop',
@@ -16,10 +14,9 @@ const COLLECTION_COLUMNS = [
     description: 'Signature styles and everyday carry pieces.',
     autoplayClass: 'is-left',
     items: [
-      { alt: 'Rhinestone Bag', src: '/Website%20Banners.webp', bagTarget: 'rhinestone-bag', href: '#/shop?cat=Bags' },
-      { alt: 'Office Bag', src: '/Website%20Banners.webp', bagTarget: 'office-bag', href: '#/shop?cat=Bags' },
-      { alt: 'Stunner', src: '/Website%20Banners.webp', bagTarget: 'stunner', href: '#/shop?cat=Bags' },
-      { alt: 'Cloud Tote', src: '/Website%20Banners.webp', bagTarget: 'cloud-tote', href: '#/shop?cat=Bags' }
+      { alt: 'Bags Collection Banner', src: '/Website%20Banners.webp', href: '#/shop?cat=Bags' },
+      { alt: 'Featured Bags', src: '/banner1.webp', href: '#/shop?cat=Bags' },
+      { alt: 'Bag Styling', src: '/about%20us.webp', href: '#/shop?cat=Bags' }
     ]
   },
   {
@@ -27,19 +24,12 @@ const COLLECTION_COLUMNS = [
     description: 'Finishing touches for polished everyday looks.',
     autoplayClass: 'is-right',
     items: [
-      { alt: 'img', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
-      { alt: 'img2', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
-      { alt: 'img3', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
-      { alt: 'img4', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' }
+      { alt: 'Accessories Collection Banner', src: '/about%20us.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'Featured Accessories', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'Accessory Styling', src: '/banner1.webp', href: '#/shop?cat=Accessories' }
     ]
   }
 ];
-
-const HOME_ABOUT_PREVIEW = {
-  title: 'About OneStop',
-  copy: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer volutpat, nibh non interdum tincidunt, mauris turpis mattis augue, et posuere lectus est a justo. Sed vel justo non risus interdum feugiat at in urna. Donec in mi sapien. Integer malesuada dolor vel sem fermentum, at feugiat tellus vulputate.',
-  image: '/about%20us.webp'
-};
 
 function escapeHtml(value) {
   return String(value || '')
@@ -85,40 +75,21 @@ export function HomePage() {
                 <h2>${escapeHtml(column.title)}</h2>
                 <p>${escapeHtml(column.description)}</p>
               </div>
-              <div class="home-collection-marquee" aria-label="${escapeHtml(column.title)} image slider">
-                <div class="home-collection-track">
-                  ${[...column.items, ...column.items].map((item, index) => `
-                    <a class="home-collection-slide" href="${item.href || '#/shop'}" aria-label="View ${escapeHtml(item.alt)} details" aria-hidden="${index >= column.items.length ? 'true' : 'false'}">
-                      <img
-                        src="${item.src}"
-                        alt="${escapeHtml(item.alt)}"
-                        ${item.bagTarget ? `data-bag-target="${escapeHtml(item.bagTarget)}"` : ''}
-                        loading="lazy"
-                        decoding="async"
-                      >
-                    </a>
-                  `).join('')}
-                </div>
+              <div class="home-collection-slideshow" aria-label="${escapeHtml(column.title)} image slider" data-collection-slideshow="${escapeHtml(column.title.toLowerCase())}">
+                ${column.items.map((item, index) => `
+                  <a class="home-collection-slide${index === 0 ? ' is-active' : ''}" href="${item.href || '#/shop'}" aria-label="View ${escapeHtml(item.alt)} details" data-collection-slide-index="${index}">
+                    <img
+                      src="${item.src}"
+                      alt="${escapeHtml(item.alt)}"
+                      loading="lazy"
+                      decoding="async"
+                    >
+                  </a>
+                `).join('')}
               </div>
             </article>
           `).join('')}
         </div>
-      </div>
-    </section>
-
-    <section class="home-about-preview section" aria-label="About OneStop preview">
-      <div class="container">
-        <article class="home-about-preview-card">
-          <div class="home-about-preview-media">
-            <img src="${HOME_ABOUT_PREVIEW.image}" alt="About OneStop" loading="lazy" decoding="async">
-          </div>
-          <div class="home-about-preview-copy">
-            <p class="home-about-preview-kicker">About Us</p>
-            <h2>${escapeHtml(HOME_ABOUT_PREVIEW.title)}</h2>
-            <p>${escapeHtml(HOME_ABOUT_PREVIEW.copy)}</p>
-            <a href="#/about" class="btn btn-outline home-about-preview-link">Read more...</a>
-          </div>
-        </article>
       </div>
     </section>
   `;
@@ -176,82 +147,41 @@ function initHomeHeroSlides() {
   });
 }
 
-const BAG_IMAGE_TARGETS = [
-  { key: 'rhinestone-bag', terms: ['rhinestone bag', 'rhinestone'] },
-  { key: 'office-bag', terms: ['office bag', 'office'] },
-  { key: 'stunner', terms: ['stunner'] },
-  { key: 'cloud-tote', terms: ['cloud tote', 'cloud', 'tote'] }
-];
+const COLLECTION_SLIDE_INTERVAL_MS = 3600;
+const collectionSlideIntervals = [];
 
-function normalizeText(value) {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+function clearCollectionIntervals() {
+  while (collectionSlideIntervals.length) {
+    const id = collectionSlideIntervals.pop();
+    window.clearInterval(id);
+  }
 }
 
-function resolveBagImageMap(products = []) {
-  const normalizedProducts = (Array.isArray(products) ? products : [])
-    .map(product => ({
-      name: normalizeText(product?.name),
-      image: String(product?.image || product?.image_url || '').trim()
-    }))
-    .filter(product => product.name && product.image);
+function initHomeCollectionSlides() {
+  clearCollectionIntervals();
 
-  return BAG_IMAGE_TARGETS.reduce((map, target) => {
-    const match = normalizedProducts.find(product => target.terms.some(term => product.name.includes(term)));
-    if (match) {
-      map.set(target.key, match.image);
-    }
-    return map;
-  }, new Map());
-}
-
-async function initHomeBagCollectionImages() {
-  const bagImages = document.querySelectorAll('.home-collection-card.is-left img[data-bag-target]');
-  if (!bagImages.length) {
-    return;
-  }
-
-  const result = await getProductsCatalogAdvanced({
-    category: 'Bags',
-    limit: 120,
-    sort: 'featured-first',
-    prioritizeDisplayOrder: true,
-    onlyActive: true
-  });
-
-  if (!result?.success || !Array.isArray(result.data) || result.data.length === 0) {
-    return;
-  }
-
-  const imageMap = resolveBagImageMap(result.data);
-  if (imageMap.size === 0) {
-    return;
-  }
-
-  bagImages.forEach(image => {
-    const target = String(image.getAttribute('data-bag-target') || '').trim();
-    const source = imageMap.get(target);
-    if (!source) {
+  const sliders = Array.from(document.querySelectorAll('[data-collection-slideshow]'));
+  sliders.forEach(slider => {
+    const slides = Array.from(slider.querySelectorAll('.home-collection-slide'));
+    if (slides.length <= 1) {
       return;
     }
-    image.src = source;
 
-    const tile = image.closest('.home-collection-slide');
-    const matchedProduct = (Array.from(result.data || [])).find(product => {
-      const normalizedName = normalizeText(product?.name);
-      return BAG_IMAGE_TARGETS.find(targetConfig => targetConfig.key === target)?.terms.some(term => normalizedName.includes(term));
-    });
+    let activeIndex = 0;
+    const showSlide = index => {
+      slides.forEach((slide, slideIndex) => slide.classList.toggle('is-active', slideIndex === index));
+    };
 
-    if (tile && matchedProduct?.id) {
-      tile.setAttribute('href', `#/product/${encodeURIComponent(String(matchedProduct.id).trim())}`);
-    }
+    const intervalId = window.setInterval(() => {
+      activeIndex = (activeIndex + 1) % slides.length;
+      showSlide(activeIndex);
+    }, COLLECTION_SLIDE_INTERVAL_MS);
+
+    collectionSlideIntervals.push(intervalId);
   });
 }
 
-export async function initHomePage() {
+export function initHomePage() {
   initHomeHeroSlides();
-  await initHomeBagCollectionImages();
+  initHomeCollectionSlides();
 }
