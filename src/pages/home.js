@@ -71,6 +71,29 @@ export function HomePage() {
           </div>
         `).join('')}
       </div>
+
+      <div class="home-hero-controls" aria-label="Banner controls">
+        <button type="button" class="home-hero-arrow prev" id="home-hero-prev" aria-label="Previous banner">
+          <span aria-hidden="true">&#8249;</span>
+        </button>
+
+        <div class="home-hero-dots" role="tablist" aria-label="Select banner">
+          ${HERO_SLIDES.map((_, index) => `
+            <button
+              type="button"
+              class="home-hero-dot${index === 0 ? ' is-active' : ''}"
+              data-hero-dot="${index}"
+              role="tab"
+              aria-label="Go to banner ${index + 1}"
+              aria-selected="${index === 0 ? 'true' : 'false'}"
+            ></button>
+          `).join('')}
+        </div>
+
+        <button type="button" class="home-hero-arrow next" id="home-hero-next" aria-label="Next banner">
+          <span aria-hidden="true">&#8250;</span>
+        </button>
+      </div>
     </section>
 
     <section class="home-collections section" aria-label="Bags and accessories collections">
@@ -104,13 +127,10 @@ export function HomePage() {
 function initHomeHeroSlides() {
   const slides = Array.from(document.querySelectorAll('.home-hero-slide'));
   const dots = Array.from(document.querySelectorAll('.home-hero-dot'));
-  const title = document.getElementById('home-hero-title');
-  const subtitle = document.getElementById('home-hero-subtitle');
-  const cta = document.getElementById('home-hero-cta');
   const prev = document.getElementById('home-hero-prev');
   const next = document.getElementById('home-hero-next');
 
-  if (!slides.length || !title || !subtitle || !cta || !prev || !next) {
+  if (!slides.length || !prev || !next) {
     return;
   }
 
@@ -124,10 +144,10 @@ function initHomeHeroSlides() {
 
     activeIndex = index;
     slides.forEach((node, nodeIndex) => node.classList.toggle('is-active', nodeIndex === index));
-    dots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === index));
-    title.textContent = slide.title;
-    subtitle.textContent = slide.subtitle;
-    cta.setAttribute('href', slide.ctaHref);
+    dots.forEach((dot, dotIndex) => {
+      dot.classList.toggle('is-active', dotIndex === index);
+      dot.setAttribute('aria-selected', dotIndex === index ? 'true' : 'false');
+    });
   };
 
   const goNext = step => {
