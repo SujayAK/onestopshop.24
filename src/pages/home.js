@@ -3,8 +3,15 @@ const HERO_SLIDES = [
     title: 'One Stop Shop',
     subtitle: 'Curated bags and accessories for everyday elegance.',
     ctaHref: '#/shop',
-    imageDesktop: '/Website%20Banners.webp',
-    imageMobile: '/Website%20Banners.webp'
+    imageDesktop: '/banner/website-banner-1.webp',
+    imageMobile: '/banner/website-banner-1.webp'
+  },
+  {
+    title: 'One Stop Shop',
+    subtitle: 'Curated bags and accessories for everyday elegance.',
+    ctaHref: '#/shop',
+    imageDesktop: '/banner/website-banner-2.webp',
+    imageMobile: '/banner/website-banner-2.webp'
   }
 ];
 
@@ -14,9 +21,9 @@ const COLLECTION_COLUMNS = [
     description: 'Signature styles and everyday carry pieces.',
     autoplayClass: 'is-left',
     items: [
-      { alt: 'Bags Collection Banner', src: '/Website%20Banners.webp', href: '#/shop?cat=Bags' },
-      { alt: 'Featured Bags', src: '/banner1.webp', href: '#/shop?cat=Bags' },
-      { alt: 'Bag Styling', src: '/about%20us.webp', href: '#/shop?cat=Bags' }
+      { alt: 'Bag Image 1619', src: '/slideshow/IMG_1619-full.webp', href: '#/shop?cat=Bags' },
+      { alt: 'Bag Image 1620', src: '/slideshow/IMG_1620-full.webp', href: '#/shop?cat=Bags' },
+      { alt: 'Bag Image 1626', src: '/slideshow/IMG_1626-full.webp', href: '#/shop?cat=Bags' }
     ]
   },
   {
@@ -24,9 +31,10 @@ const COLLECTION_COLUMNS = [
     description: 'Finishing touches for polished everyday looks.',
     autoplayClass: 'is-right',
     items: [
-      { alt: 'Accessories Collection Banner', src: '/about%20us.webp', href: '#/shop?cat=Accessories' },
-      { alt: 'Featured Accessories', src: '/Website%20Banners.webp', href: '#/shop?cat=Accessories' },
-      { alt: 'Accessory Styling', src: '/banner1.webp', href: '#/shop?cat=Accessories' }
+      { alt: 'Accessories Image 1621', src: '/slideshow/IMG_1621-full.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'Accessories Image 1622', src: '/slideshow/IMG_1622-full.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'Accessories Image 1623', src: '/slideshow/IMG_1623-full.webp', href: '#/shop?cat=Accessories' },
+      { alt: 'Accessories Image 1625', src: '/slideshow/IMG_1625-full.webp', href: '#/shop?cat=Accessories' }
     ]
   }
 ];
@@ -71,9 +79,7 @@ export function HomePage() {
           ${COLLECTION_COLUMNS.map(column => `
             <article class="home-collection-card ${column.autoplayClass}">
               <div class="home-collection-header">
-                <p class="home-collection-kicker">Collection</p>
                 <h2>${escapeHtml(column.title)}</h2>
-                <p>${escapeHtml(column.description)}</p>
               </div>
               <div class="home-collection-slideshow" aria-label="${escapeHtml(column.title)} image slider" data-collection-slideshow="${escapeHtml(column.title.toLowerCase())}">
                 ${column.items.map((item, index) => `

@@ -2540,7 +2540,7 @@ body.nav-drawer-open {
 }
 
 .home-collection-header {
-  padding: 1.1rem 1.1rem 0.9rem;
+  padding: 1.1rem 1.1rem;
   text-align: center;
 }
 
@@ -2563,17 +2563,11 @@ body.nav-drawer-open {
   display: none;
 }
 
-.home-collection-header p {
-  margin: 0.45rem 0 0;
-  color: var(--text-secondary);
-}
-
-
 .home-collection-slideshow {
   position: relative;
   overflow: hidden;
   margin: 0 1.1rem 1.1rem;
-  border-radius: 18px;
+  border-radius: 0;
   aspect-ratio: 4 / 5;
   min-height: clamp(260px, 31vw, 430px);
   background: #f7f7f8;
