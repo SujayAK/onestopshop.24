@@ -2456,10 +2456,12 @@ body.nav-drawer-open {
 }
 
 .home-hero-arrow {
-  position: static;
+  position: absolute;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 3;
   width: 28px;
   height: 28px;
@@ -2470,27 +2472,27 @@ body.nav-drawer-open {
   backdrop-filter: blur(4px);
   font-size: 1rem;
   line-height: 1;
+  cursor: pointer;
 }
 
 .home-hero-arrow.prev {
-  left: auto;
+  left: 14px;
 }
 
 .home-hero-arrow.next {
-  right: auto;
+  right: 14px;
 }
 
 .home-hero-controls {
   position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.4rem;
   z-index: 4;
-  padding: 0.6rem 0.4rem;
+  padding: 0.32rem 0.4rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(22, 22, 22, 0.22);
@@ -2501,7 +2503,6 @@ body.nav-drawer-open {
   position: static;
   transform: none;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 0.32rem;
   z-index: 4;
@@ -2979,11 +2980,19 @@ body.nav-drawer-open {
   }
 
   .home-hero-controls {
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 0.5rem 0.32rem;
-    gap: 0.5rem;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    padding: 0.28rem 0.34rem;
+    gap: 0.32rem;
+  }
+
+  .home-hero-arrow.prev {
+    left: 10px;
+  }
+
+  .home-hero-arrow.next {
+    right: 10px;
   }
 
   .home-collections {
