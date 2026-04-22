@@ -72,11 +72,11 @@ export function HomePage() {
         `).join('')}
       </div>
 
-      <div class="home-hero-controls" aria-label="Banner controls">
-        <button type="button" class="home-hero-arrow prev" id="home-hero-prev" aria-label="Previous banner">
-          <span aria-hidden="true">&#8249;</span>
-        </button>
+      <button type="button" class="home-hero-arrow prev" id="home-hero-prev" aria-label="Previous banner">
+        <span aria-hidden="true">&#8249;</span>
+      </button>
 
+      <div class="home-hero-controls" aria-label="Banner controls">
         <div class="home-hero-dots" role="tablist" aria-label="Select banner">
           ${HERO_SLIDES.map((_, index) => `
             <button
@@ -89,11 +89,11 @@ export function HomePage() {
             ></button>
           `).join('')}
         </div>
-
-        <button type="button" class="home-hero-arrow next" id="home-hero-next" aria-label="Next banner">
-          <span aria-hidden="true">&#8250;</span>
-        </button>
       </div>
+
+      <button type="button" class="home-hero-arrow next" id="home-hero-next" aria-label="Next banner">
+        <span aria-hidden="true">&#8250;</span>
+      </button>
     </section>
 
     <section class="home-collections section" aria-label="Bags and accessories collections">
