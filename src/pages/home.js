@@ -62,7 +62,7 @@ export function HomePage() {
                 src="${slide.imageDesktop}"
                 alt="${escapeHtml(slide.title)}"
                 width="2400"
-                height="1200"
+                height="900"
                 decoding="async"
                 fetchpriority="high"
                 loading="eager"
