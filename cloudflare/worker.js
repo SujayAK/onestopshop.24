@@ -154,11 +154,63 @@ function normalizeMediaView(view, fallbackLabel, fallbackColor) {
   };
 }
 
+function pickRowValue(row, keys = [], fallback = '') {
+  if (!row || typeof row !== 'object') {
+    return fallback;
+  }
+
+  for (const key of keys) {
+    if (!(key in row)) {
+      continue;
+    }
+    const value = row[key];
+    if (value === undefined || value === null) {
+      continue;
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed) {
+        return trimmed;
+      }
+      continue;
+    }
+    return value;
+  }
+
+  return fallback;
+}
+
 async function fetchProductMedia(env, productId) {
   try {
-    const result = await env.DB.prepare(
-      'SELECT id, product_id, color_name, color_hex, view_name, sort_order, image_url, alt_text, active FROM product_media WHERE product_id = ? AND active = 1 ORDER BY sort_order ASC, color_name ASC, view_name ASC'
-    ).bind(String(productId)).all();
+    const schemaResult = await env.DB.prepare('PRAGMA table_info(product_media)').all();
+    const columns = new Set((schemaResult.results || []).map(row => String(row.name || '').trim()).filter(Boolean));
+    if (columns.size === 0) {
+      return [];
+    }
+
+    const productIdColumn = ['product_id', 'productId', 'productid'].find(name => columns.has(name));
+    if (!productIdColumn) {
+      return [];
+    }
+
+    const activeColumn = ['active', 'is_active', 'enabled'].find(name => columns.has(name));
+    const orderColumn = ['sort_order', 'display_order', 'position', 'order_index', 'view_order', 'sort'].find(name => columns.has(name));
+    const colorColumn = ['color_name', 'color', 'variant_color', 'shade'].find(name => columns.has(name));
+    const viewColumn = ['view_name', 'view', 'label', 'angle', 'name'].find(name => columns.has(name));
+
+    const where = [`${productIdColumn} = ?`];
+    if (activeColumn) {
+      where.push(`${activeColumn} = 1`);
+    }
+
+    const orderBy = [
+      orderColumn,
+      colorColumn,
+      viewColumn
+    ].filter(Boolean).map(name => `${name} ASC`).join(', ');
+
+    const sql = `SELECT * FROM product_media WHERE ${where.join(' AND ')}${orderBy ? ` ORDER BY ${orderBy}` : ''}`;
+    const result = await env.DB.prepare(sql).bind(String(productId)).all();
 
     return result.results || [];
   } catch (_error) {
@@ -197,30 +249,39 @@ function hydrateMediaVariants(product, mediaRows = []) {
   };
 
   mediaRows.forEach(row => {
-    const rawName = String(row.color_name || '').trim();
+    const rawName = String(pickRowValue(row, ['color_name', 'color', 'variant_color', 'shade'], '') || '').trim();
     if (!isDefaultColor(rawName)) {
-      explicitColors.set(rawName, String(row.color_hex || '#d9c7d2').trim() || '#d9c7d2');
+      explicitColors.set(rawName, String(pickRowValue(row, ['color_hex', 'hex', 'colour_hex'], '#d9c7d2')).trim() || '#d9c7d2');
     }
   });
 
   const singleExplicitColorName = explicitColors.size === 1 ? [...explicitColors.keys()][0] : null;
   mediaRows.forEach(row => {
-    const rawColorName = String(row.color_name || 'Default').trim() || 'Default';
+    const rawColorName = String(pickRowValue(row, ['color_name', 'color', 'variant_color', 'shade'], 'Default')).trim() || 'Default';
     const colorName = isDefaultColor(rawColorName) && singleExplicitColorName ? singleExplicitColorName : rawColorName;
     const explicitHex = explicitColors.get(colorName);
-    const colorHex = String(explicitHex || row.color_hex || '#d9c7d2').trim() || '#d9c7d2';
+    const colorHex = String(explicitHex || pickRowValue(row, ['color_hex', 'hex', 'colour_hex'], '#d9c7d2')).trim() || '#d9c7d2';
     if (!grouped.has(colorName)) {
       grouped.set(colorName, { color: colorName, hex: colorHex, views: [] });
     }
 
-    const view = normalizeMediaView(row, row.view_name || 'View', colorName);
+    const viewName = pickRowValue(row, ['view_name', 'view', 'label', 'angle', 'name'], 'View');
+    const imageUrl = pickRowValue(row, ['image_url', 'url', 'image', 'src', 'media_url', 'file_url', 'r2_url'], '');
+    const normalizedRow = {
+      ...row,
+      view_name: viewName,
+      image_url: imageUrl,
+      alt_text: pickRowValue(row, ['alt_text', 'alt', 'caption'], '')
+    };
+
+    const view = normalizeMediaView(normalizedRow, viewName || 'View', colorName);
     if (view) {
       grouped.get(colorName).views.push({
-        label: row.view_name || view.label,
+        label: viewName || view.label,
         url: view.url,
         image_url: view.image_url,
         alt_text: view.alt_text,
-        sort_order: Number(row.sort_order || 0)
+        sort_order: Number(pickRowValue(row, ['sort_order', 'display_order', 'position', 'order_index', 'view_order', 'sort'], 0) || 0)
       });
     }
   });
