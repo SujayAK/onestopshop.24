@@ -326,11 +326,16 @@ function renderProductTemplate(product, wished, compared) {
                 loading="eager"
               >
               <div class="product-zoom-view" id="product-zoom-view" aria-hidden="true"></div>
+              <div class="product-angle-nav" id="product-angle-nav">
+                <button type="button" class="product-angle-nav-btn prev" id="product-angle-prev" aria-label="Previous angle">
+                  <span>‹</span>
+                </button>
+                <button type="button" class="product-angle-nav-btn next" id="product-angle-next" aria-label="Next angle">
+                  <span>›</span>
+                </button>
+              </div>
             </div>
 
-            <div class="product-angle-strip" id="product-angle-strip">
-              ${renderAngles(activeColor.views, 0)}
-            </div>
           </div>
 
           <div class="product-mobile-swatch-row" id="product-mobile-swatch-row">
@@ -382,7 +387,6 @@ function renderProductTemplate(product, wished, compared) {
           </div>
 
           <div class="product-quick-actions">
-            <button id="product-wishlist-btn" class="btn btn-outline wishlist-toggle${wished ? ' is-active' : ''}" data-product-id="${product.id}">${wished ? 'In Wishlist' : 'Add to Wishlist'}</button>
             <button id="product-compare-btn" class="btn btn-outline compare-toggle${compared ? ' is-active' : ''}" data-product-id="${product.id}">${compared ? 'In Compare' : 'Add to Compare'}</button>
           </div>
 
@@ -553,7 +557,8 @@ export async function initProductPage(productId) {
   const colorRail = document.getElementById('product-color-rail');
   const colorSwatches = document.getElementById('product-color-swatches');
   const mobileSwatches = document.getElementById('product-mobile-swatch-row');
-  const angleStrip = document.getElementById('product-angle-strip');
+  const angleNavPrev = document.getElementById('product-angle-prev');
+  const angleNavNext = document.getElementById('product-angle-next');
   const heroImage = document.getElementById('product-hero-image');
   const stickyThumb = document.getElementById('product-sticky-thumb');
   const activeColorLabel = document.getElementById('product-active-color');
@@ -621,17 +626,16 @@ export async function initProductPage(productId) {
       activeColorLabel.textContent = color.name;
     }
 
-    if (angleStrip) {
-      angleStrip.innerHTML = renderAngles(color.views, state.viewIndex);
-      angleStrip.querySelectorAll('[data-view-index]').forEach(button => {
-        button.addEventListener('click', () => {
-          const index = Number(button.getAttribute('data-view-index'));
-          if (!Number.isFinite(index)) {
-            return;
-          }
-          state.viewIndex = index;
-          updateHeroFromState();
-        });
+    if (angleNavPrev && angleNavNext) {
+      angleNavPrev.addEventListener('click', () => {
+        const newIndex = (state.viewIndex - 1 + color.views.length) % color.views.length;
+        state.viewIndex = newIndex;
+        updateHeroFromState();
+      });
+      angleNavNext.addEventListener('click', () => {
+        const newIndex = (state.viewIndex + 1) % color.views.length;
+        state.viewIndex = newIndex;
+        updateHeroFromState();
       });
     }
 
@@ -763,22 +767,6 @@ export async function initProductPage(productId) {
 
   if (stickyBuyNowBtn) {
     stickyBuyNowBtn.addEventListener('click', () => handleBuyNow(stickyBuyNowBtn));
-  }
-
-  if (wishlistBtn) {
-    wishlistBtn.addEventListener('click', async () => {
-      const result = await toggleWishlistProductSync(id);
-      if (!result.success) {
-        if (result.error === 'Please login first') {
-          showAuthRequiredPopup('Sign in to add items to your wishlist and keep them saved.');
-        } else {
-          showInfoPopup('Unable to update wishlist right now. Please try again.');
-        }
-        return;
-      }
-      wishlistBtn.classList.toggle('is-active', result.active);
-      wishlistBtn.textContent = result.active ? 'In Wishlist' : 'Add to Wishlist';
-    });
   }
 
   if (compareBtn) {

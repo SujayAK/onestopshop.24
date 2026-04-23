@@ -598,12 +598,12 @@ export function ShopPage(category = 'Bags') {
             <button type="button" class="shop-sidebar-close-btn" id="shop-filter-close-btn">Close</button>
           </div>
 
-          <div class="shop-filter-section shop-filter-accordion is-open">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="true">
+          <div class="shop-filter-section shop-filter-accordion">
+            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
               <span>Availability</span>
               <i class="fas fa-plus"></i>
             </button>
-            <div class="shop-filter-accordion-panel">
+            <div class="shop-filter-accordion-panel" hidden>
               <div class="shop-filter-options">
                 ${renderFilterCheckbox('In stock', 'in-stock')}
                 ${renderFilterCheckbox('Out of stock', 'out-of-stock')}
@@ -611,12 +611,12 @@ export function ShopPage(category = 'Bags') {
             </div>
           </div>
 
-          <div class="shop-filter-section shop-filter-accordion is-open">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="true">
+          <div class="shop-filter-section shop-filter-accordion">
+            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
               <span>Price</span>
               <i class="fas fa-plus"></i>
             </button>
-            <div class="shop-filter-accordion-panel">
+            <div class="shop-filter-accordion-panel" hidden>
               <div class="price-range-container">
                 <div class="price-slider-wrapper">
                   <input type="range" id="shop-min-price" class="price-slider price-slider-min" min="0" max="100000" value="0" step="100">
@@ -633,22 +633,22 @@ export function ShopPage(category = 'Bags') {
             </div>
           </div>
 
-          <div class="shop-filter-section shop-filter-accordion is-open">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="true">
+          <div class="shop-filter-section shop-filter-accordion">
+            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
               <span>Color</span>
               <i class="fas fa-plus"></i>
             </button>
-            <div class="shop-filter-accordion-panel">
+            <div class="shop-filter-accordion-panel" hidden>
               <div id="shop-color-filter" class="shop-color-filter-grid"></div>
             </div>
           </div>
 
-          <div class="shop-filter-section shop-filter-accordion is-open">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="true">
+          <div class="shop-filter-section shop-filter-accordion">
+            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
               <span>Category</span>
               <i class="fas fa-plus"></i>
             </button>
-            <div class="shop-filter-accordion-panel">
+            <div class="shop-filter-accordion-panel" hidden>
               <p class="shop-filter-helper">Choose one or more categories. Expand the root item to select subcategories.</p>
               <div id="shop-taxonomy" class="shop-taxonomy-tree"></div>
               <div class="shop-taxonomy-actions">
