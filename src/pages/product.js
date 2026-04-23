@@ -2,12 +2,10 @@ import { cart } from '../utils/cart.js';
 import {
   getProduct,
   getUserWishlist,
-  getUserCompare,
   toggleWishlistProductSync,
-  toggleCompareProductSync
 } from '../utils/cloudflare.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl, toFullImageUrl } from '../utils/image-optimization.js';
-import { showAuthRequiredPopup, showInfoPopup } from '../utils/ui-popup.js';
+import { showAuthRequiredPopup } from '../utils/ui-popup.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -288,7 +286,7 @@ function renderAccordion(id, title, content) {
   `;
 }
 
-function renderProductTemplate(product, wished, compared) {
+function renderProductTemplate(product, wished) {
   const media = normalizeProductMedia(product);
   const activeColor = media[0];
   const activeView = activeColor.views[0];
@@ -356,11 +354,6 @@ function renderProductTemplate(product, wished, compared) {
             <p class="product-tax-note">Taxes included. Shipping calculated at checkout.</p>
           </div>
 
-          <div class="product-review-row" aria-label="1 review">
-            <div class="product-stars" aria-hidden="true">★★★★★</div>
-            <span>1 review</span>
-          </div>
-
           <div class="product-color-block">
             <p class="product-color-label">Color: <strong id="product-active-color">${escapeHtml(activeColor.name)}</strong></p>
             <div class="product-color-swatches" id="product-color-swatches">
@@ -384,10 +377,6 @@ function renderProductTemplate(product, wished, compared) {
             </div>
             <button id="add-to-cart-btn" class="btn add-to-cart-btn" data-product-id="${product.id}" data-default-label="Add to Cart">Add to Cart</button>
             <button id="buy-now-btn" class="btn btn-outline" data-product-id="${product.id}">Buy Now</button>
-          </div>
-
-          <div class="product-quick-actions">
-            <button id="product-compare-btn" class="btn btn-outline compare-toggle${compared ? ' is-active' : ''}" data-product-id="${product.id}">${compared ? 'In Compare' : 'Add to Compare'}</button>
           </div>
 
           <div class="product-accordion">
@@ -493,10 +482,9 @@ export async function initProductPage(productId) {
     return;
   }
 
-  const [productResult, wishlistResult, compareResult] = await Promise.all([
+  const [productResult, wishlistResult] = await Promise.all([
     getProduct(id),
-    getUserWishlist(),
-    getUserCompare()
+    getUserWishlist()
   ]);
 
   if (!productResult.success || !productResult.data) {
@@ -507,9 +495,7 @@ export async function initProductPage(productId) {
 
   const product = productResult.data;
   const wishlistSource = wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : [];
-  const compareSource = compareResult.success && Array.isArray(compareResult.data) ? compareResult.data : [];
   const wishlistIds = new Set(wishlistSource.map(item => String(item).trim()).filter(Boolean));
-  const compareIds = new Set(compareSource.map(item => String(item).trim()).filter(Boolean));
 
   const media = normalizeProductMedia(product);
   const state = {
@@ -518,7 +504,7 @@ export async function initProductPage(productId) {
     quantity: 1
   };
 
-  root.innerHTML = renderProductTemplate(product, wishlistIds.has(id), compareIds.has(id));
+  root.innerHTML = renderProductTemplate(product, wishlistIds.has(id));
 
   window.dispatchEvent(new CustomEvent('seoProductUpdate', {
     detail: {
@@ -553,7 +539,6 @@ export async function initProductPage(productId) {
   const stickyAddToCartBtn = document.getElementById('sticky-add-to-cart-btn');
   const stickyBuyNowBtn = document.getElementById('sticky-buy-now-btn');
   const wishlistBtn = document.getElementById('product-wishlist-btn');
-  const compareBtn = document.getElementById('product-compare-btn');
   const colorRail = document.getElementById('product-color-rail');
   const colorSwatches = document.getElementById('product-color-swatches');
   const mobileSwatches = document.getElementById('product-mobile-swatch-row');
@@ -626,19 +611,6 @@ export async function initProductPage(productId) {
       activeColorLabel.textContent = color.name;
     }
 
-    if (angleNavPrev && angleNavNext) {
-      angleNavPrev.addEventListener('click', () => {
-        const newIndex = (state.viewIndex - 1 + color.views.length) % color.views.length;
-        state.viewIndex = newIndex;
-        updateHeroFromState();
-      });
-      angleNavNext.addEventListener('click', () => {
-        const newIndex = (state.viewIndex + 1) % color.views.length;
-        state.viewIndex = newIndex;
-        updateHeroFromState();
-      });
-    }
-
     const markColorSelection = container => {
       if (!container) {
         return;
@@ -676,6 +648,22 @@ export async function initProductPage(productId) {
   bindColorSelector(colorRail);
   bindColorSelector(colorSwatches);
   bindColorSelector(mobileSwatches);
+
+  if (angleNavPrev && angleNavNext) {
+    angleNavPrev.addEventListener('click', () => {
+      const color = getActiveColor();
+      const newIndex = (state.viewIndex - 1 + color.views.length) % color.views.length;
+      state.viewIndex = newIndex;
+      updateHeroFromState();
+    });
+
+    angleNavNext.addEventListener('click', () => {
+      const color = getActiveColor();
+      const newIndex = (state.viewIndex + 1) % color.views.length;
+      state.viewIndex = newIndex;
+      updateHeroFromState();
+    });
+  }
 
   document.querySelectorAll('[data-accordion-toggle]').forEach(button => {
     button.addEventListener('click', () => {
@@ -767,24 +755,6 @@ export async function initProductPage(productId) {
 
   if (stickyBuyNowBtn) {
     stickyBuyNowBtn.addEventListener('click', () => handleBuyNow(stickyBuyNowBtn));
-  }
-
-  if (compareBtn) {
-    compareBtn.addEventListener('click', async () => {
-      const result = await toggleCompareProductSync(id);
-      if (!result.success) {
-        if (result.error === 'Please login first') {
-          showAuthRequiredPopup('Sign in to compare products across sessions.');
-        } else if (result.error && result.error.toLowerCase().includes('limit')) {
-          showInfoPopup('You can compare up to 4 products at once.');
-        } else {
-          showInfoPopup('Unable to update compare list right now.');
-        }
-        return;
-      }
-      compareBtn.classList.toggle('is-active', result.active);
-      compareBtn.textContent = result.active ? 'In Compare' : 'Add to Compare';
-    });
   }
 
   syncQuantityInputs();
