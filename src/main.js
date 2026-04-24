@@ -1131,7 +1131,8 @@ function navigate() {
     renderPage(StockClearancePage());
     initStockClearancePage();
   } else if (hash.startsWith('#/product/')) {
-    const id = hash.split('/').pop();
+    const rawId = hash.split('/').pop() || '';
+    const id = decodeURIComponent(String(rawId).split('?')[0].split('&')[0].trim());
     renderPage(ProductPage(id));
     initProductPage(id);
   } else if (hash === '#/cart') {

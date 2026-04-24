@@ -563,15 +563,75 @@ export async function getStockClearanceCategories() {
 }
 
 export async function getProduct(id) {
-  const productId = String(id || '').trim();
+  const rawId = String(id || '').trim();
+  const productId = decodeURIComponent(rawId)
+    .replace(/^#\/product\//i, '')
+    .split('?')[0]
+    .split('&')[0]
+    .trim();
   if (!productId) {
     return { success: false, error: 'Invalid product id', data: null };
   }
+
+  const normalizedId = productId.toLowerCase();
+  const slugId = normalizedId
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 
   if (API_BASE_URL) {
     const remote = await cachedRemoteRequest(cacheKeyFor(`product:${productId}`), 10 * 60 * 1000, () => request(`/products/${encodeURIComponent(productId)}`));
     if (remote.success) {
       return remote;
+    }
+
+    if (normalizedId !== productId) {
+      const normalizedRemote = await request(`/products/${encodeURIComponent(normalizedId)}`);
+      if (normalizedRemote.success) {
+        return normalizedRemote;
+      }
+    }
+
+    if (slugId && slugId !== normalizedId) {
+      const slugRemote = await request(`/products/${encodeURIComponent(slugId)}`);
+      if (slugRemote.success) {
+        return slugRemote;
+      }
+    }
+  }
+
+  const catalogCacheCandidates = [];
+  try {
+    for (const storage of [sessionStorage, localStorage]) {
+      for (let i = 0; i < storage.length; i += 1) {
+        const key = storage.key(i);
+        if (!key || (!key.startsWith('onestop.shop.catalog.cache.') && !key.startsWith(`${CACHE_PREFIX}products:`))) {
+          continue;
+        }
+        const raw = storage.getItem(key);
+        if (!raw) {
+          continue;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed?.data?.data && Array.isArray(parsed.data.data)) {
+          catalogCacheCandidates.push(...parsed.data.data);
+        } else if (Array.isArray(parsed?.products)) {
+          catalogCacheCandidates.push(...parsed.products);
+        }
+      }
+    }
+  } catch (_error) {
+    // Ignore cache lookup issues.
+  }
+
+  if (catalogCacheCandidates.length > 0) {
+    const byId = catalogCacheCandidates.find(item => String(item?.id || '').trim() === productId)
+      || catalogCacheCandidates.find(item => String(item?.id || '').trim().toLowerCase() === normalizedId)
+      || catalogCacheCandidates.find(item => String(item?.id || '').trim().toLowerCase() === slugId)
+      || catalogCacheCandidates.find(item => String(item?.name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') === slugId);
+
+    if (byId) {
+      return { success: true, data: byId };
     }
   }
 
