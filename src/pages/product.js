@@ -1,11 +1,8 @@
 import { cart } from '../utils/cart.js';
 import {
   getProduct,
-  getUserWishlist,
-  toggleWishlistProductSync,
 } from '../utils/cloudflare.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl, toFullImageUrl } from '../utils/image-optimization.js';
-import { showAuthRequiredPopup } from '../utils/ui-popup.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -237,7 +234,6 @@ function renderColorRail(colors, activeColorIndex) {
     return `
       <button type="button" class="product-color-rail-item${index === activeColorIndex ? ' is-active' : ''}" data-color-index="${index}" aria-label="Switch to ${escapeHtml(color.name)}" title="${escapeHtml(color.name)}">
         <img src="${thumb.src}" alt="${escapeHtml(color.name)} color">
-        <span>${escapeHtml(color.name)}</span>
       </button>
     `;
   }).join('');
@@ -286,10 +282,11 @@ function renderAccordion(id, title, content) {
   `;
 }
 
-function renderProductTemplate(product, wished) {
+function renderProductTemplate(product) {
   const media = normalizeProductMedia(product);
   const activeColor = media[0];
   const activeView = activeColor.views[0];
+  const descriptionText = String(product.description || '').trim();
   const mainImage = getProductImageAttrs(toFullImageUrl(activeView.url), {
     desktopWidth: 1300,
     sizes: '(max-width: 980px) 100vw, 46vw',
@@ -367,7 +364,7 @@ function renderProductTemplate(product, wished) {
             <span id="product-stock-status" class="stock-indicator" data-stock-label data-product-id="${product.id}">Checking stock...</span>
           </div>
 
-          <p class="product-description">${escapeHtml(product.description || 'Description will be updated soon.')}</p>
+          ${descriptionText ? `<p class="product-description">${escapeHtml(descriptionText)}</p>` : ''}
 
           <div class="product-cart-row">
             <div class="product-qty-control" role="group" aria-label="Quantity selector">
@@ -457,10 +454,7 @@ export async function initProductPage(productId) {
     return;
   }
 
-  const [productResult, wishlistResult] = await Promise.all([
-    getProduct(id),
-    getUserWishlist()
-  ]);
+  const productResult = await getProduct(id);
 
   if (!productResult.success || !productResult.data) {
     root.innerHTML = renderProductNotFound();
@@ -469,17 +463,15 @@ export async function initProductPage(productId) {
   }
 
   const product = productResult.data;
-  const wishlistSource = wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : [];
-  const wishlistIds = new Set(wishlistSource.map(item => String(item).trim()).filter(Boolean));
-
   const media = normalizeProductMedia(product);
   const state = {
     colorIndex: 0,
     viewIndex: 0,
-    quantity: 1
+    quantity: 1,
+    transitionId: 0
   };
 
-  root.innerHTML = renderProductTemplate(product, wishlistIds.has(id));
+  root.innerHTML = renderProductTemplate(product);
 
   window.dispatchEvent(new CustomEvent('seoProductUpdate', {
     detail: {
@@ -510,7 +502,6 @@ export async function initProductPage(productId) {
   const qtyInput = document.getElementById('product-qty');
   const addToCartBtn = document.getElementById('add-to-cart-btn');
   const buyNowBtn = document.getElementById('buy-now-btn');
-  const wishlistBtn = document.getElementById('product-wishlist-btn');
   const colorRail = document.getElementById('product-color-rail');
   const colorSwatches = document.getElementById('product-color-swatches');
   const mobileSwatches = document.getElementById('product-mobile-swatch-row');
@@ -540,7 +531,43 @@ export async function initProductPage(productId) {
     syncQuantityInputs();
   };
 
-  const updateHeroFromState = () => {
+  const preloadHero = heroAttrs => {
+    if (!heroAttrs || !heroAttrs.src) {
+      return;
+    }
+    const preview = new Image();
+    if (heroAttrs.srcset) {
+      preview.srcset = heroAttrs.srcset;
+    }
+    if (heroAttrs.sizes) {
+      preview.sizes = heroAttrs.sizes;
+    }
+    preview.decoding = 'async';
+    preview.src = heroAttrs.src;
+  };
+
+  const preloadAdjacentViews = color => {
+    if (!color || !Array.isArray(color.views) || color.views.length < 2) {
+      return;
+    }
+
+    const nextIndex = (state.viewIndex + 1) % color.views.length;
+    const prevIndex = (state.viewIndex - 1 + color.views.length) % color.views.length;
+    [nextIndex, prevIndex].forEach(index => {
+      const view = color.views[index];
+      if (!view?.url) {
+        return;
+      }
+      const heroAttrs = getProductImageAttrs(toFullImageUrl(view.url), {
+        desktopWidth: 1300,
+        sizes: '(max-width: 980px) 100vw, 46vw',
+        aspectRatio: '4:5'
+      });
+      preloadHero(heroAttrs);
+    });
+  };
+
+  const updateHeroFromState = ({ animate = false } = {}) => {
     if (!heroImage) {
       return;
     }
@@ -553,36 +580,76 @@ export async function initProductPage(productId) {
       aspectRatio: '4:5'
     });
 
-    heroImage.src = hero.src;
-    heroImage.srcset = hero.srcset;
-    heroImage.setAttribute('data-src', hero.src);
-    heroImage.setAttribute('data-srcset', hero.srcset);
-    heroImage.alt = `${product.name || 'Product'} - ${color.name} - ${view.label}`;
-
-    if (zoom) {
-      zoom.style.backgroundImage = `url("${hero.src}")`;
-      if (gallery) {
-        gallery.classList.remove('zoom-active');
-      }
-    }
-
-    if (activeColorLabel) {
-      activeColorLabel.textContent = color.name;
-    }
-
-    const markColorSelection = container => {
-      if (!container) {
+    const applyHero = transitionId => {
+      if (transitionId !== state.transitionId) {
         return;
       }
-      container.querySelectorAll('[data-color-index]').forEach(element => {
-        const index = Number(element.getAttribute('data-color-index'));
-        element.classList.toggle('is-active', index === state.colorIndex);
+
+      heroImage.src = hero.src;
+      heroImage.srcset = hero.srcset;
+      heroImage.setAttribute('data-src', hero.src);
+      heroImage.setAttribute('data-srcset', hero.srcset);
+      heroImage.alt = `${product.name || 'Product'} - ${color.name} - ${view.label}`;
+
+      if (zoom) {
+        zoom.style.backgroundImage = `url("${hero.src}")`;
+        if (gallery) {
+          gallery.classList.remove('zoom-active');
+        }
+      }
+
+      if (activeColorLabel) {
+        activeColorLabel.textContent = color.name;
+      }
+
+      const markColorSelection = container => {
+        if (!container) {
+          return;
+        }
+        container.querySelectorAll('[data-color-index]').forEach(element => {
+          const index = Number(element.getAttribute('data-color-index'));
+          element.classList.toggle('is-active', index === state.colorIndex);
+        });
+      };
+
+      markColorSelection(colorRail);
+      markColorSelection(colorSwatches);
+      markColorSelection(mobileSwatches);
+      preloadAdjacentViews(color);
+
+      requestAnimationFrame(() => {
+        if (transitionId === state.transitionId) {
+          heroImage.classList.remove('is-switching');
+        }
       });
     };
 
-    markColorSelection(colorRail);
-    markColorSelection(colorSwatches);
-    markColorSelection(mobileSwatches);
+    if (!animate) {
+      const transitionId = ++state.transitionId;
+      applyHero(transitionId);
+      return;
+    }
+
+    const transitionId = ++state.transitionId;
+    heroImage.classList.add('is-switching');
+
+    const preview = new Image();
+    if (hero.srcset) {
+      preview.srcset = hero.srcset;
+    }
+    if (hero.sizes) {
+      preview.sizes = hero.sizes;
+    }
+    preview.decoding = 'async';
+
+    const finish = () => applyHero(transitionId);
+    preview.onload = finish;
+    preview.onerror = finish;
+    preview.src = hero.src;
+
+    if (preview.complete) {
+      finish();
+    }
   };
 
   const bindColorSelector = container => {
@@ -599,7 +666,7 @@ export async function initProductPage(productId) {
 
         state.colorIndex = Math.max(0, Math.min(media.length - 1, index));
         state.viewIndex = 0;
-        updateHeroFromState();
+        updateHeroFromState({ animate: true });
       });
     });
   };
@@ -613,14 +680,14 @@ export async function initProductPage(productId) {
       const color = getActiveColor();
       const newIndex = (state.viewIndex - 1 + color.views.length) % color.views.length;
       state.viewIndex = newIndex;
-      updateHeroFromState();
+      updateHeroFromState({ animate: true });
     });
 
     angleNavNext.addEventListener('click', () => {
       const color = getActiveColor();
       const newIndex = (state.viewIndex + 1) % color.views.length;
       state.viewIndex = newIndex;
-      updateHeroFromState();
+      updateHeroFromState({ animate: true });
     });
   }
 

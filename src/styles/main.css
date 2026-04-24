@@ -315,6 +315,14 @@ button {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: opacity 0.32s ease, transform 0.32s ease, filter 0.32s ease;
+  will-change: opacity, transform;
+}
+
+.product-page-section .product-hero-image.is-switching {
+  opacity: 0.38;
+  transform: scale(0.985);
+  filter: saturate(0.92);
 }
 
 .product-page-section .product-angle-nav {
@@ -334,26 +342,29 @@ button {
 }
 
 .product-page-section .product-angle-nav-btn {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(124, 95, 79, 0.55);
-  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(124, 95, 79, 0.62);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 243, 239, 0.92) 100%);
   color: #7c5f4f;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 6px 16px rgba(48, 36, 26, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
   pointer-events: auto;
 }
 
 .product-page-section .product-angle-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(124, 95, 79, 0.72);
-  transform: scale(1.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(246, 243, 239, 0.98) 100%);
+  border-color: rgba(124, 95, 79, 0.82);
+  transform: scale(1.06);
+  box-shadow: 0 8px 20px rgba(48, 36, 26, 0.22);
 }
 
 .product-page-section .product-color-rail {
@@ -364,19 +375,15 @@ button {
 }
 
 .product-page-section .product-color-rail-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.32rem;
-  padding: 0.4rem;
+  display: block;
+  padding: 0.24rem;
   border-radius: 10px;
   border: 1px solid rgba(203, 191, 179, 0.5);
   background: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.22s ease;
-  font-size: 0.65rem;
-  color: #7c5f4f;
-  font-weight: 600;
+  width: 72px;
+  min-height: 72px;
 }
 
 .product-page-section .product-color-rail-item:hover {
@@ -391,8 +398,10 @@ button {
 }
 
 .product-page-section .product-color-rail-item img {
-  width: 60px;
-  height: 60px;
+  width: 100%;
+  height: 100%;
+  min-height: 66px;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 6px;
 }
@@ -6803,19 +6812,19 @@ footer.main-footer {
 
 .product-qty-control {
   display: inline-grid;
-  grid-template-columns: 26px minmax(54px, 64px) 26px;
-  border-radius: 11px;
+  grid-template-columns: 22px minmax(40px, 48px) 22px;
+  border-radius: 999px;
   border: 1px solid rgba(203, 191, 179, 0.62);
   overflow: hidden;
-  background: #f9f5ef;
+  background: #f7f2eb;
 }
 
 .product-qty-control button {
-  background: #f2ebe2;
+  background: #efe7dd;
   color: #7c5f4f;
   font-weight: 700;
   width: 100%;
-  min-height: 30px;
+  min-height: 28px;
   line-height: 1;
 }
 
@@ -6823,6 +6832,7 @@ footer.main-footer {
   border: none;
   text-align: center;
   font-weight: 700;
+  font-size: 0.82rem;
   color: #4d3d32;
   background: transparent;
   min-width: 0;
@@ -6842,8 +6852,11 @@ footer.main-footer {
 }
 
 .product-accordion-item {
-  border: 1px solid rgba(203, 191, 179, 0.5);
-  border-radius: 12px;
+  border-top: 1px solid rgba(203, 191, 179, 0.5);
+  border-bottom: 1px solid rgba(203, 191, 179, 0.5);
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
   background: #fff;
   overflow: hidden;
 }
