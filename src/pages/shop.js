@@ -879,7 +879,37 @@ export async function initShopPage() {
   };
 
   const renderResults = products => {
-    const visibleProducts = products.filter(product => matchesAvailability(product) && matchesColorFilter(product) && matchesSubcategory(product));
+    let visibleProducts = products.filter(product => matchesAvailability(product) && matchesColorFilter(product) && matchesSubcategory(product));
+    const hasActiveFilters = (
+      selectedAvailability.size > 0
+      || selectedSubcategories.size > 0
+      || selectedColor !== 'all'
+      || Number(minPriceInput?.value || 0) > 0
+      || Number(maxPriceInput?.value || 100000) < 100000
+    );
+
+    if (visibleProducts.length === 0 && products.length > 0 && hasActiveFilters) {
+      selectedAvailability = new Set();
+      selectedSubcategories = new Set();
+      selectedColor = 'all';
+
+      if (minPriceInput) {
+        minPriceInput.value = '0';
+      }
+      if (maxPriceInput) {
+        maxPriceInput.value = '100000';
+      }
+
+      document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input').forEach(input => {
+        input.checked = false;
+      });
+
+      updatePriceDisplay();
+      updateCategoryFilters(products);
+      updateColorFilter(products);
+      visibleProducts = products;
+    }
+
     if (visibleProducts.length === 0) {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
