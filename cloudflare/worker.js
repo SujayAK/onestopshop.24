@@ -478,12 +478,36 @@ async function handleProductById(request, env, url, id, allowedOrigin) {
     return json({ success: false, error: 'Method not allowed' }, { status: 405, headers: corsHeaders(allowedOrigin) });
   }
 
-  const product = await env.DB.prepare(`${productBaseQuery()} WHERE id = ? LIMIT 1`).bind(id).first();
+  const requestedId = String(id || '').trim();
+  let product = await env.DB.prepare(`${productBaseQuery()} WHERE id = ? LIMIT 1`).bind(requestedId).first();
+
+  if (!product && requestedId) {
+    const normalizedId = requestedId.toLowerCase();
+    product = await env.DB.prepare(`${productBaseQuery()} WHERE LOWER(id) = ? LIMIT 1`).bind(normalizedId).first();
+
+    if (!product) {
+      const slugLikeId = normalizedId
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+
+      if (slugLikeId) {
+        product = await env.DB.prepare(`${productBaseQuery()} WHERE LOWER(id) = ? LIMIT 1`).bind(slugLikeId).first();
+
+        if (!product) {
+          product = await env.DB.prepare(
+            `${productBaseQuery()} WHERE LOWER(REPLACE(TRIM(name), ' ', '-')) = ? LIMIT 1`
+          ).bind(slugLikeId).first();
+        }
+      }
+    }
+  }
+
   if (!product) {
     return json({ success: false, error: 'Product not found' }, { status: 404, headers: corsHeaders(allowedOrigin) });
   }
 
-  const mediaRows = await fetchProductMedia(env, id);
+  const mediaRows = await fetchProductMedia(env, product.id);
   return json({ success: true, data: hydrateMediaVariants(product, mediaRows) }, { headers: corsHeaders(allowedOrigin) });
 }
 
