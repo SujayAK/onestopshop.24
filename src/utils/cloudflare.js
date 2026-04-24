@@ -1,4 +1,5 @@
 function resolveApiBaseUrl() {
+  const fallbackBaseUrl = String(import.meta.env.VITE_CLOUDFLARE_FALLBACK_API_BASE_URL || 'https://www.onestopshop24.in').trim().replace(/\/$/, '');
   const configuredBaseUrl = String(import.meta.env.VITE_CLOUDFLARE_API_BASE_URL || '').trim().replace(/\/$/, '');
   if (configuredBaseUrl) {
     return configuredBaseUrl.endsWith('/api')
@@ -12,9 +13,15 @@ function resolveApiBaseUrl() {
     if (!isLocalhost) {
       return window.location.origin;
     }
+
+    if (fallbackBaseUrl) {
+      return fallbackBaseUrl.endsWith('/api')
+        ? fallbackBaseUrl.slice(0, -4)
+        : fallbackBaseUrl;
+    }
   }
 
-  return '';
+  return fallbackBaseUrl || '';
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
