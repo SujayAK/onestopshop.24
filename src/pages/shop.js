@@ -351,8 +351,10 @@ function buildBagsBannerItems(products = [], category = 'Bags') {
 function renderSubcategoryBanner(items = []) {
   return items.map(item => `
     <a href="${item.href}" class="shop-subcategory-chip" data-subcategory-chip>
-      <span class="shop-subcategory-chip-icon">
-        ${item.icon ? `<img src="${toThumbnailUrl(item.icon)}" alt="${escapeHtml(item.name)}" width="56" height="56" loading="lazy" decoding="async">` : `<span>${escapeHtml(item.name.charAt(0))}</span>`}
+      <span class="shop-subcategory-chip-icon${item.icon ? ' has-image' : ''}">
+        <span class="shop-subcategory-chip-icon-inner">
+          ${item.icon ? `<img src="${toThumbnailUrl(item.icon)}" alt="${escapeHtml(item.name)}" width="56" height="56" loading="lazy" decoding="async">` : `<span>${escapeHtml(item.name.charAt(0))}</span>`}
+        </span>
       </span>
       <span class="shop-subcategory-chip-label">${escapeHtml(item.name)}</span>
     </a>
