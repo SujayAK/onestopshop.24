@@ -619,8 +619,18 @@ export function ShopPage(category = 'Bags') {
           </div>
           ${categoryCopy.copy ? `<p class="shop-banner-copy">${escapeHtml(categoryCopy.copy)}</p>` : ''}
         </div>
-        <div id="shop-subcategory-banner-track" class="shop-subcategory-track">
-          <div class="shop-subcategory-skeleton">Loading subcategories...</div>
+        <div class="shop-subcategory-rail" aria-label="Subcategory carousel">
+          <button type="button" class="shop-subcategory-nav" id="shop-subcategory-nav-prev" aria-label="Scroll subcategories left">
+            <span>‹</span>
+          </button>
+          <div class="shop-subcategory-track-viewport">
+            <div id="shop-subcategory-banner-track" class="shop-subcategory-track">
+              <div class="shop-subcategory-skeleton">Loading subcategories...</div>
+            </div>
+          </div>
+          <button type="button" class="shop-subcategory-nav" id="shop-subcategory-nav-next" aria-label="Scroll subcategories right">
+            <span>›</span>
+          </button>
         </div>
       </section>
 
@@ -732,6 +742,8 @@ export function ShopPage(category = 'Bags') {
 export async function initShopPage() {
   const taxonomyContainer = document.getElementById('shop-taxonomy');
   const bannerTrack = document.getElementById('shop-subcategory-banner-track');
+  const bannerNavPrev = document.getElementById('shop-subcategory-nav-prev');
+  const bannerNavNext = document.getElementById('shop-subcategory-nav-next');
   const grid = document.getElementById('shop-grid');
   const resultsCount = document.getElementById('shop-results-count');
   const gridMeta = document.getElementById('shop-grid-meta');
@@ -763,6 +775,39 @@ export async function initShopPage() {
   if (!grid || !taxonomyContainer || !sidebar || !bannerTrack || !colorFilterContainer) {
     return;
   }
+
+  const syncBannerNavState = () => {
+    if (!bannerNavPrev || !bannerNavNext || !bannerTrack) {
+      return;
+    }
+
+    const maxScrollLeft = Math.max(0, bannerTrack.scrollWidth - bannerTrack.clientWidth);
+    bannerNavPrev.disabled = bannerTrack.scrollLeft <= 4;
+    bannerNavNext.disabled = bannerTrack.scrollLeft >= (maxScrollLeft - 4);
+  };
+
+  const scrollBannerBy = direction => {
+    if (!bannerTrack) {
+      return;
+    }
+
+    const step = Math.max(220, Math.floor(bannerTrack.clientWidth * 0.65));
+    bannerTrack.scrollBy({
+      left: direction === 'next' ? step : -step,
+      behavior: 'smooth'
+    });
+  };
+
+  if (bannerNavPrev) {
+    bannerNavPrev.addEventListener('click', () => scrollBannerBy('prev'));
+  }
+
+  if (bannerNavNext) {
+    bannerNavNext.addEventListener('click', () => scrollBannerBy('next'));
+  }
+
+  bannerTrack.addEventListener('scroll', syncBannerNavState, { passive: true });
+  window.addEventListener('resize', syncBannerNavState);
 
   const formatPrice = value => new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -933,6 +978,7 @@ export async function initShopPage() {
   const updateBanner = products => {
     const items = buildBagsBannerItems(products, defaultCategory);
     bannerTrack.innerHTML = renderSubcategoryBanner(items);
+    requestAnimationFrame(syncBannerNavState);
   };
 
   const renderResults = products => {
