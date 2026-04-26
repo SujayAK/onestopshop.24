@@ -331,15 +331,41 @@ function deriveSubcategoryOptions(products = [], category = '') {
   return [...map.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
+function findSubcategoryBannerMatch(products = [], subcategoryName = '') {
+  const target = normalizeLookup(subcategoryName);
+  if (!target) {
+    return null;
+  }
+
+  const byExactSubcategory = products.find(product => normalizeLookup(product.subcategory) === target);
+  if (byExactSubcategory) {
+    return byExactSubcategory;
+  }
+
+  const baseTarget = target.replace(/\bbags?\b/g, '').trim();
+  const terms = [target, baseTarget].filter(Boolean);
+  const hasTerm = (text, term) => normalizeLookup(text).includes(term);
+
+  const byNameOrDescription = products.find(product => {
+    return terms.some(term => (
+      hasTerm(product.name, term)
+      || hasTerm(product.description, term)
+      || hasTerm(product.category, term)
+    ));
+  });
+
+  return byNameOrDescription || null;
+}
+
 function buildBagsBannerItems(products = [], category = 'Bags') {
   const options = deriveSubcategoryOptions(products, category);
   const fallbackOptions = (INVENTORY_STRUCTURE[category] || []).map(name => ({ name, count: 0 }));
   const bannerOptions = options.length > 0 ? options : fallbackOptions;
 
   return bannerOptions.map(item => {
-    const match = products.find(product => normalizeLookup(product.subcategory) === normalizeLookup(item.name));
-    const media = getPrimaryProductMedia(match || products[0] || {});
-    const icon = media.primaryView?.url || media.hoverView?.url || '';
+    const match = findSubcategoryBannerMatch(products, item.name);
+    const media = match ? getPrimaryProductMedia(match) : null;
+    const icon = media?.primaryView?.url || media?.hoverView?.url || '';
 
     return {
       id: String(item.name),

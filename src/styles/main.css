@@ -521,14 +521,18 @@ button {
 
 .shop-plp-shell .shop-subcategory-chip {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.46rem 0.64rem;
+  justify-content: center;
+  gap: 0.28rem;
+  padding: 0.5rem 0.56rem;
   border-radius: 999px;
   border: 1px solid rgba(234, 201, 224, 0.95);
   background: linear-gradient(180deg, #fff 0%, #fff6fb 100%);
   color: #4d3248;
-  min-height: 40px;
+  min-width: 92px;
+  min-height: 74px;
+  text-align: center;
 }
 
 .shop-plp-shell .shop-subcategory-chip:hover {
@@ -573,8 +577,10 @@ button {
 }
 
 .shop-plp-shell .shop-subcategory-chip-label {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+  line-height: 1.15;
   font-weight: 700;
+  max-width: 82px;
 }
 
 .shop-plp-shell .shop-control-bar {
