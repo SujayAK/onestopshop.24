@@ -10,6 +10,7 @@ import {
 import { cart } from '../utils/cart.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl } from '../utils/image-optimization.js';
 import { showAuthRequiredPopup } from '../utils/ui-popup.js';
+import { INVENTORY_STRUCTURE } from '../data/inventory-structure.js';
 
 const SHOP_CACHE_PREFIX = 'onestop.shop.catalog.cache.';
 const SHOP_CACHE_TTL_MS = 8 * 60 * 1000;
@@ -332,8 +333,10 @@ function deriveSubcategoryOptions(products = [], category = '') {
 
 function buildBagsBannerItems(products = [], category = 'Bags') {
   const options = deriveSubcategoryOptions(products, category);
+  const fallbackOptions = (INVENTORY_STRUCTURE[category] || []).map(name => ({ name, count: 0 }));
+  const bannerOptions = options.length > 0 ? options : fallbackOptions;
 
-  return options.map(item => {
+  return bannerOptions.map(item => {
     const match = products.find(product => normalizeLookup(product.subcategory) === normalizeLookup(item.name));
     const media = getPrimaryProductMedia(match || products[0] || {});
     const icon = media.primaryView?.url || media.hoverView?.url || '';
