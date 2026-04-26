@@ -306,13 +306,38 @@ function deriveFilterColors(products = []) {
   return [...palette.values()].slice(0, 12);
 }
 
+function normalizeCategoryLookup(value) {
+  const normalized = normalizeLookup(value).replace(/[^a-z0-9]+/g, '');
+
+  if (['bag', 'bags', 'handbag', 'handbags'].includes(normalized)) {
+    return 'bags';
+  }
+
+  if (['accessory', 'accessories'].includes(normalized)) {
+    return 'accessories';
+  }
+
+  return normalized;
+}
+
+function getInventoryStructureCategoryKey(category) {
+  const normalized = normalizeCategoryLookup(category);
+  if (normalized === 'bags') {
+    return 'Bags';
+  }
+  if (normalized === 'accessories') {
+    return 'Accessories';
+  }
+  return String(category || '').trim();
+}
+
 function deriveSubcategoryOptions(products = [], category = '') {
-  const normalizedCategory = normalizeLookup(category);
+  const normalizedCategory = normalizeCategoryLookup(category);
   const scopedProducts = products.filter(product => {
     if (!normalizedCategory) {
       return true;
     }
-    return normalizeLookup(product.category) === normalizedCategory;
+    return normalizeCategoryLookup(product.category) === normalizedCategory;
   });
 
   const map = new Map();
@@ -359,7 +384,8 @@ function findSubcategoryBannerMatch(products = [], subcategoryName = '') {
 
 function buildBagsBannerItems(products = [], category = 'Bags') {
   const options = deriveSubcategoryOptions(products, category);
-  const fallbackOptions = (INVENTORY_STRUCTURE[category] || []).map(name => ({ name, count: 0 }));
+  const fallbackCategoryKey = getInventoryStructureCategoryKey(category);
+  const fallbackOptions = (INVENTORY_STRUCTURE[fallbackCategoryKey] || []).map(name => ({ name, count: 0 }));
   const bannerOptions = options.length > 0 ? options : fallbackOptions;
 
   return bannerOptions.map(item => {
