@@ -1776,8 +1776,10 @@ button {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   border-bottom: 1px solid var(--border-color);
   box-shadow: 0 2px 8px rgba(80, 72, 64, 0.08);
@@ -2121,8 +2123,10 @@ button {
 }
 
 header.main-header {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
   z-index: 1000;
   background: rgba(246, 243, 239, 0.96);
   backdrop-filter: blur(10px);
@@ -2233,6 +2237,11 @@ header.main-header.is-scrolled {
 @media (max-width: 640px) {
   header.main-header {
     padding: 0.16rem 0.6rem;
+    top: 42px;
+  }
+
+  main#main-content {
+    padding-top: 115px;
   }
 
   .logo-text {
@@ -3786,6 +3795,7 @@ body.nav-drawer-open {
 
   main#main-content {
     width: 100%;
+    padding-top: 130px;
   }
 
 .whatsapp-floater {
