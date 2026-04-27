@@ -405,6 +405,17 @@ function normalizeCategoryName(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function normalizeCategoryBucket(value) {
+  const normalized = normalizeCategoryName(value).replace(/[^a-z0-9]+/g, '');
+  if (['bag', 'bags', 'handbag', 'handbags'].includes(normalized)) {
+    return 'bags';
+  }
+  if (['accessory', 'accessories'].includes(normalized)) {
+    return 'accessories';
+  }
+  return normalized;
+}
+
 function buildTaxonomyIndex(rows = []) {
   const tree = new Map();
 
@@ -431,13 +442,13 @@ function buildTaxonomyIndex(rows = []) {
 }
 
 function categoriesMatch(sectionCategory, productCategory) {
-  const section = normalizeCategoryName(sectionCategory);
-  const product = normalizeCategoryName(productCategory);
+  const section = normalizeCategoryBucket(sectionCategory);
+  const product = normalizeCategoryBucket(productCategory);
   if (!section || !product) {
     return false;
   }
 
-  return section === product || section.includes(product) || product.includes(section);
+  return section === product;
 }
 
 function buildSectionItemsFromProducts(products = [], section) {

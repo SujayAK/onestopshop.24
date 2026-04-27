@@ -756,6 +756,7 @@ export async function initShopPage() {
   let selectedSubcategories = new Set(routeFilters.subcategory ? [normalizeLookup(routeFilters.subcategory)] : []);
   let currentLayout = localStorage.getItem('shop.layout') || 'grid-3';
   let unsubscribe = () => {};
+  const activeCategoryKey = normalizeCategoryLookup(defaultCategory);
 
   if (!grid || !sidebar || !bannerTrack || !colorFilterContainer) {
     return;
@@ -863,6 +864,13 @@ export async function initShopPage() {
     return [...selectedAvailability].some(key => Boolean(checks[key]));
   };
 
+  const matchesCategory = product => {
+    if (!activeCategoryKey) {
+      return true;
+    }
+    return normalizeCategoryLookup(product?.category) === activeCategoryKey;
+  };
+
   const matchesSubcategory = product => {
     if (selectedSubcategories.size === 0) {
       return true;
@@ -916,7 +924,7 @@ export async function initShopPage() {
   };
 
   const renderResults = products => {
-    let visibleProducts = products.filter(product => matchesAvailability(product) && matchesColorFilter(product) && matchesSubcategory(product));
+    let visibleProducts = products.filter(product => matchesCategory(product) && matchesAvailability(product) && matchesColorFilter(product) && matchesSubcategory(product));
     const hasActiveFilters = (
       selectedAvailability.size > 0
       || selectedSubcategories.size > 0

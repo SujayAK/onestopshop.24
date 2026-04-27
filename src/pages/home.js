@@ -3,15 +3,8 @@ const HERO_SLIDES = [
     title: 'One Stop Shop',
     subtitle: 'Curated by women for women.',
     ctaHref: '#/shop',
-    imageDesktop: '/banner/25555%20logo.png',
-    imageMobile: '/banner/WS%20Mobile%20(1600%20x%20900%20px).png'
-  },
-  {
-    title: 'One Stop Shop',
-    subtitle: 'Curated by women for women.',
-    ctaHref: '#/shop',
-    imageDesktop: '/banner/WS%20Mobile%20(1600%20x%20900%20px).png',
-    imageMobile: '/banner/WS%20Mobile%20(1600%20x%20900%20px).png'
+    imageDesktop: '/banner/website-banner-0.webp',
+    imageMobile: '/banner/website-banner-0.webp'
   },
   {
     title: 'One Stop Shop',
