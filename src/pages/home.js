@@ -12,13 +12,6 @@ const HERO_SLIDES = [
     ctaHref: '#/shop',
     imageDesktop: '/banner/website-banner-1.webp',
     imageMobile: '/banner/website-banner-1.webp'
-  },
-  {
-    title: 'One Stop Shop',
-    subtitle: 'Curated bags and accessories for everyday elegance.',
-    ctaHref: '#/shop',
-    imageDesktop: '/banner/website-banner-2.webp',
-    imageMobile: '/banner/website-banner-2.webp'
   }
 ];
 
