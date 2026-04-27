@@ -546,10 +546,27 @@ function buildCategoryHref(sectionCategory, itemName = '') {
 
 function renderDesktopDropdownLinks(section) {
   if (section.key === 'accessories') {
+    const accessories = [
+      { name: 'Hair Bows', icon: 'fa-bow' },
+      { name: 'Nails', icon: 'fa-hand-nails' },
+      { name: 'Statement Jewellery', icon: 'fa-ring' },
+      { name: 'Bag Charms', icon: 'fa-charm' },
+      { name: 'Sunglasses', icon: 'fa-glasses' },
+      { name: 'Hair Claw Clips', icon: 'fa-grip' },
+      { name: 'Scarfs', icon: 'fa-scarf' }
+    ];
+    
     return `
-      <a class="nav-dropdown-item" href="${buildCategoryHref(section.category)}">
-        <span>Statement Jewellery</span>
-      </a>
+      <div class="nav-accessories-grid">
+        ${accessories.map(item => `
+          <a class="nav-accessories-item" href="${buildCategoryHref(section.category, item.name)}" title="${escapeHtml(item.name)}">
+            <div class="nav-accessories-icon">
+              <i class="fas ${item.icon}"></i>
+            </div>
+            <span class="nav-accessories-label">${escapeHtml(item.name)}</span>
+          </a>
+        `).join('')}
+      </div>
     `;
   }
 
@@ -566,7 +583,26 @@ function renderDesktopDropdownLinks(section) {
 
 function renderDrawerLinks(section) {
   if (section.key === 'accessories') {
-    return `<a class="nav-drawer-sublink" href="${buildCategoryHref(section.category)}">Statement Jewellery</a>`;
+    const accessories = [
+      { name: 'Hair Bows', icon: 'fa-bow' },
+      { name: 'Nails', icon: 'fa-hand-nails' },
+      { name: 'Statement Jewellery', icon: 'fa-ring' },
+      { name: 'Bag Charms', icon: 'fa-charm' },
+      { name: 'Sunglasses', icon: 'fa-glasses' },
+      { name: 'Hair Claw Clips', icon: 'fa-grip' },
+      { name: 'Scarfs', icon: 'fa-scarf' }
+    ];
+    
+    return `
+      <div class="nav-drawer-accessories-grid">
+        ${accessories.map(item => `
+          <a class="nav-drawer-accessories-item" href="${buildCategoryHref(section.category, item.name)}" title="${escapeHtml(item.name)}">
+            <i class="fas ${item.icon}"></i>
+            <span>${escapeHtml(item.name)}</span>
+          </a>
+        `).join('')}
+      </div>
+    `;
   }
 
   if (!section.items.length) {
@@ -860,13 +896,6 @@ function renderPage(content) {
   
   // Create container if not exists or clear it
   app.innerHTML = `
-    <div class="animated-bg">
-      <div class="floating-shape shape-1"></div>
-      <div class="floating-shape shape-2"></div>
-      <div class="floating-shape shape-3"></div>
-      <div class="floating-shape shape-4"></div>
-      <div class="floating-shape shape-5"></div>
-    </div>
     ${header}
     <main id="main-content" class="fade-in">
       ${content}

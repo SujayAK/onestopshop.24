@@ -294,7 +294,7 @@ function renderProductTemplate(product) {
 
   return `
       <div class="breadcrumbs">
-        <a href="#/">Home</a> / <a href="#/shop">Shop</a> / <span>${escapeHtml(product.name || 'Product')}</span>
+        <a href="#/shop">Shop</a> / <span>${escapeHtml(product.name || 'Product')}</span>
       </div>
 
       <div class="product-page-layout">

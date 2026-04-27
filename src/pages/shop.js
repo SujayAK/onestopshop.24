@@ -622,7 +622,7 @@ export function ShopPage(category = 'Bags') {
   return `
     <div class="container section section-compact shop-plp-shell">
       <div class="breadcrumbs">
-        <a href="#/">Home</a> / <span>${escapeHtml(categoryCopy.label)}</span>
+        <span>${escapeHtml(categoryCopy.label)}</span>
       </div>
 
       <section class="shop-subcategory-banner" aria-label="${escapeHtml(categoryCopy.label)} subcategories">
@@ -643,13 +643,6 @@ export function ShopPage(category = 'Bags') {
 
       <div class="shop-control-bar" id="shop-control-bar">
         <div class="shop-control-count" id="shop-results-count">Loading products...</div>
-        <div class="shop-control-actions">
-          <div class="shop-layout-toggle" role="group" aria-label="Layout view toggles">
-            <button type="button" class="shop-layout-btn is-active" data-layout="grid-3" aria-label="3 column grid"><i class="fas fa-grip"></i></button>
-            <button type="button" class="shop-layout-btn" data-layout="grid-2" aria-label="2 column grid"><i class="fas fa-table-cells-large"></i></button>
-          </div>
-          <button type="button" class="shop-filter-open-btn" id="shop-filter-open-btn"><i class="fas fa-sliders"></i><span>Filter</span></button>
-        </div>
         <label class="shop-sort-wrap">
           <span>Sort By:</span>
           <select id="shop-sort">
@@ -662,61 +655,7 @@ export function ShopPage(category = 'Bags') {
         </label>
       </div>
 
-      <div id="shop-filter-overlay" class="shop-filter-overlay" hidden></div>
-
       <div class="shop-plp-layout">
-        <aside class="shop-sidebar" id="shop-sidebar">
-          <div class="shop-sidebar-head">
-            <span>Filters</span>
-            <button type="button" class="shop-sidebar-close-btn" id="shop-filter-close-btn">Close</button>
-          </div>
-
-          <div class="shop-filter-section shop-filter-accordion">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
-              <span>Availability</span>
-              <i class="fas fa-plus"></i>
-            </button>
-            <div class="shop-filter-accordion-panel" hidden>
-              <div class="shop-filter-options">
-                ${renderFilterCheckbox('In stock', 'in-stock')}
-                ${renderFilterCheckbox('Out of stock', 'out-of-stock')}
-              </div>
-            </div>
-          </div>
-
-          <div class="shop-filter-section shop-filter-accordion">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
-              <span>Price</span>
-              <i class="fas fa-plus"></i>
-            </button>
-            <div class="shop-filter-accordion-panel" hidden>
-              <div class="price-range-container">
-                <div class="price-slider-wrapper">
-                  <input type="range" id="shop-min-price" class="price-slider price-slider-min" min="0" max="100000" value="0" step="100">
-                  <input type="range" id="shop-max-price" class="price-slider price-slider-max" min="0" max="100000" value="100000" step="100">
-                  <div class="price-slider-track"></div>
-                  <div class="price-slider-fill"></div>
-                </div>
-                <div class="price-range-display">
-                  <span class="price-min-display">₹0</span>
-                  <span class="price-dash">—</span>
-                  <span class="price-max-display">₹100,000</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="shop-filter-section shop-filter-accordion">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
-              <span>Color</span>
-              <i class="fas fa-plus"></i>
-            </button>
-            <div class="shop-filter-accordion-panel" hidden>
-              <div id="shop-color-filter" class="shop-color-filter-grid"></div>
-            </div>
-          </div>
-        </aside>
-
         <main class="shop-main">
           <div class="shop-grid-meta" id="shop-grid-meta"></div>
           <div id="shop-grid" class="shop-grid">
@@ -735,30 +674,17 @@ export async function initShopPage() {
   const grid = document.getElementById('shop-grid');
   const resultsCount = document.getElementById('shop-results-count');
   const gridMeta = document.getElementById('shop-grid-meta');
-  const minPriceInput = document.getElementById('shop-min-price');
-  const maxPriceInput = document.getElementById('shop-max-price');
-  const minPriceDisplay = document.querySelector('.price-min-display');
-  const maxPriceDisplay = document.querySelector('.price-max-display');
-  const priceSliderFill = document.querySelector('.price-slider-fill');
   const sortSelect = document.getElementById('shop-sort');
-  const filterOpenBtn = document.getElementById('shop-filter-open-btn');
-  const filterOverlay = document.getElementById('shop-filter-overlay');
-  const filterCloseBtn = document.getElementById('shop-filter-close-btn');
-  const sidebar = document.getElementById('shop-sidebar');
-  const layoutButtons = document.querySelectorAll('.shop-layout-btn');
-  const colorFilterContainer = document.getElementById('shop-color-filter');
   const routeFilters = parseShopRouteFilters();
   const defaultCategory = routeFilters.category || 'Bags';
   let catalogProducts = [];
   let wishlistIds = new Set();
-  let selectedColor = 'all';
-  let selectedAvailability = new Set();
   let selectedSubcategories = new Set(routeFilters.subcategory ? [normalizeLookup(routeFilters.subcategory)] : []);
   let currentLayout = localStorage.getItem('shop.layout') || 'grid-3';
   let unsubscribe = () => {};
   const activeCategoryKey = normalizeCategoryLookup(defaultCategory);
 
-  if (!grid || !sidebar || !bannerTrack || !colorFilterContainer) {
+  if (!grid || !bannerTrack) {
     return;
   }
 
@@ -792,77 +718,7 @@ export async function initShopPage() {
     bannerNavNext.addEventListener('click', () => scrollBannerBy('next'));
   }
 
-  bannerTrack.addEventListener('scroll', syncBannerNavState, { passive: true });
   window.addEventListener('resize', syncBannerNavState);
-
-  const formatPrice = value => new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(Number(value || 0));
-
-  const updatePriceDisplay = () => {
-    const minVal = Number(minPriceInput.value);
-    const maxVal = Number(maxPriceInput.value);
-    minPriceDisplay.textContent = formatPrice(minVal);
-    maxPriceDisplay.textContent = formatPrice(maxVal);
-    const minPercent = (minVal / Number(minPriceInput.max)) * 100;
-    const maxPercent = (maxVal / Number(maxPriceInput.max)) * 100;
-    priceSliderFill.style.left = `${minPercent}%`;
-    priceSliderFill.style.right = `${100 - maxPercent}%`;
-  };
-
-  const openFilters = () => {
-    sidebar.classList.add('is-open');
-    if (filterOverlay) {
-      filterOverlay.hidden = false;
-    }
-    document.body.classList.add('shop-filter-drawer-open');
-  };
-
-  const closeFilters = () => {
-    sidebar.classList.remove('is-open');
-    if (filterOverlay) {
-      filterOverlay.hidden = true;
-    }
-    document.body.classList.remove('shop-filter-drawer-open');
-  };
-
-  const setLayout = layout => {
-    const safeLayout = layout === 'grid-2' ? 'grid-2' : 'grid-3';
-    currentLayout = safeLayout;
-    localStorage.setItem('shop.layout', safeLayout);
-    layoutButtons.forEach(button => {
-      button.classList.toggle('is-active', button.getAttribute('data-layout') === safeLayout);
-    });
-    grid.dataset.layout = safeLayout;
-    grid.classList.remove('is-grid-2', 'is-grid-3', 'is-list');
-    grid.classList.add(`is-${safeLayout}`);
-  };
-
-  const matchesColorFilter = product => {
-    if (selectedColor === 'all') {
-      return true;
-    }
-    const target = selectedColor.toLowerCase();
-    const colors = getProductColorsFromMedia(product);
-    return colors.some(color => normalizeText(color.name).toLowerCase() === target || normalizeText(color.hex).toLowerCase() === target);
-  };
-
-  const matchesAvailability = product => {
-    if (selectedAvailability.size === 0) {
-      return true;
-    }
-
-    const stock = Number(product.stock || 0);
-    const checks = {
-      'in-stock': stock > 0,
-      'out-of-stock': stock <= 0
-    };
-
-    return [...selectedAvailability].some(key => Boolean(checks[key]));
-  };
 
   const matchesCategory = product => {
     if (!activeCategoryKey) {
@@ -924,36 +780,7 @@ export async function initShopPage() {
   };
 
   const renderResults = products => {
-    let visibleProducts = products.filter(product => matchesCategory(product) && matchesAvailability(product) && matchesColorFilter(product) && matchesSubcategory(product));
-    const hasActiveFilters = (
-      selectedAvailability.size > 0
-      || selectedSubcategories.size > 0
-      || selectedColor !== 'all'
-      || Number(minPriceInput?.value || 0) > 0
-      || Number(maxPriceInput?.value || 100000) < 100000
-    );
-
-    if (visibleProducts.length === 0 && products.length > 0 && hasActiveFilters) {
-      selectedAvailability = new Set();
-      selectedSubcategories = new Set();
-      selectedColor = 'all';
-
-      if (minPriceInput) {
-        minPriceInput.value = '0';
-      }
-      if (maxPriceInput) {
-        maxPriceInput.value = '100000';
-      }
-
-      document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input').forEach(input => {
-        input.checked = false;
-      });
-
-      updatePriceDisplay();
-      syncSelectedSubcategories(products);
-      updateColorFilter(products);
-      visibleProducts = products;
-    }
+    let visibleProducts = products.filter(product => matchesCategory(product) && matchesSubcategory(product));
 
     if (visibleProducts.length === 0) {
       grid.innerHTML = `
@@ -987,15 +814,13 @@ export async function initShopPage() {
   };
 
   const refreshProducts = async () => {
-    const minPrice = Number(minPriceInput.value) || 0;
-    const maxPrice = Number(maxPriceInput.value) || 100000;
-    const sort = sortSelect.value || 'newest';
+    const sort = sortSelect.value || 'featured-first';
     const prioritizeDisplayOrder = sort === 'featured-first';
     const backendSort = prioritizeDisplayOrder ? 'newest' : sort;
 
     const result = await getProductsCatalogAdvanced({
-      minPrice,
-      maxPrice,
+      minPrice: 0,
+      maxPrice: 100000,
       sort: backendSort,
       prioritizeDisplayOrder,
       limit: 240,
@@ -1010,8 +835,8 @@ export async function initShopPage() {
       && defaultCategory
     ) {
       const fallbackResult = await getProductsCatalogAdvanced({
-        minPrice,
-        maxPrice,
+        minPrice: 0,
+        maxPrice: 100000,
         sort: backendSort,
         prioritizeDisplayOrder,
         limit: 240
@@ -1071,19 +896,10 @@ export async function initShopPage() {
     });
   };
 
-  const updateFilters = () => {
-    selectedAvailability = new Set(Array.from(document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input:checked')).map(input => input.value).filter(Boolean));
-    updatePriceDisplay();
-    refreshProducts();
-  };
-
-  updatePriceDisplay();
-
   const cachedProducts = readShopCatalogCache(defaultCategory);
   if (cachedProducts.length > 0) {
     catalogProducts = cachedProducts;
     updateBanner(catalogProducts);
-    updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
   }
 
@@ -1097,68 +913,10 @@ export async function initShopPage() {
     syncSelectedSubcategories(catalogProducts);
     renderResults(catalogProducts);
   }
-  document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input').forEach(input => input.addEventListener('change', updateFilters));
 
-  layoutButtons.forEach(button => {
-    button.addEventListener('click', () => setLayout(button.getAttribute('data-layout') || 'grid-3'));
-  });
-  setLayout(currentLayout);
-
-  if (filterOpenBtn) {
-    filterOpenBtn.addEventListener('click', openFilters);
-  }
-  if (filterOverlay) {
-    filterOverlay.addEventListener('click', closeFilters);
-  }
-  if (filterCloseBtn) {
-    filterCloseBtn.addEventListener('click', closeFilters);
-  }
-
-  document.querySelectorAll('.shop-filter-accordion-trigger').forEach(button => {
-    button.addEventListener('click', () => {
-      const section = button.closest('.shop-filter-accordion');
-      const panel = section?.querySelector('.shop-filter-accordion-panel');
-      const expanded = button.getAttribute('aria-expanded') === 'true';
-      button.setAttribute('aria-expanded', String(!expanded));
-      section?.classList.toggle('is-open', !expanded);
-      if (panel) {
-        panel.hidden = expanded;
-      }
-    });
-  });
-
-  minPriceInput.addEventListener('input', () => {
-    const minVal = Number(minPriceInput.value);
-    const maxVal = Number(maxPriceInput.value);
-    if (minVal > maxVal) {
-      minPriceInput.value = maxVal;
-    }
-    updatePriceDisplay();
-  });
-
-  maxPriceInput.addEventListener('input', () => {
-    const minVal = Number(minPriceInput.value);
-    const maxVal = Number(maxPriceInput.value);
-    if (maxVal < minVal) {
-      maxPriceInput.value = minVal;
-    }
-    updatePriceDisplay();
-  });
-
-  let priceFilterTimeout;
-  minPriceInput.addEventListener('change', () => {
-    clearTimeout(priceFilterTimeout);
-    priceFilterTimeout = setTimeout(updateFilters, 180);
-  });
-  maxPriceInput.addEventListener('change', () => {
-    clearTimeout(priceFilterTimeout);
-    priceFilterTimeout = setTimeout(updateFilters, 180);
-  });
-
-  sortSelect.addEventListener('change', updateFilters);
+  sortSelect.addEventListener('change', refreshProducts);
 
   window.addEventListener('hashchange', () => {
-    closeFilters();
     unsubscribe();
   }, { once: true });
 
