@@ -7322,3 +7322,77 @@ body.route-product .webgl-background-layer {
 .product-color-rail-item img {
   min-height: 72px;
 }
+
+/* Shop subcategory dropdown rows: horizontal bags/accessories rails */
+.shop-plp-shell .shop-subcategory-dropdowns-wrap {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.shop-plp-shell .shop-subcategory-dropdown {
+  border: 1px solid rgba(203, 191, 179, 0.62);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+}
+
+.shop-plp-shell .shop-subcategory-dropdown-trigger {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #5f4b3d;
+}
+
+.shop-plp-shell .shop-subcategory-dropdown-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.shop-plp-shell .shop-subcategory-dropdown-icon {
+  font-size: 0.78rem;
+  color: #6f5646;
+  transition: transform 0.2s ease;
+}
+
+.shop-plp-shell .shop-subcategory-dropdown[open] .shop-subcategory-dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.shop-plp-shell .shop-subcategory-dropdown-panel {
+  padding: 0 0.5rem 0.55rem;
+}
+
+.shop-plp-shell .shop-subcategory-dropdown-panel .shop-subcategory-track {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.55rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding-bottom: 0.1rem;
+}
+
+.shop-plp-shell .shop-subcategory-dropdown-panel .shop-subcategory-chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 768px) {
+  .shop-plp-shell .shop-subcategory-dropdown-trigger {
+    padding: 0.5rem 0.62rem;
+    font-size: 0.78rem;
+  }
+
+  .shop-plp-shell .shop-subcategory-dropdown-panel {
+    padding: 0 0.42rem 0.5rem;
+  }
+
+  .shop-plp-shell .shop-subcategory-dropdown-panel .shop-subcategory-chip {
+    min-width: 82px;
+  }
+}

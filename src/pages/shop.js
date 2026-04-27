@@ -430,6 +430,35 @@ function renderSubcategoryBanner(items = []) {
   `).join('');
 }
 
+function buildSubcategoryDropdownGroups(products = []) {
+  return [
+    { key: 'bags', label: 'Bags', items: buildBagsBannerItems(products, 'Bags') },
+    { key: 'accessories', label: 'Accessories', items: buildBagsBannerItems(products, 'Accessories') }
+  ].filter(group => Array.isArray(group.items) && group.items.length > 0);
+}
+
+function renderSubcategoryDropdowns(groups = [], activeCategory = 'Bags') {
+  const activeKey = normalizeCategoryLookup(activeCategory) || 'bags';
+
+  return groups.map(group => {
+    const isActive = group.key === activeKey;
+
+    return `
+      <details class="shop-subcategory-dropdown${isActive ? ' is-active' : ''}" data-subcategory-dropdown="${group.key}" ${isActive ? 'open' : ''}>
+        <summary class="shop-subcategory-dropdown-trigger">
+          <span class="shop-subcategory-dropdown-label">${escapeHtml(group.label)}</span>
+          <span class="shop-subcategory-dropdown-icon" aria-hidden="true">▾</span>
+        </summary>
+        <div class="shop-subcategory-dropdown-panel">
+          <div class="shop-subcategory-track">
+            ${renderSubcategoryBanner(group.items)}
+          </div>
+        </div>
+      </details>
+    `;
+  }).join('');
+}
+
 function renderFilterCheckbox(label, value, checked = false) {
   return `
     <label class="shop-filter-check">
@@ -626,18 +655,8 @@ export function ShopPage(category = 'Bags') {
       </div>
 
       <section class="shop-subcategory-banner" aria-label="${escapeHtml(categoryCopy.label)} subcategories">
-        <div class="shop-subcategory-rail" aria-label="Subcategory carousel">
-          <button type="button" class="shop-subcategory-nav" id="shop-subcategory-nav-prev" aria-label="Scroll subcategories left">
-            <span>‹</span>
-          </button>
-          <div class="shop-subcategory-track-viewport">
-            <div id="shop-subcategory-banner-track" class="shop-subcategory-track">
-              <div class="shop-subcategory-skeleton">Loading subcategories...</div>
-            </div>
-          </div>
-          <button type="button" class="shop-subcategory-nav" id="shop-subcategory-nav-next" aria-label="Scroll subcategories right">
-            <span>›</span>
-          </button>
+        <div id="shop-subcategory-banner-track" class="shop-subcategory-dropdowns-wrap">
+          <div class="shop-subcategory-skeleton">Loading subcategories...</div>
         </div>
       </section>
 
@@ -669,8 +688,6 @@ export function ShopPage(category = 'Bags') {
 
 export async function initShopPage() {
   const bannerTrack = document.getElementById('shop-subcategory-banner-track');
-  const bannerNavPrev = document.getElementById('shop-subcategory-nav-prev');
-  const bannerNavNext = document.getElementById('shop-subcategory-nav-next');
   const grid = document.getElementById('shop-grid');
   const resultsCount = document.getElementById('shop-results-count');
   const gridMeta = document.getElementById('shop-grid-meta');
@@ -688,37 +705,27 @@ export async function initShopPage() {
     return;
   }
 
-  const syncBannerNavState = () => {
-    if (!bannerNavPrev || !bannerNavNext || !bannerTrack) {
-      return;
-    }
+  const bindSubcategoryDropdowns = () => {
+    const dropdowns = Array.from(document.querySelectorAll('.shop-subcategory-dropdown'));
 
-    const maxScrollLeft = Math.max(0, bannerTrack.scrollWidth - bannerTrack.clientWidth);
-    bannerNavPrev.disabled = bannerTrack.scrollLeft <= 4;
-    bannerNavNext.disabled = bannerTrack.scrollLeft >= (maxScrollLeft - 4);
-  };
+    dropdowns.forEach(dropdown => {
+      dropdown.addEventListener('toggle', () => {
+        const isOpen = dropdown.hasAttribute('open');
+        dropdown.classList.toggle('is-active', isOpen);
 
-  const scrollBannerBy = direction => {
-    if (!bannerTrack) {
-      return;
-    }
+        if (!isOpen) {
+          return;
+        }
 
-    const step = Math.max(220, Math.floor(bannerTrack.clientWidth * 0.65));
-    bannerTrack.scrollBy({
-      left: direction === 'next' ? step : -step,
-      behavior: 'smooth'
+        dropdowns.forEach(other => {
+          if (other !== dropdown) {
+            other.removeAttribute('open');
+            other.classList.remove('is-active');
+          }
+        });
+      });
     });
   };
-
-  if (bannerNavPrev) {
-    bannerNavPrev.addEventListener('click', () => scrollBannerBy('prev'));
-  }
-
-  if (bannerNavNext) {
-    bannerNavNext.addEventListener('click', () => scrollBannerBy('next'));
-  }
-
-  window.addEventListener('resize', syncBannerNavState);
 
   const matchesCategory = product => {
     if (!activeCategoryKey) {
@@ -774,9 +781,9 @@ export async function initShopPage() {
   };
 
   const updateBanner = products => {
-    const items = buildBagsBannerItems(products, defaultCategory);
-    bannerTrack.innerHTML = renderSubcategoryBanner(items);
-    requestAnimationFrame(syncBannerNavState);
+    const groups = buildSubcategoryDropdownGroups(products);
+    bannerTrack.innerHTML = renderSubcategoryDropdowns(groups, defaultCategory);
+    bindSubcategoryDropdowns();
   };
 
   const renderResults = products => {
