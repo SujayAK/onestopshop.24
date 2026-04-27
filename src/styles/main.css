@@ -7143,3 +7143,79 @@ footer.main-footer {
 .profile-subtitle {
   color: var(--text-secondary) !important;
 }
+
+/* Final UI refinements from latest review */
+body.route-shop::before,
+body.route-product::before {
+  display: none;
+}
+
+body.route-shop .webgl-background-layer,
+body.route-product .webgl-background-layer {
+  opacity: 0.08;
+}
+
+.nav-mega-link {
+  min-width: 86px;
+  justify-content: center;
+}
+
+.nav-list-dropdown {
+  width: min(280px, 72vw);
+}
+
+.shop-plp-shell .shop-subcategory-banner {
+  padding: 0.7rem 0.8rem;
+}
+
+.shop-plp-shell .shop-subcategory-banner-head {
+  display: none;
+}
+
+.shop-plp-shell .shop-subcategory-track {
+  gap: 0.55rem;
+}
+
+.shop-plp-shell .shop-subcategory-chip {
+  min-width: 86px;
+  padding: 0.38rem 0.42rem 0.44rem;
+}
+
+.shop-plp-shell .shop-subcategory-chip-icon {
+  width: 54px;
+  height: 54px;
+}
+
+.shop-plp-shell .shop-control-bar {
+  grid-template-columns: auto 1fr auto;
+}
+
+.shop-plp-shell .shop-control-actions {
+  justify-self: center;
+}
+
+.shop-plp-shell .shop-sort-wrap {
+  justify-self: end;
+}
+
+.shop-plp-shell .shop-layout-btn {
+  min-width: 40px;
+}
+
+.product-mobile-swatch-row {
+  display: none !important;
+}
+
+.product-color-rail {
+  min-width: 86px;
+}
+
+.product-color-rail-item {
+  width: 80px;
+  min-height: 80px;
+  border-radius: 12px;
+}
+
+.product-color-rail-item img {
+  min-height: 72px;
+}

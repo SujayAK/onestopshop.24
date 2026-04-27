@@ -383,6 +383,20 @@ function findSubcategoryBannerMatch(products = [], subcategoryName = '') {
 }
 
 function buildBagsBannerItems(products = [], category = 'Bags') {
+  if (normalizeCategoryLookup(category) === 'accessories') {
+    const accessoryMatch = products.find(product => normalizeCategoryLookup(product.category) === 'accessories');
+    const media = accessoryMatch ? getPrimaryProductMedia(accessoryMatch) : null;
+    const icon = media?.primaryView?.url || media?.hoverView?.url || '';
+
+    return [{
+      id: 'statement-jewellery',
+      name: 'Statement Jewellery',
+      slug: 'statement-jewellery',
+      href: `#/shop?cat=${encodeURIComponent('Accessories')}`,
+      icon
+    }];
+  }
+
   const options = deriveSubcategoryOptions(products, category);
   const fallbackCategoryKey = getInventoryStructureCategoryKey(category);
   const fallbackOptions = (INVENTORY_STRUCTURE[fallbackCategoryKey] || []).map(name => ({ name, count: 0 }));
@@ -612,13 +626,6 @@ export function ShopPage(category = 'Bags') {
       </div>
 
       <section class="shop-subcategory-banner" aria-label="${escapeHtml(categoryCopy.label)} subcategories">
-        <div class="shop-subcategory-banner-head">
-          <div>
-            <p class="shop-banner-kicker">${escapeHtml(categoryCopy.kicker)}</p>
-            ${categoryCopy.title ? `<h1>${escapeHtml(categoryCopy.title)}</h1>` : ''}
-          </div>
-          ${categoryCopy.copy ? `<p class="shop-banner-copy">${escapeHtml(categoryCopy.copy)}</p>` : ''}
-        </div>
         <div class="shop-subcategory-rail" aria-label="Subcategory carousel">
           <button type="button" class="shop-subcategory-nav" id="shop-subcategory-nav-prev" aria-label="Scroll subcategories left">
             <span>‹</span>
@@ -638,9 +645,8 @@ export function ShopPage(category = 'Bags') {
         <div class="shop-control-count" id="shop-results-count">Loading products...</div>
         <div class="shop-control-actions">
           <div class="shop-layout-toggle" role="group" aria-label="Layout view toggles">
-            <button type="button" class="shop-layout-btn is-active" data-layout="grid-3" aria-label="3 column grid"><i class="fas fa-border-all"></i></button>
-            <button type="button" class="shop-layout-btn" data-layout="grid-2" aria-label="2 column grid"><i class="fas fa-border-none"></i></button>
-            <button type="button" class="shop-layout-btn" data-layout="list" aria-label="List view"><i class="fas fa-list"></i></button>
+            <button type="button" class="shop-layout-btn is-active" data-layout="grid-3" aria-label="3 column grid"><i class="fas fa-grip"></i></button>
+            <button type="button" class="shop-layout-btn" data-layout="grid-2" aria-label="2 column grid"><i class="fas fa-table-cells-large"></i></button>
           </div>
           <button type="button" class="shop-filter-open-btn" id="shop-filter-open-btn"><i class="fas fa-sliders"></i><span>Filter</span></button>
         </div>
@@ -709,23 +715,6 @@ export function ShopPage(category = 'Bags') {
               <div id="shop-color-filter" class="shop-color-filter-grid"></div>
             </div>
           </div>
-
-          <div class="shop-filter-section shop-filter-accordion">
-            <button type="button" class="shop-filter-accordion-trigger" aria-expanded="false">
-              <span>Category</span>
-              <i class="fas fa-plus"></i>
-            </button>
-            <div class="shop-filter-accordion-panel" hidden>
-              <p class="shop-filter-helper">Choose one or more categories. Expand the root item to select subcategories.</p>
-              <div id="shop-taxonomy" class="shop-taxonomy-tree"></div>
-              <div class="shop-taxonomy-actions">
-                <button type="button" id="shop-clear-categories" class="btn btn-outline btn-sm">Clear Categories</button>
-                <span id="shop-category-summary" class="shop-category-summary">All categories</span>
-              </div>
-            </div>
-          </div>
-
-          <button id="shop-reset-filters" class="btn btn-outline">Reset Filters</button>
         </aside>
 
         <main class="shop-main">
@@ -740,7 +729,6 @@ export function ShopPage(category = 'Bags') {
 }
 
 export async function initShopPage() {
-  const taxonomyContainer = document.getElementById('shop-taxonomy');
   const bannerTrack = document.getElementById('shop-subcategory-banner-track');
   const bannerNavPrev = document.getElementById('shop-subcategory-nav-prev');
   const bannerNavNext = document.getElementById('shop-subcategory-nav-next');
@@ -753,9 +741,6 @@ export async function initShopPage() {
   const maxPriceDisplay = document.querySelector('.price-max-display');
   const priceSliderFill = document.querySelector('.price-slider-fill');
   const sortSelect = document.getElementById('shop-sort');
-  const resetBtn = document.getElementById('shop-reset-filters');
-  const clearCategoriesBtn = document.getElementById('shop-clear-categories');
-  const categorySummary = document.getElementById('shop-category-summary');
   const filterOpenBtn = document.getElementById('shop-filter-open-btn');
   const filterOverlay = document.getElementById('shop-filter-overlay');
   const filterCloseBtn = document.getElementById('shop-filter-close-btn');
@@ -772,7 +757,7 @@ export async function initShopPage() {
   let currentLayout = localStorage.getItem('shop.layout') || 'grid-3';
   let unsubscribe = () => {};
 
-  if (!grid || !taxonomyContainer || !sidebar || !bannerTrack || !colorFilterContainer) {
+  if (!grid || !sidebar || !bannerTrack || !colorFilterContainer) {
     return;
   }
 
@@ -844,14 +829,15 @@ export async function initShopPage() {
   };
 
   const setLayout = layout => {
-    currentLayout = layout;
-    localStorage.setItem('shop.layout', layout);
+    const safeLayout = layout === 'grid-2' ? 'grid-2' : 'grid-3';
+    currentLayout = safeLayout;
+    localStorage.setItem('shop.layout', safeLayout);
     layoutButtons.forEach(button => {
-      button.classList.toggle('is-active', button.getAttribute('data-layout') === layout);
+      button.classList.toggle('is-active', button.getAttribute('data-layout') === safeLayout);
     });
-    grid.dataset.layout = layout;
+    grid.dataset.layout = safeLayout;
     grid.classList.remove('is-grid-2', 'is-grid-3', 'is-list');
-    grid.classList.add(`is-${layout}`);
+    grid.classList.add(`is-${safeLayout}`);
   };
 
   const matchesColorFilter = product => {
@@ -885,64 +871,12 @@ export async function initShopPage() {
     return selectedSubcategories.has(normalizeLookup(product.subcategory));
   };
 
-  const updateCategorySummary = () => {
-    if (!categorySummary) {
-      return;
-    }
-
-    const labels = Array.from(document.querySelectorAll('.shop-subcategory-checkbox:checked'))
-      .map(cb => cb.getAttribute('data-subcategory-label') || cb.value)
-      .filter(Boolean);
-
-    categorySummary.textContent = labels.length > 0
-      ? labels.slice(0, 3).join(', ') + (labels.length > 3 ? ` +${labels.length - 3}` : '')
-      : 'All categories';
-  };
-
-  const updateCategoryFilters = products => {
+  const syncSelectedSubcategories = products => {
     const options = deriveSubcategoryOptions(products, defaultCategory);
-
-    if (options.length === 0) {
-      taxonomyContainer.innerHTML = '<p class="shop-filter-helper">No subcategories available yet.</p>';
-      selectedSubcategories = new Set();
-      updateCategorySummary();
-      return;
-    }
 
     selectedSubcategories = new Set(
       [...selectedSubcategories].filter(selected => options.some(option => normalizeLookup(option.name) === selected))
     );
-
-    taxonomyContainer.innerHTML = options.map(option => {
-      const normalized = normalizeLookup(option.name);
-      const checked = selectedSubcategories.has(normalized);
-      return `
-        <label class="shop-filter-check">
-          <input
-            type="checkbox"
-            class="shop-subcategory-checkbox"
-            data-subcategory-label="${escapeHtml(option.name)}"
-            value="${escapeHtml(option.name)}"
-            ${checked ? 'checked' : ''}
-          >
-          <span>${escapeHtml(option.name)}</span>
-          <small style="margin-left:auto;color:#87677a;">${option.count}</small>
-        </label>
-      `;
-    }).join('');
-
-    taxonomyContainer.querySelectorAll('.shop-subcategory-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        selectedSubcategories = new Set(
-          Array.from(taxonomyContainer.querySelectorAll('.shop-subcategory-checkbox:checked'))
-            .map(node => normalizeLookup(node.value))
-            .filter(Boolean)
-        );
-        updateFilters();
-      });
-    });
-
-    updateCategorySummary();
   };
 
   const updateColorFilter = products => {
@@ -1008,7 +942,7 @@ export async function initShopPage() {
       });
 
       updatePriceDisplay();
-      updateCategoryFilters(products);
+      syncSelectedSubcategories(products);
       updateColorFilter(products);
       visibleProducts = products;
     }
@@ -1030,7 +964,7 @@ export async function initShopPage() {
 
     resultsCount.textContent = `${visibleProducts.length} product${visibleProducts.length === 1 ? '' : 's'} found`;
     if (gridMeta) {
-      gridMeta.textContent = currentLayout === 'list' ? 'Curated list view' : 'Premium product grid';
+      gridMeta.textContent = currentLayout === 'grid-2' ? 'Two-column view' : 'Three-column view';
     }
     grid.innerHTML = visibleProducts.map((product, index) => renderProductCard(
       product,
@@ -1095,7 +1029,7 @@ export async function initShopPage() {
 
     catalogProducts = finalResult.data;
     writeShopCatalogCache(defaultCategory, catalogProducts);
-    updateCategoryFilters(catalogProducts);
+    syncSelectedSubcategories(catalogProducts);
     updateBanner(catalogProducts);
     updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
@@ -1132,7 +1066,6 @@ export async function initShopPage() {
   const updateFilters = () => {
     selectedAvailability = new Set(Array.from(document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input:checked')).map(input => input.value).filter(Boolean));
     updatePriceDisplay();
-    updateCategorySummary();
     refreshProducts();
   };
 
@@ -1153,7 +1086,7 @@ export async function initShopPage() {
 
   wishlistIds = new Set((wishlistResult.success && Array.isArray(wishlistResult.data) ? wishlistResult.data : []).map(item => String(item).trim()).filter(Boolean));
   if (catalogProducts.length > 0) {
-    updateCategoryFilters(catalogProducts);
+    syncSelectedSubcategories(catalogProducts);
     renderResults(catalogProducts);
   }
   document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input').forEach(input => input.addEventListener('change', updateFilters));
@@ -1215,28 +1148,6 @@ export async function initShopPage() {
   });
 
   sortSelect.addEventListener('change', updateFilters);
-
-  resetBtn.addEventListener('click', () => {
-    selectedSubcategories = new Set();
-    document.querySelectorAll('#shop-sidebar .shop-filter-options .shop-filter-check input').forEach(input => { input.checked = false; });
-    minPriceInput.value = '0';
-    maxPriceInput.value = '100000';
-    sortSelect.value = 'featured-first';
-    selectedColor = 'all';
-    updateCategoryFilters(catalogProducts);
-    updatePriceDisplay();
-    updateFilters();
-  });
-
-  if (clearCategoriesBtn) {
-    clearCategoriesBtn.addEventListener('click', () => {
-      selectedSubcategories = new Set();
-      updateCategoryFilters(catalogProducts);
-      routeFilters.category = '';
-      routeFilters.subcategory = '';
-      updateFilters();
-    });
-  }
 
   window.addEventListener('hashchange', () => {
     closeFilters();

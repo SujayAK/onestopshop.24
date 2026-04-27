@@ -534,6 +534,14 @@ function buildCategoryHref(sectionCategory, itemName = '') {
 }
 
 function renderDesktopDropdownLinks(section) {
+  if (section.key === 'accessories') {
+    return `
+      <a class="nav-dropdown-item" href="${buildCategoryHref(section.category)}">
+        <span>Statement Jewellery</span>
+      </a>
+    `;
+  }
+
   if (!section.items.length) {
     return '<p class="nav-mega-empty">No subcategories available yet.</p>';
   }
@@ -546,6 +554,10 @@ function renderDesktopDropdownLinks(section) {
 }
 
 function renderDrawerLinks(section) {
+  if (section.key === 'accessories') {
+    return `<a class="nav-drawer-sublink" href="${buildCategoryHref(section.category)}">Statement Jewellery</a>`;
+  }
+
   if (!section.items.length) {
     return '<p class="nav-drawer-empty">No subcategories available yet.</p>';
   }
@@ -1101,6 +1113,14 @@ function initTestimonialSlider() {
 function navigate() {
   const hash = window.location.hash || '#/';
   applySeoMeta(getRouteSeoPayload(hash));
+
+  document.body.classList.remove('route-shop', 'route-product');
+  if (hash.startsWith('#/shop')) {
+    document.body.classList.add('route-shop');
+  }
+  if (hash.startsWith('#/product/')) {
+    document.body.classList.add('route-product');
+  }
   
   if (hash === '#/' || hash === '') {
     renderPage(HomePage());

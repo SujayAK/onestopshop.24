@@ -200,12 +200,11 @@ function buildMaterialContent(product) {
 }
 
 function buildShippingContent(product) {
-  const timeline = String(product?.delivery_timeline || '6-8 days').trim();
+  const timeline = String(product?.delivery_timeline || '6-8').trim().replace(/\s*days?/i, '');
   return `
     <div class="product-shipping-copy">
-      <p>Delivery Timeline: ${escapeHtml(timeline)}</p>
+      <p>Delivery Timeline: ${escapeHtml(timeline)} working days.</p>
       <p>Orders are processed in 24-48 hours. Tracking details are shared once dispatched.</p>
-      <p>Shipping charges are calculated at checkout based on destination and weight.</p>
     </div>
   `;
 }
@@ -222,18 +221,17 @@ function renderProductNotFound() {
   `;
 }
 
-function renderColorRail(colors, activeColorIndex) {
-  return colors.map((color, index) => {
-    const primaryView = color.views[0] || { label: 'Primary', url: buildMissingImageUrl(color.name, 'primary') };
-    const thumb = getProductImageAttrs(toThumbnailUrl(primaryView.url), {
+function renderColorRail(views, activeViewIndex) {
+  return views.map((view, index) => {
+    const thumb = getProductImageAttrs(toThumbnailUrl(view.url), {
       desktopWidth: 180,
       sizes: '72px',
       aspectRatio: '1:1'
     });
 
     return `
-      <button type="button" class="product-color-rail-item${index === activeColorIndex ? ' is-active' : ''}" data-color-index="${index}" aria-label="Switch to ${escapeHtml(color.name)}" title="${escapeHtml(color.name)}">
-        <img src="${thumb.src}" alt="${escapeHtml(color.name)} color">
+      <button type="button" class="product-color-rail-item${index === activeViewIndex ? ' is-active' : ''}" data-view-index="${index}" aria-label="Show ${escapeHtml(view.label)}" title="${escapeHtml(view.label)}">
+        <img src="${thumb.src}" alt="${escapeHtml(view.label)}">
       </button>
     `;
   }).join('');
@@ -302,7 +300,7 @@ function renderProductTemplate(product) {
       <div class="product-page-layout">
         <div class="product-gallery" id="product-gallery">
           <aside class="product-color-rail" id="product-color-rail">
-            ${renderColorRail(media, 0)}
+            ${renderColorRail(activeColor.views, 0)}
           </aside>
 
           <div class="product-media-main">
@@ -332,10 +330,6 @@ function renderProductTemplate(product) {
             </div>
 
           </div>
-
-          <div class="product-mobile-swatch-row" id="product-mobile-swatch-row">
-            ${renderColorSwatches(media, 0)}
-          </div>
         </div>
 
         <div class="product-info product-info-card">
@@ -348,7 +342,7 @@ function renderProductTemplate(product) {
               <span class="product-price-original">${formatINR(originalPrice)}</span>
               <span class="product-discount-badge">${Math.round(discountPercent)}% OFF</span>
             </div>
-            <p class="product-tax-note">Taxes included. Shipping calculated at checkout.</p>
+            <p class="product-tax-note">All taxes and shipping included.</p>
           </div>
 
           <div class="product-color-block">
@@ -358,7 +352,7 @@ function renderProductTemplate(product) {
             </div>
           </div>
 
-          <p class="product-delivery-line">Delivery Timeline: ${escapeHtml(String(product.delivery_timeline || '6-8 days'))}</p>
+          <p class="product-delivery-line">Delivery Timeline: ${escapeHtml(String(product.delivery_timeline || '6-8').replace(/\s*days?/i, ''))} working days.</p>
 
           <div class="product-stock-row">
             <span id="product-stock-status" class="stock-indicator" data-stock-label data-product-id="${product.id}">Checking stock...</span>
@@ -377,7 +371,7 @@ function renderProductTemplate(product) {
           </div>
 
           <div class="product-accordion">
-            ${renderAccordion('product-material-panel', 'Material & Make', buildMaterialContent(product))}
+            ${renderAccordion('product-material-panel', 'Details', buildMaterialContent(product))}
             ${renderAccordion('product-shipping-panel', 'Shipping Policy', buildShippingContent(product))}
           </div>
         </div>
@@ -504,7 +498,6 @@ export async function initProductPage(productId) {
   const buyNowBtn = document.getElementById('buy-now-btn');
   const colorRail = document.getElementById('product-color-rail');
   const colorSwatches = document.getElementById('product-color-swatches');
-  const mobileSwatches = document.getElementById('product-mobile-swatch-row');
   const angleNavPrev = document.getElementById('product-angle-prev');
   const angleNavNext = document.getElementById('product-angle-next');
   const heroImage = document.getElementById('product-hero-image');
@@ -612,9 +605,26 @@ export async function initProductPage(productId) {
         });
       };
 
-      markColorSelection(colorRail);
+      const markViewSelection = container => {
+        if (!container) {
+          return;
+        }
+        container.innerHTML = renderColorRail(color.views, state.viewIndex);
+        container.querySelectorAll('[data-view-index]').forEach(element => {
+          const index = Number(element.getAttribute('data-view-index'));
+          element.classList.toggle('is-active', index === state.viewIndex);
+          element.addEventListener('click', () => {
+            if (!Number.isFinite(index)) {
+              return;
+            }
+            state.viewIndex = Math.max(0, Math.min(color.views.length - 1, index));
+            updateHeroFromState({ animate: true });
+          });
+        });
+      };
+
       markColorSelection(colorSwatches);
-      markColorSelection(mobileSwatches);
+      markViewSelection(colorRail);
       preloadAdjacentViews(color);
 
       requestAnimationFrame(() => {
@@ -671,9 +681,7 @@ export async function initProductPage(productId) {
     });
   };
 
-  bindColorSelector(colorRail);
   bindColorSelector(colorSwatches);
-  bindColorSelector(mobileSwatches);
 
   if (angleNavPrev && angleNavNext) {
     angleNavPrev.addEventListener('click', () => {
