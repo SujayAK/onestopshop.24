@@ -1091,6 +1091,11 @@ async function initAnnouncementBar() {
   // Set default message
   announcementText.textContent = DEFAULT_ANNOUNCEMENT_MESSAGE;
 
+  const syncAnnouncementLayout = () => {
+    const isHidden = announcementBar.classList.contains('hidden');
+    document.body.classList.toggle('announcement-hidden', isHidden);
+  };
+
   // Fetch from Cloudflare
   const result = await getAnnouncementBarMessage();
   if (result.success && result.data) {
@@ -1103,6 +1108,7 @@ async function initAnnouncementBar() {
       event.preventDefault();
       event.stopPropagation();
       announcementBar.classList.add('hidden');
+      syncAnnouncementLayout();
       // Store dismissal state in sessionStorage (expires on page refresh)
       sessionStorage.setItem('announcement_dismissed', 'true');
     });
@@ -1110,6 +1116,9 @@ async function initAnnouncementBar() {
     // Check if announcement was dismissed in this session
     if (sessionStorage.getItem('announcement_dismissed') === 'true') {
       announcementBar.classList.add('hidden');
+      syncAnnouncementLayout();
+    } else {
+      syncAnnouncementLayout();
     }
   }
 }
