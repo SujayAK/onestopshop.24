@@ -126,10 +126,6 @@ function renderProductCard(product, wished, compared) {
 export function StockClearancePage() {
   return `
     <div class="container section">
-      <div class="breadcrumbs">
-        <a href="#/">Home</a> / <span>Stock Clearance Sale</span>
-      </div>
-
       <div style="text-align: center; margin-bottom: 3rem;">
         <p style="font-size: 0.9rem; color: var(--accent-pink); text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 0.5rem;">LIMITED TIME OFFER</p>
         <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🔥 STOCK CLEARANCE SALE 🔥</h1>

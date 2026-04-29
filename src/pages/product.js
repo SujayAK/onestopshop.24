@@ -296,10 +296,6 @@ function renderProductTemplate(product) {
   const { currentPrice, originalPrice, discountPercent } = getCurrentPriceAndDiscount(product);
 
   return `
-      <div class="breadcrumbs">
-        <a href="#/shop">Shop</a> / <span>${escapeHtml(product.name || 'Product')}</span>
-      </div>
-
       <div class="product-page-layout">
         <div class="product-gallery" id="product-gallery">
           <aside class="product-color-rail" id="product-color-rail">

@@ -251,10 +251,6 @@ export function SearchPage(initialQuery = '') {
 
   return `
     <section class="section section-compact shop-plp-shell search-page-shell">
-      <div class="breadcrumbs">
-        <a href="#/">Home</a> / <span>Search</span>
-      </div>
-
       <div class="search-page-hero">
         <div>
           <p class="search-page-kicker">Search the Catalog</p>

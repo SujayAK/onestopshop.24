@@ -38,10 +38,6 @@ export function CartPage() {
 
   return `
     <div class="container section">
-      <div class="breadcrumbs">
-        <a href="#/">Home</a> / <span>Cart</span>
-      </div>
-
       <h1 style="margin-bottom: 3rem;">Shopping Cart</h1>
 
       <div class="cart-layout-grid">

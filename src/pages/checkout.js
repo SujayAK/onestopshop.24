@@ -29,10 +29,6 @@ export function CheckoutPage() {
 
   return `
     <div class="container section">
-      <div class="breadcrumbs">
-        <a href="#/">Home</a> / <a href="#/cart">Cart</a> / <span>Checkout</span>
-      </div>
-
       <h1 style="margin-bottom: 3rem;">Checkout</h1>
 
       <div class="checkout-layout-grid">

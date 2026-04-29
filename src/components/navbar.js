@@ -19,7 +19,12 @@ export function Navbar() {
             <li class="nav-mega-item" data-nav-section="home">
               <a href="#/" class="nav-mega-link">HOME</a>
             </li>
-            <!-- Bags and Accessories dropdowns removed as per request -->
+            <li class="nav-mega-item" data-nav-section="bags">
+              <a href="#/shop?cat=Bags" class="nav-mega-link">BAGS</a>
+            </li>
+            <li class="nav-mega-item" data-nav-section="accessories">
+              <a href="#/shop?cat=Accessories" class="nav-mega-link">ACCESSORIES</a>
+            </li>
           </ul>
         </nav>
 
@@ -50,8 +55,8 @@ export function Navbar() {
 
         <div class="nav-drawer-body">
           <a href="#/" class="nav-drawer-link">Home</a>
-
-          <!-- Bags and Accessories accordions removed as per request -->
+          <a href="#/shop?cat=Bags" class="nav-drawer-link">Bags</a>
+          <a href="#/shop?cat=Accessories" class="nav-drawer-link">Accessories</a>
         </div>
 
         <div class="nav-drawer-footer">
