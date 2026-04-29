@@ -7605,31 +7605,23 @@ body.route-product .webgl-background-layer {
 
 /* ==================== COMPACT MODERN PRICE FILTER ==================== */
 
-/* ==================== ULTRA COMPACT 1-LINE PRICE FILTER ==================== */
+/* ==================== COMPACT MODERN PRICE FILTER ==================== */
 
 .shop-filter-strip .shop-filter-card,
 .shop-plp-shell .shop-filter-card {
-  background: #fff;
-  border: 1px solid rgba(203, 191, 179, 0.7);
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 2px 8px rgba(48, 36, 26, 0.05);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(203, 191, 179, 0.65);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 4px 12px rgba(48, 36, 26, 0.06);
+  max-width: 100%;
 }
 
-/* Single Line Layout */
-.shop-price-range-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
+/* Price Range Container - More Compact */
 .shop-price-range {
   position: relative;
-  flex: 1;
-  min-width: 180px;
-  height: 22px;
-  margin: 0;
+  height: 26px;
+  margin: 14px 0 12px;
 }
 
 .shop-price-range-track,
@@ -7638,96 +7630,126 @@ body.route-product .webgl-background-layer {
   left: 0;
   right: 0;
   top: 50%;
-  height: 3px;
+  height: 4px;
   transform: translateY(-50%);
   border-radius: 9999px;
 }
 
 .shop-price-range-track {
-  background: rgba(203, 191, 179, 0.45);
+  background: rgba(203, 191, 179, 0.4);
 }
 
 .shop-price-range-fill {
+  left: 0;
+  width: 100%;
   background: linear-gradient(90deg, #8A5A3D, #C2A878);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Range Input */
+/* Dual Range Sliders */
 .shop-price-range-input {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 50%;
   width: 100%;
-  height: 22px;
+  height: 26px;
   margin: 0;
   appearance: none;
   background: transparent;
   pointer-events: none;
+  z-index: 3;
 }
 
 .shop-price-range-input::-webkit-slider-thumb {
   appearance: none;
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #6f5646;
-  border: 2.5px solid #fff;
-  box-shadow: 0 2px 6px rgba(48, 36, 26, 0.25);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(48, 36, 26, 0.3);
   pointer-events: auto;
   cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.shop-price-range-input::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
 }
 
 .shop-price-range-input::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #6f5646;
-  border: 2.5px solid #fff;
-  box-shadow: 0 2px 6px rgba(48, 36, 26, 0.25);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(48, 36, 26, 0.3);
   cursor: pointer;
 }
 
-/* Price Inputs + Apply in one tight row */
-.shop-price-inputs {
+/* Price Pills - Compact */
+.shop-price-pills {
   display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5f4b3d;
+}
+
+.shop-price-pills span {
+  background: #fff;
+  border: 1px solid rgba(203, 191, 179, 0.65);
+  border-radius: 999px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+/* Price Number Inputs */
+.shop-price-inputs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 8px;
-  flex: 1;
-  min-width: 220px;
+  margin-bottom: 14px;
 }
 
 .shop-price-inputs input {
-  height: 32px;
-  width: 78px;
-  border: 1px solid rgba(203, 191, 179, 0.65);
-  border-radius: 8px;
-  padding: 0 10px;
-  font-size: 0.8rem;
+  height: 36px;
+  border: 1px solid rgba(203, 191, 179, 0.6);
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 0.82rem;
   text-align: center;
   background: #fff;
+  font-weight: 500;
 }
 
 .shop-price-inputs span {
   color: #8A5A3D;
   font-weight: 600;
-  white-space: nowrap;
+  font-size: 0.95rem;
 }
 
-/* Apply Button */
+/* Apply Button - Modern & Compact */
 #shop-price-apply {
-  height: 32px;
-  padding: 0 20px;
-  background: #6f5646;
+  width: 100%;
+  min-height: 38px;
+  background: linear-gradient(180deg, #8A5A3D, #6f5646);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 0.75rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.4px;
-  white-space: nowrap;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #shop-price-apply:hover {
-  background: #5c4738;
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(138, 90, 61, 0.35);
+  background: #6f5646;
 }
