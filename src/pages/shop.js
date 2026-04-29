@@ -557,8 +557,8 @@ export function ShopPage(category = 'Bags') {
           <div class="shop-price-range" aria-label="Price range slider">
             <div class="shop-price-range-track"></div>
             <div class="shop-price-range-fill" id="shop-price-range-fill"></div>
-            <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="100000" step="100" value="0" aria-label="Minimum price">
-            <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="100000" step="100" value="100000" aria-label="Maximum price">
+            <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="10000" step="100" value="0" aria-label="Minimum price">
+            <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="10000" step="100" value="100000" aria-label="Maximum price">
           </div>
           <div class="shop-price-pills" aria-live="polite">
             <span id="shop-price-min-pill">₹0</span>
