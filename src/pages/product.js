@@ -1,8 +1,11 @@
 import { cart } from '../utils/cart.js';
 import {
   getProduct,
+  getUserWishlist,
+  toggleWishlistProductSync
 } from '../utils/cloudflare.js';
 import { getProductImageAttrs, initLazyLoading, toThumbnailUrl, toFullImageUrl } from '../utils/image-optimization.js';
+import { showAuthRequiredPopup, showInfoPopup } from '../utils/ui-popup.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -370,6 +373,17 @@ function renderProductTemplate(product) {
             <button id="buy-now-btn" class="btn btn-outline" data-product-id="${product.id}">Buy Now</button>
           </div>
 
+          <div class="product-secondary-actions" aria-label="Product quick actions">
+            <button type="button" id="product-wishlist-btn" class="product-secondary-btn" data-product-id="${product.id}" aria-pressed="false" title="Add to wishlist">
+              <i class="far fa-heart" aria-hidden="true"></i>
+              <span>Wishlist</span>
+            </button>
+            <button type="button" id="product-share-btn" class="product-secondary-btn" title="Share product">
+              <i class="fas fa-share-alt" aria-hidden="true"></i>
+              <span>Share Product</span>
+            </button>
+          </div>
+
           <div class="product-accordion">
             ${renderAccordion('product-material-panel', 'Details', buildMaterialContent(product))}
             ${renderAccordion('product-shipping-panel', 'Shipping Policy', buildShippingContent(product))}
@@ -496,6 +510,8 @@ export async function initProductPage(productId) {
   const qtyInput = document.getElementById('product-qty');
   const addToCartBtn = document.getElementById('add-to-cart-btn');
   const buyNowBtn = document.getElementById('buy-now-btn');
+  const wishlistBtn = document.getElementById('product-wishlist-btn');
+  const shareBtn = document.getElementById('product-share-btn');
   const colorRail = document.getElementById('product-color-rail');
   const colorSwatches = document.getElementById('product-color-swatches');
   const angleNavPrev = document.getElementById('product-angle-prev');
@@ -781,6 +797,86 @@ export async function initProductPage(productId) {
 
   if (buyNowBtn) {
     buyNowBtn.addEventListener('click', () => handleBuyNow(buyNowBtn));
+  }
+
+  const updateWishlistButtonState = active => {
+    if (!wishlistBtn) {
+      return;
+    }
+    wishlistBtn.classList.toggle('is-active', active);
+    wishlistBtn.setAttribute('aria-pressed', String(active));
+    wishlistBtn.title = active ? 'Remove from wishlist' : 'Add to wishlist';
+    const icon = wishlistBtn.querySelector('i');
+    if (icon) {
+      icon.className = active ? 'fas fa-heart' : 'far fa-heart';
+    }
+  };
+
+  if (wishlistBtn) {
+    let isWished = false;
+    const initialWishlist = await getUserWishlist();
+    if (initialWishlist.success && Array.isArray(initialWishlist.data)) {
+      const wanted = new Set(initialWishlist.data.map(item => String(item).trim()));
+      isWished = wanted.has(id);
+    }
+    updateWishlistButtonState(isWished);
+
+    wishlistBtn.addEventListener('click', async () => {
+      const result = await toggleWishlistProductSync(id);
+      if (result.success) {
+        isWished = Boolean(result.active);
+        updateWishlistButtonState(isWished);
+      } else if (result.error === 'Please login first') {
+        showAuthRequiredPopup('Sign in to add items to your wishlist and sync it across devices.');
+      }
+    });
+  }
+
+  const copyShareUrl = async url => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      return true;
+    }
+
+    const fallbackInput = document.createElement('input');
+    fallbackInput.type = 'text';
+    fallbackInput.value = url;
+    fallbackInput.setAttribute('readonly', 'readonly');
+    fallbackInput.style.position = 'fixed';
+    fallbackInput.style.left = '-9999px';
+    document.body.appendChild(fallbackInput);
+    fallbackInput.select();
+    fallbackInput.setSelectionRange(0, url.length);
+    const copied = document.execCommand('copy');
+    fallbackInput.remove();
+    return copied;
+  };
+
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+      const url = `${window.location.origin}${window.location.pathname}#/product/${encodeURIComponent(id)}`;
+      const payload = {
+        title: product.name || 'OneStopShop Product',
+        text: `Check out ${product.name || 'this product'} on OneStopShop`,
+        url
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(payload);
+          return;
+        } catch (error) {
+          if (error && error.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+
+      const copied = await copyShareUrl(url);
+      if (copied) {
+        showInfoPopup('Product link copied to clipboard.', 'Shared');
+      }
+    });
   }
 
   syncQuantityInputs();

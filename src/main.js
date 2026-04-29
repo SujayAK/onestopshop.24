@@ -1094,6 +1094,12 @@ async function initAnnouncementBar() {
   const syncAnnouncementLayout = () => {
     const isHidden = announcementBar.classList.contains('hidden');
     document.body.classList.toggle('announcement-hidden', isHidden);
+    // Animate navbar up when announcement is hidden
+    if (isHidden) {
+      document.body.classList.add('announcement-hidden');
+    } else {
+      document.body.classList.remove('announcement-hidden');
+    }
   };
 
   // Fetch from Cloudflare

@@ -19,22 +19,7 @@ export function Navbar() {
             <li class="nav-mega-item" data-nav-section="home">
               <a href="#/" class="nav-mega-link">HOME</a>
             </li>
-            <li class="nav-mega-item" data-nav-section="bags">
-              <a href="#/shop?cat=Bags" class="nav-mega-link" data-nav-trigger="bags">BAGS</a>
-              <div class="nav-list-dropdown" data-nav-dropdown="bags" aria-label="Bags categories">
-                <div class="nav-list-dropdown-inner" data-nav-dropdown-list="bags">
-                  <span class="nav-mega-loading">Loading bag categories...</span>
-                </div>
-              </div>
-            </li>
-            <li class="nav-mega-item" data-nav-section="accessories">
-              <a href="#/shop?cat=Accessories" class="nav-mega-link" data-nav-trigger="accessories">ACCESSORIES</a>
-              <div class="nav-list-dropdown" data-nav-dropdown="accessories" aria-label="Accessories categories">
-                <div class="nav-list-dropdown-inner" data-nav-dropdown-list="accessories">
-                  <span class="nav-mega-loading">Loading accessories...</span>
-                </div>
-              </div>
-            </li>
+            <!-- Bags and Accessories dropdowns removed as per request -->
           </ul>
         </nav>
 
@@ -66,29 +51,7 @@ export function Navbar() {
         <div class="nav-drawer-body">
           <a href="#/" class="nav-drawer-link">Home</a>
 
-          <div class="nav-drawer-accordion">
-            <button type="button" class="nav-drawer-accordion-trigger" data-nav-accordion="bags" aria-expanded="false">
-              <span>BAGS</span>
-              <i class="fas fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div class="nav-drawer-accordion-panel" data-nav-mobile-panel="bags" hidden>
-              <div class="nav-drawer-grid" data-nav-drawer-grid="bags">
-                <span class="nav-mega-loading">Loading bag categories...</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="nav-drawer-accordion">
-            <button type="button" class="nav-drawer-accordion-trigger" data-nav-accordion="accessories" aria-expanded="false">
-              <span>ACCESSORIES</span>
-              <i class="fas fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div class="nav-drawer-accordion-panel" data-nav-mobile-panel="accessories" hidden>
-              <div class="nav-drawer-grid" data-nav-drawer-grid="accessories">
-                <span class="nav-mega-loading">Loading accessories...</span>
-              </div>
-            </div>
-          </div>
+          <!-- Bags and Accessories accordions removed as per request -->
         </div>
 
         <div class="nav-drawer-footer">

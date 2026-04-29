@@ -493,11 +493,11 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
                 loading="lazy"
               >
             ` : ''}
+            <button class="shop-heart-icon${wished ? ' is-active' : ''}" data-product-id="${product.id}" data-action="wishlist" title="${wished ? 'Remove from wishlist' : 'Add to wishlist'}">
+              <i class="fas fa-heart"></i>
+            </button>
           </div>
         </a>
-        <button class="shop-heart-icon${wished ? ' is-active' : ''}" data-product-id="${product.id}" data-action="wishlist" title="${wished ? 'Remove from wishlist' : 'Add to wishlist'}">
-          <i class="fas fa-heart"></i>
-        </button>
       </div>
       <div class="shop-card-info">
         <div class="shop-card-meta-line">
@@ -538,18 +538,8 @@ export function ShopPage(category = 'Bags') {
   const categoryCopy = getCategoryCopy(category);
   return `
     <div class="container section section-compact shop-plp-shell">
-      <div class="breadcrumbs">
-        <span>${escapeHtml(categoryCopy.label)}</span>
-      </div>
-
-      <section class="shop-subcategory-banner" aria-label="${escapeHtml(categoryCopy.label)} subcategories">
-        <div id="shop-subcategory-banner-track" class="shop-subcategory-dropdowns-wrap">
-          <div class="shop-subcategory-skeleton">Loading subcategories...</div>
-        </div>
-      </section>
 
       <div class="shop-control-bar" id="shop-control-bar">
-        <div class="shop-control-count" id="shop-results-count">Loading products...</div>
         <label class="shop-sort-wrap">
           <span>Sort By:</span>
           <select id="shop-sort">
@@ -583,7 +573,14 @@ export function ShopPage(category = 'Bags') {
 
       <div class="shop-plp-layout">
         <main class="shop-main">
-          <div class="shop-grid-meta" id="shop-grid-meta"></div>
+          <div class="shop-grid-meta" id="shop-grid-meta">
+            <button type="button" class="shop-view-btn shop-view-3col is-active" data-layout="grid-3" title="Three-column view" aria-label="Three-column view">
+              <i class="fas fa-th" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="shop-view-btn shop-view-2col" data-layout="grid-2" title="Two-column view" aria-label="Two-column view">
+              <i class="fas fa-th-large" aria-hidden="true"></i>
+            </button>
+          </div>
           <div id="shop-grid" class="shop-grid">
             <div class="profile-loading" style="grid-column: 1 / -1;">Loading products...</div>
           </div>
@@ -594,10 +591,7 @@ export function ShopPage(category = 'Bags') {
 }
 
 export async function initShopPage() {
-  const bannerTrack = document.getElementById('shop-subcategory-banner-track');
   const grid = document.getElementById('shop-grid');
-  const resultsCount = document.getElementById('shop-results-count');
-  const gridMeta = document.getElementById('shop-grid-meta');
   const sortSelect = document.getElementById('shop-sort');
   const colorFilterContainer = document.getElementById('shop-color-filters');
   const priceMinInput = document.getElementById('shop-price-min');
@@ -614,9 +608,29 @@ export async function initShopPage() {
   let unsubscribe = () => {};
   const activeCategoryKey = normalizeCategoryLookup(defaultCategory);
 
-  if (!grid || !bannerTrack || !sortSelect || !colorFilterContainer || !priceMinInput || !priceMaxInput || !priceApplyButton) {
+  if (!grid || !sortSelect || !colorFilterContainer || !priceMinInput || !priceMaxInput || !priceApplyButton) {
     return;
   }
+
+  const bindViewLayoutButtons = () => {
+    document.querySelectorAll('.shop-view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const layout = btn.getAttribute('data-layout');
+        if (!layout) return;
+        
+        currentLayout = layout;
+        localStorage.setItem('shop.layout', layout);
+        grid.className = `shop-grid ${layout === 'grid-2' ? 'is-grid-2' : layout === 'list' ? 'is-list' : ''}`;
+        
+        document.querySelectorAll('.shop-view-btn').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        
+        renderResults(catalogProducts);
+      });
+    });
+  };
+  
+  bindViewLayoutButtons();
 
   const clampPriceValue = value => {
     const parsed = Number(value);
@@ -697,11 +711,6 @@ export async function initShopPage() {
     });
   };
 
-  const updateBanner = products => {
-    const groups = buildSubcategoryDropdownGroups(products);
-    bannerTrack.innerHTML = renderSubcategoryDropdowns(groups, defaultCategory);
-  };
-
   const renderResults = products => {
     let visibleProducts = products.filter(product => matchesCategory(product) && matchesPrice(product) && matchesColor(product));
 
@@ -713,17 +722,9 @@ export async function initShopPage() {
           <p style="color: var(--text-secondary);">Try adjusting your filters or check back later.</p>
         </div>
       `;
-      resultsCount.textContent = '0 products found';
-      if (gridMeta) {
-        gridMeta.textContent = 'No matching results';
-      }
       return;
     }
 
-    resultsCount.textContent = `${visibleProducts.length} product${visibleProducts.length === 1 ? '' : 's'} found`;
-    if (gridMeta) {
-      gridMeta.textContent = currentLayout === 'grid-2' ? 'Two-column view' : 'Three-column view';
-    }
     grid.innerHTML = visibleProducts.map((product, index) => renderProductCard(
       product,
       wishlistIds.has(product.id),
@@ -785,7 +786,6 @@ export async function initShopPage() {
 
     catalogProducts = finalResult.data;
     writeShopCatalogCache(defaultCategory, catalogProducts);
-    updateBanner(catalogProducts);
     updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
   };
@@ -821,7 +821,6 @@ export async function initShopPage() {
   const cachedProducts = readShopCatalogCache(defaultCategory);
   if (cachedProducts.length > 0) {
     catalogProducts = cachedProducts;
-    updateBanner(catalogProducts);
     updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
   }
