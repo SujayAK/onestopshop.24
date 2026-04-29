@@ -224,6 +224,28 @@ function renderProductNotFound() {
   `;
 }
 
+function normalizePreviewProduct(id, product) {
+  if (!product || typeof product !== 'object') {
+    return null;
+  }
+
+  const nextId = String(product.id || id || '').trim();
+  if (!nextId) {
+    return null;
+  }
+
+  return {
+    ...product,
+    id: nextId,
+    name: product.name || 'Product',
+    category: product.category || 'General',
+    price: Number(product.price || 0),
+    image: product.image || product.image_url || '',
+    image_url: product.image_url || product.image || '',
+    delivery_timeline: product.delivery_timeline || '6-8'
+  };
+}
+
 function renderColorRail(views, activeViewIndex) {
   return views.map((view, index) => {
     const thumb = getProductImageAttrs(toThumbnailUrl(view.url), {
@@ -304,6 +326,14 @@ function renderProductTemplate(product) {
 
           <div class="product-media-main">
             <div class="product-image-stage">
+              <div class="product-hero-quick-actions" aria-label="Product quick actions">
+                <button type="button" id="product-wishlist-btn" class="product-hero-action-btn" data-product-id="${product.id}" aria-pressed="false" aria-label="Add to wishlist" title="Add to wishlist">
+                  <i class="far fa-heart" aria-hidden="true"></i>
+                </button>
+                <button type="button" id="product-share-btn" class="product-hero-action-btn" aria-label="Share product" title="Share product">
+                  <i class="fas fa-share-alt" aria-hidden="true"></i>
+                </button>
+              </div>
               <img
                 class="product-hero-image lazy-image"
                 id="product-hero-image"
@@ -369,17 +399,6 @@ function renderProductTemplate(product) {
             <button id="buy-now-btn" class="btn btn-outline" data-product-id="${product.id}">Buy Now</button>
           </div>
 
-          <div class="product-secondary-actions" aria-label="Product quick actions">
-            <button type="button" id="product-wishlist-btn" class="product-secondary-btn" data-product-id="${product.id}" aria-pressed="false" title="Add to wishlist">
-              <i class="far fa-heart" aria-hidden="true"></i>
-              <span>Wishlist</span>
-            </button>
-            <button type="button" id="product-share-btn" class="product-secondary-btn" title="Share product">
-              <i class="fas fa-share-alt" aria-hidden="true"></i>
-              <span>Share Product</span>
-            </button>
-          </div>
-
           <div class="product-accordion">
             ${renderAccordion('product-material-panel', 'Details', buildMaterialContent(product))}
             ${renderAccordion('product-shipping-panel', 'Shipping Policy', buildShippingContent(product))}
@@ -435,17 +454,19 @@ function initProductImageZoom() {
   syncZoomImage();
 }
 
-export function ProductPage(id) {
+export function ProductPage(id, initialProduct = null) {
+  const preview = normalizePreviewProduct(id, initialProduct);
+
   return `
     <section class="section section-compact product-page-section">
       <div class="container" id="product-page-root" data-product-id="${String(id || '').trim()}">
-        <div class="profile-loading">Loading product...</div>
+        ${preview ? renderProductTemplate(preview) : '<div class="profile-loading">Loading product...</div>'}
       </div>
     </section>
   `;
 }
 
-export async function initProductPage(productId) {
+export async function initProductPage(productId, initialProduct = null) {
   const root = document.getElementById('product-page-root');
   if (!root) {
     return;
@@ -458,6 +479,13 @@ export async function initProductPage(productId) {
     return;
   }
 
+  const preview = normalizePreviewProduct(id, initialProduct);
+  if (preview) {
+    root.innerHTML = renderProductTemplate(preview);
+    initLazyLoading();
+  }
+
+  const wishlistPromise = getUserWishlist();
   const productResult = await getProduct(id);
 
   if (!productResult.success || !productResult.data) {
@@ -801,6 +829,7 @@ export async function initProductPage(productId) {
     }
     wishlistBtn.classList.toggle('is-active', active);
     wishlistBtn.setAttribute('aria-pressed', String(active));
+    wishlistBtn.setAttribute('aria-label', active ? 'Remove from wishlist' : 'Add to wishlist');
     wishlistBtn.title = active ? 'Remove from wishlist' : 'Add to wishlist';
     const icon = wishlistBtn.querySelector('i');
     if (icon) {
@@ -810,7 +839,7 @@ export async function initProductPage(productId) {
 
   if (wishlistBtn) {
     let isWished = false;
-    const initialWishlist = await getUserWishlist();
+    const initialWishlist = await wishlistPromise;
     if (initialWishlist.success && Array.isArray(initialWishlist.data)) {
       const wanted = new Set(initialWishlist.data.map(item => String(item).trim()));
       isWished = wanted.has(id);

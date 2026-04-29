@@ -506,7 +506,6 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
         </div>
         <h3 class="shop-card-title">${escapeHtml(product.name)}</h3>
         <p class="shop-card-price">${formatINR(product.price)}</p>
-        ${colorSwatches ? `<div class="shop-card-colors">${colorSwatches}</div>` : ''}
         <span class="shop-stock-badge ${stock.css}">${stock.text}</span>
       </div>
     </article>
@@ -555,19 +554,22 @@ export function ShopPage(category = 'Bags') {
       <section class="shop-filter-strip" aria-label="Shop filters">
         <div class="shop-filter-card" aria-label="Price filter">
           <h3>Price</h3>
+          <div class="shop-price-range" aria-label="Price range slider">
+            <div class="shop-price-range-track"></div>
+            <div class="shop-price-range-fill" id="shop-price-range-fill"></div>
+            <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="100000" step="100" value="0" aria-label="Minimum price">
+            <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="100000" step="100" value="100000" aria-label="Maximum price">
+          </div>
+          <div class="shop-price-pills" aria-live="polite">
+            <span id="shop-price-min-pill">₹0</span>
+            <span id="shop-price-max-pill">₹100,000</span>
+          </div>
           <div class="shop-price-inputs">
             <input id="shop-price-min" type="number" min="0" step="100" value="0" placeholder="Min">
             <span>-</span>
             <input id="shop-price-max" type="number" min="0" step="100" value="100000" placeholder="Max">
           </div>
           <button id="shop-price-apply" type="button" class="btn btn-outline btn-sm">Apply</button>
-        </div>
-
-        <div class="shop-filter-card" aria-label="Color filter">
-          <h3>Color</h3>
-          <div id="shop-color-filters" class="shop-color-filter-grid">
-            <p class="shop-filter-helper">Loading colors...</p>
-          </div>
         </div>
       </section>
 
@@ -593,22 +595,26 @@ export function ShopPage(category = 'Bags') {
 export async function initShopPage() {
   const grid = document.getElementById('shop-grid');
   const sortSelect = document.getElementById('shop-sort');
-  const colorFilterContainer = document.getElementById('shop-color-filters');
   const priceMinInput = document.getElementById('shop-price-min');
   const priceMaxInput = document.getElementById('shop-price-max');
+  const priceMinRange = document.getElementById('shop-price-min-range');
+  const priceMaxRange = document.getElementById('shop-price-max-range');
+  const priceRangeFill = document.getElementById('shop-price-range-fill');
+  const priceMinPill = document.getElementById('shop-price-min-pill');
+  const priceMaxPill = document.getElementById('shop-price-max-pill');
   const priceApplyButton = document.getElementById('shop-price-apply');
   const routeFilters = parseShopRouteFilters();
   const defaultCategory = routeFilters.category || 'Bags';
   let catalogProducts = [];
   let wishlistIds = new Set();
-  let selectedColor = 'all';
   let selectedMinPrice = 0;
   let selectedMaxPrice = 100000;
   let currentLayout = localStorage.getItem('shop.layout') || 'grid-3';
   let unsubscribe = () => {};
   const activeCategoryKey = normalizeCategoryLookup(defaultCategory);
+  const maxPriceCap = 100000;
 
-  if (!grid || !sortSelect || !colorFilterContainer || !priceMinInput || !priceMaxInput || !priceApplyButton) {
+  if (!grid || !sortSelect || !priceMinInput || !priceMaxInput || !priceMinRange || !priceMaxRange || !priceRangeFill || !priceApplyButton) {
     return;
   }
 
@@ -637,21 +643,57 @@ export async function initShopPage() {
     if (!Number.isFinite(parsed)) {
       return 0;
     }
-    return Math.max(0, Math.round(parsed));
+    return Math.max(0, Math.min(maxPriceCap, Math.round(parsed)));
+  };
+
+  const formatPriceLabel = value => `₹${Number(value || 0).toLocaleString('en-IN')}`;
+
+  const setPriceRange = (min, max) => {
+    let nextMin = clampPriceValue(min);
+    let nextMax = clampPriceValue(max);
+
+    if (nextMax < nextMin) {
+      [nextMin, nextMax] = [nextMax, nextMin];
+    }
+
+    selectedMinPrice = nextMin;
+    selectedMaxPrice = nextMax;
+
+    priceMinInput.value = String(nextMin);
+    priceMaxInput.value = String(nextMax);
+    priceMinRange.value = String(nextMin);
+    priceMaxRange.value = String(nextMax);
+
+    const minPercent = (nextMin / maxPriceCap) * 100;
+    const maxPercent = (nextMax / maxPriceCap) * 100;
+    priceRangeFill.style.left = `${minPercent}%`;
+    priceRangeFill.style.right = `${100 - maxPercent}%`;
+
+    if (priceMinPill) {
+      priceMinPill.textContent = formatPriceLabel(nextMin);
+    }
+    if (priceMaxPill) {
+      priceMaxPill.textContent = formatPriceLabel(nextMax);
+    }
+  };
+
+  const syncFromRangeInputs = source => {
+    let min = clampPriceValue(priceMinRange.value);
+    let max = clampPriceValue(priceMaxRange.value);
+
+    if (min > max) {
+      if (source === 'min') {
+        max = min;
+      } else {
+        min = max;
+      }
+    }
+
+    setPriceRange(min, max);
   };
 
   const resolvePriceRange = () => {
-    let min = clampPriceValue(priceMinInput.value);
-    let max = clampPriceValue(priceMaxInput.value);
-    if (max < min) {
-      [min, max] = [max, min];
-    }
-
-    priceMinInput.value = String(min);
-    priceMaxInput.value = String(max);
-
-    selectedMinPrice = min;
-    selectedMaxPrice = max;
+    setPriceRange(priceMinInput.value, priceMaxInput.value);
   };
 
   const matchesCategory = product => {
@@ -666,53 +708,8 @@ export async function initShopPage() {
     return Number.isFinite(price) && price >= selectedMinPrice && price <= selectedMaxPrice;
   };
 
-  const matchesColor = product => {
-    if (selectedColor === 'all') {
-      return true;
-    }
-
-    const target = normalizeLookup(selectedColor);
-    const colors = getProductColorsFromMedia(product);
-
-    return colors.some(color => {
-      const name = normalizeLookup(color?.name);
-      const hex = normalizeLookup(color?.hex);
-      return name === target || hex === target;
-    });
-  };
-
-  const updateColorFilter = products => {
-    const colors = deriveFilterColors(products);
-    if (colors.length === 0) {
-      colorFilterContainer.innerHTML = '<p class="shop-filter-helper">No color data available yet.</p>';
-      return;
-    }
-
-    colorFilterContainer.innerHTML = `
-      <button type="button" class="shop-color-filter-chip${selectedColor === 'all' ? ' is-active' : ''}" data-color-filter="all">
-        <span class="shop-color-filter-dot" style="--swatch:#d9c7d2"></span>
-        <span>All</span>
-      </button>
-      ${colors.map(color => `
-        <button type="button" class="shop-color-filter-chip${selectedColor.toLowerCase() === normalizeText(color.name).toLowerCase() || selectedColor.toLowerCase() === normalizeText(color.hex).toLowerCase() ? ' is-active' : ''}" data-color-filter="${escapeHtml(color.name)}" title="${escapeHtml(color.name)}">
-          <span class="shop-color-filter-dot" style="--swatch:${escapeHtml(color.hex)}"></span>
-          <span>${escapeHtml(color.name)}</span>
-        </button>
-      `).join('')}
-    `;
-
-    colorFilterContainer.querySelectorAll('[data-color-filter]').forEach(button => {
-      button.addEventListener('click', () => {
-        const value = button.getAttribute('data-color-filter') || 'all';
-        selectedColor = value === 'all' ? 'all' : value;
-        colorFilterContainer.querySelectorAll('[data-color-filter]').forEach(item => item.classList.toggle('is-active', item === button));
-        refreshProducts();
-      });
-    });
-  };
-
   const renderResults = products => {
-    let visibleProducts = products.filter(product => matchesCategory(product) && matchesPrice(product) && matchesColor(product));
+    let visibleProducts = products.filter(product => matchesCategory(product) && matchesPrice(product));
 
     if (visibleProducts.length === 0) {
       grid.innerHTML = `
@@ -786,7 +783,6 @@ export async function initShopPage() {
 
     catalogProducts = finalResult.data;
     writeShopCatalogCache(defaultCategory, catalogProducts);
-    updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
   };
 
@@ -821,7 +817,6 @@ export async function initShopPage() {
   const cachedProducts = readShopCatalogCache(defaultCategory);
   if (cachedProducts.length > 0) {
     catalogProducts = cachedProducts;
-    updateColorFilter(catalogProducts);
     renderResults(catalogProducts);
   }
 
@@ -840,6 +835,13 @@ export async function initShopPage() {
     renderResults(catalogProducts);
   });
 
+  [priceMinRange, priceMaxRange].forEach(input => {
+    input.addEventListener('input', () => {
+      syncFromRangeInputs(input === priceMinRange ? 'min' : 'max');
+      renderResults(catalogProducts);
+    });
+  });
+
   [priceMinInput, priceMaxInput].forEach(input => {
     input.addEventListener('keydown', event => {
       if (event.key === 'Enter') {
@@ -847,7 +849,13 @@ export async function initShopPage() {
         priceApplyButton.click();
       }
     });
+    input.addEventListener('change', () => {
+      resolvePriceRange();
+      renderResults(catalogProducts);
+    });
   });
+
+  setPriceRange(selectedMinPrice, selectedMaxPrice);
 
   sortSelect.addEventListener('change', refreshProducts);
 

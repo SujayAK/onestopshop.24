@@ -304,6 +304,49 @@ function registerCatalogProducts(productsList = []) {
   });
 }
 
+function findCachedCatalogProductById(productId) {
+  const id = String(productId || '').trim();
+  if (!id) {
+    return null;
+  }
+
+  const fromMap = productCatalogById.get(id);
+  if (fromMap) {
+    return fromMap;
+  }
+
+  const cachePrefix = 'onestop.shop.catalog.cache.';
+  const stores = [sessionStorage, localStorage];
+
+  for (const store of stores) {
+    try {
+      for (let index = 0; index < store.length; index += 1) {
+        const key = store.key(index);
+        if (!key || !key.startsWith(cachePrefix)) {
+          continue;
+        }
+
+        const raw = store.getItem(key);
+        if (!raw) {
+          continue;
+        }
+
+        const parsed = JSON.parse(raw);
+        const products = Array.isArray(parsed?.products) ? parsed.products : [];
+        const hit = products.find(item => String(item?.id || '').trim() === id);
+        const normalized = normalizeCatalogProduct(hit);
+        if (normalized) {
+          return normalized;
+        }
+      }
+    } catch (_error) {
+      // Ignore storage access/parsing errors.
+    }
+  }
+
+  return null;
+}
+
 function isAuthenticated() {
   try {
     const user = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -1208,8 +1251,9 @@ function navigate() {
   } else if (hash.startsWith('#/product/')) {
     const rawId = hash.split('/').pop() || '';
     const id = decodeURIComponent(String(rawId).split('?')[0].split('&')[0].trim());
-    renderPage(ProductPage(id));
-    initProductPage(id);
+    const previewProduct = findCachedCatalogProductById(id);
+    renderPage(ProductPage(id, previewProduct));
+    initProductPage(id, previewProduct);
   } else if (hash === '#/cart') {
     renderPage(CartPage());
     initCartPage();
