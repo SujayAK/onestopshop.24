@@ -29,11 +29,6 @@
   --nav-visual-height: 56px;
 }
 
-/* Compact shop filters with modern price range slider */
-.shop-plp-shell .shop-filter-strip {
-  margin: 0.45rem 0 0.7rem;
-  display: block;
-}
 
 .shop-plp-shell .shop-filter-card {
   max-width: 420px;
@@ -889,16 +884,7 @@ button {
   color: #5f4b3d;
 }
 
-.shop-plp-shell .shop-filter-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.2rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 12px;
-  border: 1px solid rgba(203, 191, 179, 0.4);
-}
+
 
 .shop-plp-shell .shop-filter-card {
   display: flex;
@@ -7596,4 +7582,146 @@ body.route-product .webgl-background-layer {
 
 .product-color-rail-item img {
   min-height: 72px;
+}
+
+/* sk file changess*/
+/*
+.shop-plp-shell .shop-filter-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(203, 191, 179, 0.4);
+}
+
+.shop-plp-shell .shop-filter-strip {
+  margin: 0.45rem 0 0.7rem;
+  display: block;
+}
+*/
+
+.shop-plp-shell .shop-filter-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0 1rem;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(203,191,179,0.3);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+/* Make card compact + horizontal */
+.shop-filter-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+/* Smaller title */
+.shop-filter-card h3 {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Compact slider */
+.shop-price-range {
+  position: relative;
+  width: 120px;
+  height: 4px;
+}
+
+.shop-price-range-track {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: #eee;
+  border-radius: 2px;
+}
+
+.shop-price-range-fill {
+  position: absolute;
+  height: 4px;
+  background: #222;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+/* Range inputs */
+.shop-price-range-input {
+  position: absolute;
+  width: 100%;
+  background: none;
+  pointer-events: none;
+  -webkit-appearance: none;
+}
+
+.shop-price-range-input::-webkit-slider-thumb {
+  pointer-events: all;
+  width: 10px;
+  height: 10px;
+  background: #222;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Pills = primary visible values */
+.shop-price-pills {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+}
+
+.shop-price-pills span {
+  background: #f4f4f4;
+  padding: 0.2rem 0.45rem;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+/* Hide inputs by default (important improvement) */
+.shop-price-inputs {
+  display: none;
+}
+
+/* Show inputs only on hover/focus */
+.shop-filter-card:hover .shop-price-inputs,
+.shop-filter-card:focus-within .shop-price-inputs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.shop-price-inputs input {
+  width: 55px;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+/* Subtle button */
+#shop-price-apply {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  opacity: 0.7;
+}
+
+.shop-filter-card:hover #shop-price-apply {
+  opacity: 1;
 }
