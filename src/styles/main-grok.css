@@ -1,0 +1,185 @@
+:root {
+  --bg-primary: #f5f2ec;
+  --bg-secondary: #e8e1d5;
+  --text-primary: #1f1f1f;
+  --text-secondary: #6b6157;
+  --accent: #8a5a3d;
+  --border: #c9b9a8;
+  --nav-height: 56px;
+  --announcement-height: 48px;
+
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+
+  --transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ====================== BASE ====================== */
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+img { image-rendering: crisp-edges; max-width: 100%; display: block; }
+
+/* ====================== TYPOGRAPHY ====================== */
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
+h2 { font-size: clamp(1.75rem, 4vw, 2.8rem); }
+
+/* ====================== LAYOUT ====================== */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 48px);
+}
+
+.section { padding: clamp(2.5rem, 6vw, 4.5rem) 0; }
+
+/* ====================== NAV & HEADER ====================== */
+header.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(245, 242, 236, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.hamburger { display: none; }
+
+@media (max-width: 767px) {
+  .hamburger { display: flex; }
+  .nav-links.nav-links-desktop { display: none !important; }
+}
+
+/* ====================== SHOP PLP - COMPACT FILTERS ====================== */
+.shop-plp-shell {
+  background: linear-gradient(180deg, #f5f2ec 0%, #e8e1d5 100%);
+  border-radius: 18px;
+  padding: clamp(12px, 2vw, 18px);
+}
+
+.shop-plp-shell .shop-sidebar {
+  background: rgba(255,255,255,0.95);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.6rem;
+  box-shadow: 0 10px 24px rgba(48,36,26,0.08);
+}
+
+@media (min-width: 768px) {
+  .shop-plp-shell .shop-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding: 0.5rem;
+  }
+  .shop-plp-shell .shop-filter-section { padding: 0.45rem 0.65rem; }
+}
+
+/* Price Range - Highly Optimized */
+.shop-price-range {
+  position: relative;
+  height: 26px;
+  margin: 12px 0;
+}
+
+.shop-price-range-track,
+.shop-price-range-fill {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+}
+
+.shop-price-range-track { background: rgba(203,191,179,0.45); }
+.shop-price-range-fill { background: linear-gradient(90deg, #8a5a3d, #c2a878); }
+
+/* ====================== PRODUCT CARDS & GRID ====================== */
+.shop-plp-shell .shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: clamp(16px, 2.2vw, 24px);
+}
+
+@media (max-width: 767px) {
+  .shop-plp-shell .shop-grid { grid-template-columns: 1fr; }
+}
+
+.shop-product-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  contain: content;
+}
+
+.shop-product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(48,36,26,0.12);
+}
+
+/* ====================== WHATSAPP FLOATER ====================== */
+.whatsapp-floater {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9999;
+  height: 56px;
+  padding: 0 1rem;
+  background: #25D366;
+  color: #fff;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  transition: var(--transition);
+}
+
+.whatsapp-floater:hover { transform: scale(1.08); }
+
+@media (max-width: 480px) {
+  .whatsapp-floater { right: 16px; bottom: 16px; height: 50px; }
+}
+
+/* ====================== FOOTER ====================== */
+footer.main-footer {
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border);
+  padding: 3rem 0 1.5rem;
+}
+
+/* ====================== PERFORMANCE HELPERS ====================== */
+.lazy-image {
+  opacity: 0.6;
+  transition: opacity 0.4s ease;
+}
+
+.lazy-image.loaded { opacity: 1; }
+
+.content-visibility-auto {
+  content-visibility: auto;
+  contain: content;
+}
+
+/* Reduce animation jank */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
