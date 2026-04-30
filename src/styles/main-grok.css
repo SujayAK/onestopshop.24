@@ -7536,124 +7536,142 @@ body.route-product .webgl-background-layer {
   min-height: 72px;
 }
 
-/* sk file changess*/
-/*
-.shop-plp-shell .shop-filter-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.2rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 12px;
-  border: 1px solid rgba(203, 191, 179, 0.4);
+/* --- THE ULTIMATE ALIGNMENT FIX: SORT & PRICE SIDE-BY-SIDE --- */
+
+/* 1. Turn the main shell into a Flex container to allow elements to flow together */
+.shop-plp-shell,
+.shop-plp-shell > .container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
 }
 
-.shop-plp-shell .shop-filter-strip {
-  margin: 0.45rem 0 0.7rem;
-  display: block;
-}
-*/
-
-/* ==================== COMPACT MODERN PRICE FILTER ==================== */
-
-/* ==================== COMPACT MODERN PRICE FILTER ==================== */
-
-/* --- UNIFIED HORIZONTAL FILTER BAR --- */
-
-/* 1. Main container: Force a single line and remove double padding */
-.shop-plp-shell .shop-sidebar,
-.shop-plp-shell .shop-filter-strip {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 2rem !important;
-  padding: 0.75rem 1.25rem !important;
-  background: #ffffff !important;
-  border: 1px solid #CBBFB3 !important;
-  border-radius: 12px !important;
-  margin-bottom: 1.5rem !important;
-  width: 100% !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+/* 2. "Dissolve" the layout wrapper so Sort, Price, and the Grid become siblings */
+.shop-plp-shell .shop-plp-layout {
+    display: contents !important;
 }
 
-/* 2. Remove the ugly internal boxes and borders */
+/* 3. Strip the ugly box styles from the Sort Bar and make it float left */
+.shop-plp-shell .shop-control-bar {
+    display: flex !important;
+    align-items: center !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 2rem 1.5rem 0 !important; /* Space between Sort and Price */
+}
+
+/* 4. Strip the ugly box styles from the Sidebar and make it float next to Sort */
+.shop-plp-shell .shop-sidebar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 0 1.5rem 0 !important;
+    position: static !important;
+    height: auto !important;
+}
+
+/* 5. Force the actual Product Grid to drop down below the new unified bar */
+.shop-plp-shell .shop-main {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+}
+
+/* 6. Clean up the internal elements to look like a premium, minimal UI */
 .shop-plp-shell .shop-filter-section,
 .shop-plp-shell .shop-filter-card {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  border: none !important;
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  width: auto !important;
-  box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-/* 3. Style the "Sort By" label and dropdown */
-.shop-plp-shell .shop-filter-card span,
-.shop-plp-shell .shop-filter-card label {
-  font-size: 0.8rem !important;
-  font-weight: 700 !important;
-  color: #6E6359 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  white-space: nowrap !important;
-  margin-right: 0.75rem !important;
+/* Labels for Sort and Price */
+.shop-plp-shell .shop-sort-wrap,
+.shop-plp-shell .shop-price-inputs::before {
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    color: #6E6359 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
 }
 
-/* 4. Refined Inputs: Thin borders for a high-end look */
+.shop-plp-shell .shop-price-inputs::before {
+    content: "PRICE:" !important;
+    margin-right: 0.5rem !important;
+}
+
+/* Style the Inputs & Dropdowns to match beautifully */
+.shop-plp-shell .shop-sort-wrap select,
+.shop-plp-shell .shop-price-inputs input {
+    height: 38px !important;
+    border: 1px solid #CBBFB3 !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #1A1A1A !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    padding: 0 12px !important;
+    margin: 0 0.25rem !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+}
+
+/* Keep price inputs tight */
 .shop-plp-shell .shop-price-inputs {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-  border-left: 1px solid #E9E2D9 !important; /* Visual separator */
-  padding-left: 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
 }
 
 .shop-plp-shell .shop-price-inputs input {
-  width: 90px !important;
-  height: 34px !important;
-  border: 1px solid #CBBFB3 !important;
-  border-radius: 6px !important;
-  padding: 0 10px !important;
-  font-size: 0.85rem !important;
-  text-align: center !important;
-  color: #1A1A1A !important;
-  background: #fff !important;
+    width: 85px !important;
+    text-align: center !important;
 }
 
-/* 5. Clean Dash Separator */
-.shop-plp-shell .shop-price-inputs::before {
-  content: "PRICE" !important;
-  font-size: 0.8rem !important;
-  font-weight: 700 !important;
-  color: #6E6359 !important;
-  margin-right: 0.75rem !important;
-}
-
-/* 6. Brand-Consistent Apply Button */
+/* Apply Button styled to match your logo */
 .shop-plp-shell #shop-price-apply {
-  background: #8A5A3D !important;
-  color: #ffffff !important;
-  border: none !important;
-  border-radius: 6px !important;
-  height: 34px !important;
-  padding: 0 1.5rem !important;
-  font-size: 0.7rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-  cursor: pointer !important;
-  margin-left: 0.5rem !important;
+    background: #8A5A3D !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    height: 38px !important;
+    padding: 0 1.25rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    margin-left: 0.75rem !important;
+    transition: background 0.2s ease !important;
 }
 
-/* 7. Hidden Extras for Maximum Simplicity */
+.shop-plp-shell #shop-price-apply:hover {
+    background: #6f5646 !important;
+}
+
+/* Hide the messy extra UI (Titles, slider tracks, pills) */
 .shop-plp-shell .shop-filter-card h3,
 .shop-plp-shell .shop-price-range,
 .shop-plp-shell .shop-price-pills {
-  display: none !important;
+    display: none !important;
+}
+
+/* Make sure they gracefully stack back on top of each other on mobile phones */
+@media (max-width: 768px) {
+    .shop-plp-shell .shop-control-bar,
+    .shop-plp-shell .shop-sidebar {
+        width: 100% !important;
+        margin-right: 0 !important;
+        margin-bottom: 1rem !important;
+        justify-content: flex-start !important;
+    }
 }
