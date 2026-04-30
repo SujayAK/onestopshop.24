@@ -1,5 +1,5 @@
-import './styles/main.css';
-//import './styles/main-grok.css';
+//import './styles/main.css';
+import './styles/main-grok.css';
 import './styles/shop-cloudflare.css';
 import { Navbar } from './components/navbar.js';
 import { Footer } from './components/footer.js';
