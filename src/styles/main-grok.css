@@ -7559,65 +7559,93 @@ body.route-product .webgl-background-layer {
 
 /* ==================== COMPACT MODERN PRICE FILTER ==================== */
 
-/* 1. Force the main wrapper to be a horizontal row */
+/* --- THE ULTIMATE MINIMAL FILTER BAR --- */
+
+/* 1. Force the main container to be ONE clean row */
 .shop-plp-shell .shop-sidebar,
 .shop-plp-shell .shop-filter-strip {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 2rem !important;
-  padding: 0.5rem 1rem !important;
-  background: #ffffff !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 8px !important;
-  margin-bottom: 1rem !important;
-  width: 100% !important;
-  height: auto !important;
-  box-shadow: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 1.5rem !important;
+    padding: 0.6rem 1.2rem !important;
+    background: #ffffff !important;
+    border: 1px solid #CBBFB3 !important; /* Soft neutral border */
+    border-radius: 12px !important;
+    margin-bottom: 1.5rem !important;
+    width: 100% !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
 }
 
-/* 2. Force the individual Sort and Price cards to stop expanding */
+/* 2. Remove the ugly internal boxes/borders from Sort & Price */
+.shop-plp-shell .shop-filter-section,
 .shop-plp-shell .shop-filter-card {
-  display: flex !important;
-  flex-direction: row !important; 
-  align-items: center !important;
-  gap: 0.8rem !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  width: auto !important;
-  max-width: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    box-shadow: none !important;
 }
 
-/* 3. Hide the word "PRICE", the big slider track, and the pills to keep it minimal */
-.shop-plp-shell .shop-filter-card h3,
-.shop-plp-shell .shop-price-range,
-.shop-plp-shell .shop-price-pills {
-  display: none !important;
+/* 3. Style the "Sort By" text */
+.shop-plp-shell .shop-filter-card span,
+.shop-plp-shell .shop-filter-card label {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #6E6359 !important;
+    white-space: nowrap !important;
+    margin-right: 0.5rem !important;
 }
 
-/* 4. Force the price inputs to sit perfectly side-by-side */
+/* 4. Style the Inputs to look "High-End" (Thin borders) */
 .shop-plp-shell .shop-price-inputs {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  margin: 0 !important;
-  gap: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
 }
 
 .shop-plp-shell .shop-price-inputs input {
-  width: 90px !important;
-  height: 36px !important;
-  margin: 0 !important;
+    width: 85px !important;
+    height: 34px !important;
+    border: 1px solid #CBBFB3 !important;
+    border-radius: 6px !important;
+    padding: 0 8px !important;
+    font-size: 0.85rem !important;
+    text-align: center !important;
+    color: #1A1A1A !important;
+    background: #fff !important;
 }
 
-/* 5. Fix the Apply button to sit inline next to the inputs */
+/* 5. Professional "OSS" Branding for the Apply Button */
 .shop-plp-shell #shop-price-apply {
-  width: auto !important;
-  min-height: 36px !important;
-  padding: 0 1rem !important;
-  margin: 0 !important;
+    background: #8A5A3D !important; /* Your brand brown */
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    height: 34px !important;
+    padding: 0 1.2rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    transition: background 0.2s ease !important;
+    margin-left: 0.5rem !important;
+}
+
+.shop-plp-shell #shop-price-apply:hover {
+    background: #6f5646 !important;
+}
+
+/* 6. Hide the extras that make it look cluttered */
+.shop-plp-shell .shop-filter-card h3,
+.shop-plp-shell .shop-price-range,
+.shop-plp-shell .shop-price-pills {
+    display: none !important;
 }
