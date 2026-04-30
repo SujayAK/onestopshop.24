@@ -7559,52 +7559,65 @@ body.route-product .webgl-background-layer {
 
 /* ==================== COMPACT MODERN PRICE FILTER ==================== */
 
-/* Container for the whole top bar */
-.shop-filter-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.5rem 1rem;
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  margin-bottom: 1rem;
+/* 1. Force the main wrapper to be a horizontal row */
+.shop-plp-shell .shop-sidebar,
+.shop-plp-shell .shop-filter-strip {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 2rem !important;
+  padding: 0.5rem 1rem !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  margin-bottom: 1rem !important;
+  width: 100% !important;
+  height: auto !important;
+  box-shadow: none !important;
 }
 
-/* Make the individual filter cards compact */
-.shop-filter-strip .shop-filter-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  width: auto; /* Stops it from stretching */
+/* 2. Force the individual Sort and Price cards to stop expanding */
+.shop-plp-shell .shop-filter-card {
+  display: flex !important;
+  flex-direction: row !important; 
+  align-items: center !important;
+  gap: 0.8rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  width: auto !important;
+  max-width: none !important;
 }
 
-/* Shrink the price inputs so they don't take up the whole screen */
-.shop-price-inputs {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
+/* 3. Hide the word "PRICE", the big slider track, and the pills to keep it minimal */
+.shop-plp-shell .shop-filter-card h3,
+.shop-plp-shell .shop-price-range,
+.shop-plp-shell .shop-price-pills {
+  display: none !important;
 }
 
-.shop-price-inputs input {
-  width: 80px; /* Force small inputs */
-  height: 32px;
+/* 4. Force the price inputs to sit perfectly side-by-side */
+.shop-plp-shell .shop-price-inputs {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  margin: 0 !important;
+  gap: 0.5rem !important;
 }
 
-/* Make the apply button small and inline */
-#shop-price-apply {
-  min-height: 32px;
-  padding: 0 1rem;
-  width: auto;
+.shop-plp-shell .shop-price-inputs input {
+  width: 90px !important;
+  height: 36px !important;
+  margin: 0 !important;
 }
 
-/* Hide the giant slider track on desktop if you want it ultra-minimal */
-.shop-filter-strip .shop-price-range {
-  display: none; 
+/* 5. Fix the Apply button to sit inline next to the inputs */
+.shop-plp-shell #shop-price-apply {
+  width: auto !important;
+  min-height: 36px !important;
+  padding: 0 1rem !important;
+  margin: 0 !important;
 }
