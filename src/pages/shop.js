@@ -563,16 +563,18 @@ export function ShopPage(category = 'Bags') {
         </section>
 
         <div class="shop-control-bar" id="shop-control-bar">
-          <div class="shop-sort-wrap custom-dropdown">
+          <div class="shop-sort-wrap">
             <span class="sort-label">Sort By:</span>
-            <div class="dropdown-selected" id="custom-sort-selected">Featured First</div>
-            <ul class="dropdown-list" id="custom-sort-list">
-              <li data-value="featured-first" class="is-active">Featured First</li>
-              <li data-value="newest">Newest</li>
-              <li data-value="price-asc">Price: Low to High</li>
-              <li data-value="price-desc">Price: High to Low</li>
-              <li data-value="name-asc">Name: A to Z</li>
-            </ul>
+            <div class="custom-dropdown">
+              <div class="dropdown-selected" id="custom-sort-selected">Featured First</div>
+              <ul class="dropdown-list" id="custom-sort-list">
+                <li data-value="featured-first" class="is-active">Featured First</li>
+                <li data-value="newest">Newest</li>
+                <li data-value="price-asc">Price: Low to High</li>
+                <li data-value="price-desc">Price: High to Low</li>
+                <li data-value="name-asc">Name: A to Z</li>
+              </ul>
+            </div>
             <select id="shop-sort" style="display:none;">
               <option value="featured-first">Featured First</option>
               <option value="newest">Newest</option>
@@ -863,13 +865,4 @@ export async function initShopPage() {
       });
     });
   }
-
-  window.addEventListener('hashchange', () => {
-    unsubscribe();
-  }, { once: true });
-
-  await initialProductsPromise;
-  unsubscribe = subscribeCatalogRealtime(async () => {
-    await refreshProducts();
-  });
 }
