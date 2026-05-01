@@ -154,9 +154,22 @@ html {
 
 .shop-plp-shell #shop-price-apply {
   min-height: 30px;
-  padding: 0.32rem 0.7rem;
-  font-size: 0.66rem;
-  letter-spacing: 0.06em;
+  padding: 0.32rem 1.2rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  background: #6f5646;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-left: 0.8rem;
+}
+
+.shop-plp-shell #shop-price-apply:hover {
+  background: #5f4b3d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
 /* Product hero quick actions */
@@ -297,7 +310,7 @@ button {
   padding: clamp(32px, 6vw, 64px) 0;
 }
 .section.section-compact {
-  padding-top: clamp(0.7rem, 1.8vh, 1.2rem);
+  padding-top: clamp(0.2rem, 0.5vh, 0.5rem);
   padding-bottom: clamp(1.7rem, 4vh, 2.8rem);
 }
 .section.section-compact .breadcrumbs {
@@ -845,7 +858,75 @@ button {
   color: #684f60;
 }
 
-.shop-plp-shell .shop-sort-wrap select,
+.shop-plp-shell .custom-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.shop-plp-shell .dropdown-selected {
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #e6cfdd;
+  background: linear-gradient(180deg, #ffffff 0%, #fff5fa 100%);
+  color: #4b3946;
+  padding: 0 1.2rem 0 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 6px 14px rgba(34, 11, 24, 0.05);
+  transition: all 0.3s ease;
+}
+.shop-plp-shell .dropdown-selected::after {
+  content: '▼';
+  font-size: 0.55rem;
+  margin-left: 0.6rem;
+  color: #a85a87;
+  transition: transform 0.3s ease;
+}
+.shop-plp-shell .custom-dropdown:hover .dropdown-selected {
+  border-color: rgba(223, 90, 161, 0.5);
+  box-shadow: 0 8px 16px rgba(223, 90, 161, 0.12);
+}
+.shop-plp-shell .custom-dropdown:hover .dropdown-selected::after {
+  transform: rotate(180deg);
+}
+.shop-plp-shell .dropdown-list {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e6cfdd;
+  box-shadow: 0 10px 24px rgba(34, 11, 24, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+  list-style: none;
+  padding: 0.4rem 0;
+  margin: 0;
+  min-width: 160px;
+}
+.shop-plp-shell .custom-dropdown:hover .dropdown-list {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.shop-plp-shell .dropdown-list li {
+  padding: 0.5rem 1rem;
+  font-size: 0.72rem;
+  color: #4b3946;
+  transition: background 0.2s ease;
+}
+.shop-plp-shell .dropdown-list li:hover,
+.shop-plp-shell .dropdown-list li.is-active {
+  background: #f3ede6;
+  color: #5f4b3d;
+}
+
 .shop-plp-shell .shop-filter-open-btn {
   height: 34px;
   border-radius: 999px;
@@ -856,42 +937,6 @@ button {
   font-size: 0.72rem;
   font-weight: 700;
   box-shadow: 0 6px 14px rgba(34, 11, 24, 0.05);
-}
-
-.shop-plp-shell .shop-filter-open-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.36rem;
-}
-
-.shop-plp-shell .shop-sort-wrap select {
-  min-width: 162px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding-right: 2.25rem;
-  background-image: linear-gradient(45deg, transparent 50%, #a85a87 50%), linear-gradient(135deg, #a85a87 50%, transparent 50%);
-  background-position: calc(100% - 18px) 52%, calc(100% - 13px) 52%;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-}
-
-.shop-plp-shell .shop-sort-wrap select:hover,
-.shop-plp-shell .shop-sort-wrap select:focus {
-  border-color: rgba(223, 90, 161, 0.5);
-  box-shadow: 0 8px 16px rgba(223, 90, 161, 0.12);
-  outline: none;
-}
-
-.shop-plp-shell .shop-sort-wrap select option {
-  color: #4b3946;
-  background: #fff;
-}
-
-.shop-plp-shell .shop-sort-wrap select option:checked,
-.shop-plp-shell .shop-sort-wrap select option:focus {
-  background: #f3ede6;
-  color: #5f4b3d;
 }
 
 
@@ -930,6 +975,7 @@ button {
 }
 
 .shop-plp-shell .shop-grid-meta {
+  margin-left: auto;
   margin-bottom: 0;
   font-size: 0.74rem;
   color: #7c6675;

@@ -542,36 +542,44 @@ export function ShopPage(category = 'Bags') {
         <section class="shop-filter-strip" aria-label="Shop filters">
           <div class="shop-filter-card" aria-label="Price filter">
             <h3>Price</h3>
-            <div class="shop-price-inputs">
+            <div class="shop-price-inputs" style="display: none;">
               <input id="shop-price-min" type="number" min="0" step="100" value="0" placeholder="Min">
               <span>-</span>
               <input id="shop-price-max" type="number" min="0" step="100" value="100000" placeholder="Max">
             </div>
-            <button id="shop-price-apply" type="button" class="btn btn-outline btn-sm">Apply</button>
-            <div class="shop-price-range" aria-label="Price range slider" style="display: none;">
+            <div class="shop-price-range" aria-label="Price range slider">
               <div class="shop-price-range-track"></div>
               <div class="shop-price-range-fill" id="shop-price-range-fill"></div>
-              <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="10000" step="100" value="0" aria-label="Minimum price">
-              <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="10000" step="100" value="10000" aria-label="Maximum price">
+              <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="100000" step="100" value="0" aria-label="Minimum price">
+              <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="100000" step="100" value="100000" aria-label="Maximum price">
             </div>
-            <div class="shop-price-pills" aria-live="polite" style="display: none;">
+            <div class="shop-price-pills" aria-live="polite">
               <span id="shop-price-min-pill">₹0</span>
               <span id="shop-price-max-pill">₹100,000</span>
             </div>
+            <button id="shop-price-apply" type="button" class="btn btn-outline btn-sm">Apply</button>
           </div>
         </section>
 
         <div class="shop-control-bar" id="shop-control-bar">
-          <label class="shop-sort-wrap">
-            <span>Sort By:</span>
-            <select id="shop-sort">
+          <div class="shop-sort-wrap custom-dropdown">
+            <span class="sort-label">Sort By:</span>
+            <div class="dropdown-selected" id="custom-sort-selected">Featured First</div>
+            <ul class="dropdown-list" id="custom-sort-list">
+              <li data-value="featured-first" class="is-active">Featured First</li>
+              <li data-value="newest">Newest</li>
+              <li data-value="price-asc">Price: Low to High</li>
+              <li data-value="price-desc">Price: High to Low</li>
+              <li data-value="name-asc">Name: A to Z</li>
+            </ul>
+            <select id="shop-sort" style="display:none;">
               <option value="featured-first">Featured First</option>
               <option value="newest">Newest</option>
               <option value="price-asc">Price: Low to High</option>
               <option value="price-desc">Price: High to Low</option>
               <option value="name-asc">Name: A to Z</option>
             </select>
-          </label>
+          </div>
         </div>
 
         <div class="shop-grid-meta" id="shop-grid-meta">
@@ -861,6 +869,23 @@ export async function initShopPage() {
   setPriceRange(selectedMinPrice, selectedMaxPrice);
 
   sortSelect.addEventListener('change', refreshProducts);
+
+  const customSortList = document.getElementById('custom-sort-list');
+  const customSortSelected = document.getElementById('custom-sort-selected');
+  if (customSortList && customSortSelected) {
+    customSortList.querySelectorAll('li').forEach(li => {
+      li.addEventListener('click', () => {
+        const val = li.getAttribute('data-value');
+        customSortSelected.textContent = li.textContent;
+        sortSelect.value = val;
+        
+        customSortList.querySelectorAll('li').forEach(item => item.classList.remove('is-active'));
+        li.classList.add('is-active');
+        
+        refreshProducts();
+      });
+    });
+  }
 
   window.addEventListener('hashchange', () => {
     unsubscribe();
