@@ -40,20 +40,7 @@ html {
   padding: 0;
 }
 
-/* --- LINE 65 (Approx): SAFARI IMAGE OPTIMIZATION --- */
-.product-image, 
-.home-product-image, 
-.shop-collection-media img,
-.lazy-image {
-  /* Forces hardware acceleration on iOS to prevent blurriness */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  /* Prevents blur during CSS hover scaling */
-  will-change: transform; 
-}
-
+/* Removed Safari hardware acceleration hack to fix WebP blurriness on Retina displays */
 
 .shop-plp-shell .shop-filter-card {
   /* Override default padding and max-width since it's inline now */
@@ -2503,10 +2490,6 @@ header.main-header.is-scrolled {
   .logo-img {
     height: 48px;
     width: auto;
-    /* Fix for iPhone blurriness on SVG */
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-    transform: translateZ(0);
     max-width: 100%;
     object-fit: contain;
   }
