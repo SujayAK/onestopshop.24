@@ -538,51 +538,54 @@ export function ShopPage(category = 'Bags') {
   return `
     <div class="container section section-compact shop-plp-shell">
 
-      <div class="shop-control-bar" id="shop-control-bar">
-        <label class="shop-sort-wrap">
-          <span>Sort By:</span>
-          <select id="shop-sort">
-            <option value="featured-first">Featured First</option>
-            <option value="newest">Newest</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="name-asc">Name: A to Z</option>
-          </select>
-        </label>
-      </div>
+      <div class="shop-top-bar">
+        <section class="shop-filter-strip" aria-label="Shop filters">
+          <div class="shop-filter-card" aria-label="Price filter">
+            <h3>Price</h3>
+            <div class="shop-price-inputs">
+              <input id="shop-price-min" type="number" min="0" step="100" value="0" placeholder="Min">
+              <span>-</span>
+              <input id="shop-price-max" type="number" min="0" step="100" value="100000" placeholder="Max">
+            </div>
+            <button id="shop-price-apply" type="button" class="btn btn-outline btn-sm">Apply</button>
+            <div class="shop-price-range" aria-label="Price range slider" style="display: none;">
+              <div class="shop-price-range-track"></div>
+              <div class="shop-price-range-fill" id="shop-price-range-fill"></div>
+              <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="10000" step="100" value="0" aria-label="Minimum price">
+              <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="10000" step="100" value="10000" aria-label="Maximum price">
+            </div>
+            <div class="shop-price-pills" aria-live="polite" style="display: none;">
+              <span id="shop-price-min-pill">₹0</span>
+              <span id="shop-price-max-pill">₹100,000</span>
+            </div>
+          </div>
+        </section>
 
-      <section class="shop-filter-strip" aria-label="Shop filters">
-        <div class="shop-filter-card" aria-label="Price filter">
-          <h3>Price</h3>
-          <div class="shop-price-range" aria-label="Price range slider">
-            <div class="shop-price-range-track"></div>
-            <div class="shop-price-range-fill" id="shop-price-range-fill"></div>
-            <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="10000" step="100" value="0" aria-label="Minimum price">
-            <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="10000" step="100" value="10000" aria-label="Maximum price">
-          </div>
-          <div class="shop-price-pills" aria-live="polite">
-            <span id="shop-price-min-pill">₹0</span>
-            <span id="shop-price-max-pill">₹100,000</span>
-          </div>
-          <div class="shop-price-inputs">
-            <input id="shop-price-min" type="number" min="0" step="100" value="0" placeholder="Min">
-            <span>-</span>
-            <input id="shop-price-max" type="number" min="0" step="100" value="100000" placeholder="Max">
-          </div>
-          <button id="shop-price-apply" type="button" class="btn btn-outline btn-sm">Apply</button>
+        <div class="shop-control-bar" id="shop-control-bar">
+          <label class="shop-sort-wrap">
+            <span>Sort By:</span>
+            <select id="shop-sort">
+              <option value="featured-first">Featured First</option>
+              <option value="newest">Newest</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="name-asc">Name: A to Z</option>
+            </select>
+          </label>
         </div>
-      </section>
+
+        <div class="shop-grid-meta" id="shop-grid-meta">
+          <button type="button" class="shop-view-btn shop-view-3col is-active" data-layout="grid-3" title="Three-column view" aria-label="Three-column view">
+            <i class="fas fa-th" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="shop-view-btn shop-view-2col" data-layout="grid-2" title="Two-column view" aria-label="Two-column view">
+            <i class="fas fa-th-large" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
 
       <div class="shop-plp-layout">
         <main class="shop-main">
-          <div class="shop-grid-meta" id="shop-grid-meta">
-            <button type="button" class="shop-view-btn shop-view-3col is-active" data-layout="grid-3" title="Three-column view" aria-label="Three-column view">
-              <i class="fas fa-th" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="shop-view-btn shop-view-2col" data-layout="grid-2" title="Two-column view" aria-label="Two-column view">
-              <i class="fas fa-th-large" aria-hidden="true"></i>
-            </button>
-          </div>
           <div id="shop-grid" class="shop-grid">
             <div class="profile-loading" style="grid-column: 1 / -1;">Loading products...</div>
           </div>
