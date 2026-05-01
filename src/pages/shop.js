@@ -462,10 +462,14 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
   const featuredClass = isFeatured ? ' is-featured' : '';
   const cardLayoutClass = layoutMode === 'list' ? ' is-list' : layoutMode === 'grid-2' ? ' is-grid-2' : ' is-grid-3';
 
+  const isOutOfStock = stock.css.includes('out-of-stock');
+  const productLink = isOutOfStock ? `javascript:void(0)` : `#/product/${product.id}`;
+  const pointerStyle = isOutOfStock ? `style="cursor: not-allowed; opacity: 0.75;"` : ``;
+
   return `
-    <article class="shop-product-card${featuredClass}${cardLayoutClass}" data-product-id="${product.id}">
+    <article class="shop-product-card${featuredClass}${cardLayoutClass}" data-product-id="${product.id}" ${pointerStyle}>
       <div class="shop-card-image">
-        <a href="#/product/${product.id}" class="shop-card-image-link">
+        <a href="${productLink}" class="shop-card-image-link" ${isOutOfStock ? 'onclick="return false;"' : ''}>
           <div class="shop-card-image-stack${mediaPair.hasHover ? ' has-hover' : ''}">
             <img
               class="lazy-image shop-card-image-primary"
@@ -499,14 +503,18 @@ function renderProductCard(product, wished, compared, layoutMode = 'grid-3', isF
           </div>
         </a>
       </div>
-      <div class="shop-card-info">
-        <div class="shop-card-meta-line">
-          <span class="shop-card-category">${escapeHtml(product.category || 'Bags')}</span>
-          ${isFeatured ? '<span class="shop-featured-pill">Featured</span>' : ''}
+      <div class="shop-card-info" style="padding: 1.25rem;">
+        <div class="shop-card-meta-line" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div>
+            <span class="shop-card-category" style="font-weight: 600; font-size: 0.8rem; letter-spacing: 0.5px;">${escapeHtml(product.category || 'Bags')}</span>
+            ${isFeatured ? '<span class="shop-featured-pill">Featured</span>' : ''}
+          </div>
+          <span class="shop-stock-badge ${stock.css}" style="font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 99px;">${stock.text}</span>
         </div>
-        <h3 class="shop-card-title">${escapeHtml(product.name)}</h3>
-        <p class="shop-card-price">${formatINR(product.price)}</p>
-        <span class="shop-stock-badge ${stock.css}">${stock.text}</span>
+        <div class="shop-card-title-price" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+          <h3 class="shop-card-title" style="margin: 0; font-size: 1.1rem; line-height: 1.3;">${escapeHtml(product.name)}</h3>
+          <p class="shop-card-price" style="font-size: 1.25rem; font-weight: 700; margin: 0; flex-shrink: 0; color: #33272a;">${formatINR(product.price)}</p>
+        </div>
       </div>
     </article>
   `;
@@ -541,23 +549,16 @@ export function ShopPage(category = 'Bags') {
       <div class="shop-top-bar">
         <section class="shop-filter-strip" aria-label="Shop filters">
           <div class="shop-filter-card" aria-label="Price filter">
-            <h3>Price</h3>
-            <div class="shop-price-inputs" style="display: none;">
-              <input id="shop-price-min" type="number" min="0" step="100" value="0" placeholder="Min">
-              <span>-</span>
-              <input id="shop-price-max" type="number" min="0" step="100" value="100000" placeholder="Max">
-            </div>
             <div class="shop-price-range" aria-label="Price range slider">
               <div class="shop-price-range-track"></div>
               <div class="shop-price-range-fill" id="shop-price-range-fill"></div>
-              <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="100000" step="100" value="0" aria-label="Minimum price">
-              <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="100000" step="100" value="100000" aria-label="Maximum price">
+              <input id="shop-price-min-range" class="shop-price-range-input min" type="range" min="0" max="10000" step="100" value="0" aria-label="Minimum price">
+              <input id="shop-price-max-range" class="shop-price-range-input max" type="range" min="0" max="10000" step="100" value="10000" aria-label="Maximum price">
             </div>
             <div class="shop-price-pills" aria-live="polite">
               <span id="shop-price-min-pill">₹0</span>
-              <span id="shop-price-max-pill">₹100,000</span>
+              <span id="shop-price-max-pill">₹10,000</span>
             </div>
-            <button id="shop-price-apply" type="button" class="btn btn-outline btn-sm">Apply</button>
           </div>
         </section>
 
@@ -606,26 +607,23 @@ export function ShopPage(category = 'Bags') {
 export async function initShopPage() {
   const grid = document.getElementById('shop-grid');
   const sortSelect = document.getElementById('shop-sort');
-  const priceMinInput = document.getElementById('shop-price-min');
-  const priceMaxInput = document.getElementById('shop-price-max');
   const priceMinRange = document.getElementById('shop-price-min-range');
   const priceMaxRange = document.getElementById('shop-price-max-range');
   const priceRangeFill = document.getElementById('shop-price-range-fill');
   const priceMinPill = document.getElementById('shop-price-min-pill');
   const priceMaxPill = document.getElementById('shop-price-max-pill');
-  const priceApplyButton = document.getElementById('shop-price-apply');
   const routeFilters = parseShopRouteFilters();
   const defaultCategory = routeFilters.category || 'Bags';
   let catalogProducts = [];
   let wishlistIds = new Set();
   let selectedMinPrice = 0;
-  let selectedMaxPrice = 100000;
+  let selectedMaxPrice = 10000;
   let currentLayout = localStorage.getItem('shop.layout') || 'grid-3';
   let unsubscribe = () => {};
   const activeCategoryKey = normalizeCategoryLookup(defaultCategory);
-  const maxPriceCap = 100000;
+  const maxPriceCap = 10000;
 
-  if (!grid || !sortSelect || !priceMinInput || !priceMaxInput || !priceMinRange || !priceMaxRange || !priceRangeFill || !priceApplyButton) {
+  if (!grid || !sortSelect || !priceMinRange || !priceMaxRange || !priceRangeFill) {
     return;
   }
 
@@ -670,8 +668,6 @@ export async function initShopPage() {
     selectedMinPrice = nextMin;
     selectedMaxPrice = nextMax;
 
-    priceMinInput.value = String(nextMin);
-    priceMaxInput.value = String(nextMax);
     priceMinRange.value = String(nextMin);
     priceMaxRange.value = String(nextMax);
 
@@ -704,7 +700,7 @@ export async function initShopPage() {
   };
 
   const resolvePriceRange = () => {
-    setPriceRange(priceMinInput.value, priceMaxInput.value);
+    setPriceRange(priceMinRange.value, priceMaxRange.value);
   };
 
   const matchesCategory = product => {
@@ -841,31 +837,12 @@ export async function initShopPage() {
     renderResults(catalogProducts);
   }
 
-  priceApplyButton.addEventListener('click', () => {
-    resolvePriceRange();
-    renderResults(catalogProducts);
-  });
-
   [priceMinRange, priceMaxRange].forEach(input => {
     input.addEventListener('input', () => {
       syncFromRangeInputs(input === priceMinRange ? 'min' : 'max');
       renderResults(catalogProducts);
     });
   });
-
-  [priceMinInput, priceMaxInput].forEach(input => {
-    input.addEventListener('keydown', event => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        priceApplyButton.click();
-      }
-    });
-    input.addEventListener('change', () => {
-      resolvePriceRange();
-      renderResults(catalogProducts);
-    });
-  });
-
   setPriceRange(selectedMinPrice, selectedMaxPrice);
 
   sortSelect.addEventListener('change', refreshProducts);

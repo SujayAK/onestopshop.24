@@ -13,8 +13,8 @@
   --white: #ffffff;
   
   /* Typography */
-  --font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   
   /* Spacing & Layout */
   --spacing-xs: 0.5rem;
@@ -2501,8 +2501,12 @@ header.main-header.is-scrolled {
   }
 
   .logo-img {
-    width: 160px;
-    height: auto;
+    height: 48px;
+    width: auto;
+    /* Fix for iPhone blurriness on SVG */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    transform: translateZ(0);
     max-width: 100%;
     object-fit: contain;
   }
@@ -4480,10 +4484,10 @@ main#main-content {
 footer.main-footer {
   background: var(--bg-primary);
   border-top: 1px solid var(--border-color);
-  color: var(--text-primary);
-  min-height: calc(var(--nav-visual-height) * 2);
-  padding: 2.8rem 0 1rem;
-  animation: slideInLeft 0.8s ease-out;
+  padding: var(--spacing-xl) 0 var(--spacing-md);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
 }
 
 .footer-grid {

@@ -1,4 +1,6 @@
 import { cart } from '../utils/cart.js';
+import { getInventoryByProductIds } from '../utils/cloudflare.js';
+import { showInfoPopup } from '../utils/ui-popup.js';
 
 export function CartPage() {
   const items = cart.getItems();
@@ -98,11 +100,40 @@ export function initCartPage() {
 
   // Update quantity
   document.querySelectorAll('.qty-increase').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const productId = parseInt(e.target.getAttribute('data-product-id'));
-      const item = cart.getItems().find(i => i.id === productId);
-      cart.updateQuantity(productId, item.quantity + 1);
-      window.location.hash = '#/cart';
+    btn.addEventListener('click', async (e) => {
+      const btnEl = e.currentTarget;
+      const productIdRaw = btnEl.getAttribute('data-product-id');
+      const productId = isNaN(parseInt(productIdRaw)) ? productIdRaw : parseInt(productIdRaw);
+      const item = cart.getItems().find(i => String(i.id) === String(productId));
+      
+      if (!item) return;
+      
+      const newQuantity = item.quantity + 1;
+      
+      const originalText = btnEl.textContent;
+      btnEl.textContent = '...';
+      btnEl.disabled = true;
+      
+      try {
+        const inventoryResult = await getInventoryByProductIds([productId]);
+        
+        if (inventoryResult.success && inventoryResult.data && inventoryResult.data.length > 0) {
+          const stock = Number(inventoryResult.data[0].stock || 0);
+          if (newQuantity > stock) {
+            showInfoPopup(`Sorry, only ${stock} items available in stock.`);
+            btnEl.textContent = originalText;
+            btnEl.disabled = false;
+            return;
+          }
+        }
+        
+        cart.updateQuantity(productId, newQuantity);
+        window.location.hash = '#/cart';
+      } catch (error) {
+        console.error('Failed to check inventory', error);
+        cart.updateQuantity(productId, newQuantity);
+        window.location.hash = '#/cart';
+      }
     });
   });
 

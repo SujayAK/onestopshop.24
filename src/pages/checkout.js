@@ -83,7 +83,7 @@ export function CheckoutPage() {
           </div>
 
           <div class="checkout-actions-row">
-            <a href="#/cart" class="btn btn-outline" style="flex: 1; text-align: center;">Back to Cart</a>
+            <button id="back-to-cart-btn" class="btn btn-outline" style="flex: 1; text-align: center; text-decoration: none;">Back to Cart</button>
             <button id="proceed-payment-btn" class="btn" style="flex: 1;">Proceed to Payment</button>
           </div>
         </div>
@@ -112,19 +112,19 @@ export function CheckoutPage() {
                 <span>${shipping === 0 ? 'Free' : `₹${shipping.toFixed(2)}`}</span>
               </div>
 
-              <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; color: var(--accent-pink);">
+              <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; color: #33272a;">
                 <span>Total Amount:</span>
                 <span>₹${total.toFixed(2)}</span>
               </div>
             </div>
 
-            <div style="background: var(--bg-secondary); padding: 1.5rem; margin-top: 2rem; border-radius: 4px;">
+            <div style="background: #f9f8f6; padding: 1.5rem; margin-top: 2rem; border-radius: 4px; border: 1px solid #e2dcd6;">
               <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                <i class="fas fa-lock" style="color: var(--accent-purple);"></i>
+                <i class="fas fa-lock" style="color: #8A5A3D;"></i>
                 <span style="font-size: 0.85rem; font-weight: 600;">Secure Payment Powered by Razorpay</span>
               </div>
               <div style="display: flex; align-items: center; gap: 1rem;">
-                <i class="fas fa-check-circle" style="color: var(--accent-purple);"></i>
+                <i class="fas fa-check-circle" style="color: #8A5A3D;"></i>
                 <span style="font-size: 0.85rem;">All transactions are encrypted and secure</span>
               </div>
             </div>
@@ -137,6 +137,14 @@ export function CheckoutPage() {
 
 export function initCheckoutPage() {
   const proceedBtn = document.getElementById('proceed-payment-btn');
+  const backToCartBtn = document.getElementById('back-to-cart-btn');
+
+  if (backToCartBtn) {
+    backToCartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.hash = '#/cart';
+    });
+  }
   
   if (proceedBtn) {
     proceedBtn.addEventListener('click', async () => {
