@@ -2455,9 +2455,10 @@ header.main-header.is-scrolled {
   }
 
   .logo-img {
-    width: 255px;
-    height: 55px;
-    max-width: 255px;
+    width: auto;
+    height: 38px;
+    max-width: 160px;
+    object-fit: contain;
   }
 
   .nav-container {
@@ -2637,12 +2638,16 @@ header.main-header.is-scrolled {
   }
 
   .nav-icons {
-    margin-right: 0.5rem;
-    gap: 0.8rem;
+    margin-right: 0.1rem;
+    gap: 0.5rem;
+  }
+
+  .nav-icons .icon-link:not(.cart-link) {
+    display: none;
   }
 
   .icon-link {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
   }
 
   .hamburger {
@@ -3879,13 +3884,13 @@ body.nav-drawer-open {
   .home-hero-image,
   .shop-collection-media img,
   .product-image {
-    object-fit: contain; /* Prevents the image from being chopped */
+    object-fit: cover; /* Prevents the image from being chopped, covers the taller height */
     object-position: center;
     background-color: transparent; /* Removes any solid background padding */
   }
   
   .home-hero {
-    aspect-ratio: 8 / 3; /* Allows the container to match the image's natural height */
+    aspect-ratio: 16 / 9; /* Make the banner taller on mobile so it's readable and not too small */
     height: auto;
   }
 
