@@ -7797,3 +7797,179 @@ body.route-product .webgl-background-layer {
     width: auto !important;
     white-space: nowrap !important;
 }
+
+
+
+
+/* ==========================================================================
+   PREMIUM SHOP TOOLBAR
+   ========================================================================== */
+
+.shop-top-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: var(--bg-secondary, #F5F7FA);
+  border: 1px solid var(--border-color, #CBBFB3);
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Typography for Labels */
+.toolbar-group label {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary, #6E6359);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* Shared Input & Select Styles */
+.toolbar-input {
+  height: 38px;
+  border: 1px solid var(--border-color, #CBBFB3);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--text-primary, #1A1A1A);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.toolbar-input:focus {
+  outline: none;
+  border-color: var(--accent-pink, #8A5A3D);
+  box-shadow: 0 0 0 3px rgba(138, 90, 61, 0.15);
+}
+
+/* Specific Price Input tweaks */
+.price-input {
+  width: 90px;
+  text-align: center;
+  /* Hide arrows on number inputs for a cleaner look */
+  -moz-appearance: textfield;
+}
+.price-input::-webkit-outer-spin-button,
+.price-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.price-divider {
+  color: var(--text-secondary, #6E6359);
+  font-weight: 600;
+}
+
+/* The Apply Button */
+.toolbar-apply-btn {
+  height: 38px;
+  padding: 0 1.25rem;
+  background: var(--accent-pink, #8A5A3D);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  margin-left: 0.4rem;
+}
+
+.toolbar-apply-btn:hover {
+  background: #6f472e;
+  transform: translateY(-1px);
+}
+
+.toolbar-apply-btn:active {
+  transform: translateY(0);
+}
+
+/* View Toggles (Grid Layout Buttons) */
+.view-toggles {
+  margin-left: auto;
+  gap: 0.4rem;
+}
+
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #CBBFB3);
+  background: #ffffff;
+  color: var(--text-secondary, #6E6359);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+  background: var(--bg-secondary, #F5F7FA);
+  color: var(--text-primary, #1A1A1A);
+}
+
+.view-btn.is-active {
+  background: var(--accent-pink, #8A5A3D);
+  border-color: var(--accent-pink, #8A5A3D);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS
+   ========================================================================== */
+@media (max-width: 860px) {
+  .shop-top-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.2rem;
+    padding: 1rem;
+  }
+  
+  .toolbar-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Make sort select take remaining space on mobile */
+  #shop-sort {
+    flex-grow: 1;
+    max-width: none;
+  }
+
+  /* Distribute price inputs evenly */
+  .price-group {
+    flex-wrap: wrap;
+  }
+  
+  .price-input {
+    flex-grow: 1;
+    width: auto;
+  }
+
+  .toolbar-apply-btn {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+  
+  .view-toggles {
+    justify-content: flex-end;
+  }
+}
