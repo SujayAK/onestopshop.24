@@ -330,6 +330,8 @@ button {
   border: 1px solid #ecd7e6;
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(255, 252, 254, 0.98) 0%, rgba(255, 246, 250, 0.95) 100%);
+}
+
 .shop-plp-shell .shop-stock-badge.is-low {
   color: #8b4e00;
   background: rgba(243, 183, 101, 0.24);
@@ -352,8 +354,7 @@ button {
   min-height: 32px;
   padding: 8px 10px;
   font-size: 0.66rem;
-}
-  min-width: 0;
+ min-width: 0;
 }
 
 .product-page-section .product-page-layout {
@@ -1160,12 +1161,13 @@ button {
 }
 
 .app-popup-title {
-.shop-plp-shell .shop-card-meta-line .shop-featured-pill {
-  margin-left: 0.15rem;
-}
   margin: 0 0 0.45rem;
   font-size: 1.2rem;
   color: #3f2434;
+}
+
+.shop-plp-shell .shop-card-meta-line .shop-featured-pill {
+  margin-left: 0.15rem;
 }
 
 .app-popup-message {
@@ -1175,14 +1177,15 @@ button {
 }
 
 .app-popup-actions {
-.shop-plp-shell .shop-card-colors,
-.shop-plp-shell .shop-stock-badge {
-  justify-self: center;
-}
   margin-top: 1rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.55rem;
+}
+
+.shop-plp-shell .shop-card-colors,
+.shop-plp-shell .shop-stock-badge {
+  justify-self: center;
 }
 
 .app-popup-actions .btn,
@@ -3860,10 +3863,19 @@ body.nav-drawer-open {
 }
 
 @media (max-width: 768px) {
-  .home-hero {
-    aspect-ratio: 16 / 9;
-    max-height: none;
+  .home-hero-image,
+  .shop-collection-media img,
+  .product-image {
+    object-fit: contain; /* Prevents the image from being chopped */
+    object-position: center;
+    background-color: transparent; /* Removes any solid background padding */
   }
+  
+  .home-hero {
+    aspect-ratio: auto; /* Allows the container to match the image's natural height */
+    height: auto;
+  }
+
 
   .home-hero-content {
     padding-top: 1rem;
@@ -3982,9 +3994,9 @@ body.nav-drawer-open {
   }
 }
 
-  main#main-content {
-    width: 100%;
-  }
+main#main-content {
+  width: 100%;
+}
 
 .whatsapp-floater {
   position: fixed;
@@ -7757,51 +7769,31 @@ body.route-product .webgl-background-layer {
 
 
 
-/* --- FIX FOR THE STACKED "APPLY" BUTTON --- */
-
-/* 1. Flatten the invisible container wrapping the inputs and button */
+/* Forces the Price Range container to stay strictly on one line */
 .shop-plp-shell .shop-price-range-container,
-.shop-plp-shell .price-range-container,
-.shop-plp-shell .shop-filter-card > form {
+.shop-plp-shell .price-range-container {
     display: flex !important;
     flex-direction: row !important;
-    flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 0.25rem !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: auto !important;
+    flex-wrap: nowrap !important; /* Prevents the drop to the next line */
+    gap: 0.5rem !important;
+    width: max-content !important; 
 }
 
-/* 2. Ensure the inputs stay in a tight row */
+/* Forces the input boxes to stay inline */
 .shop-plp-shell .shop-price-inputs {
     display: flex !important;
     flex-direction: row !important;
-    flex-wrap: nowrap !important;
     align-items: center !important;
+    flex-wrap: nowrap !important;
     gap: 0.25rem !important;
-    margin: 0 !important;
-    width: auto !important;
 }
 
-/* 3. Stop the APPLY button from expanding and force it onto the same line */
+/* Prevents the button from stretching or wrapping */
 .shop-plp-shell #shop-price-apply {
     display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: auto !important; 
-    min-width: 80px !important;
-    flex: 0 0 auto !important; /* Crucial: stops the button from stretching */
-    margin: 0 0 0 0.5rem !important; /* Adds a tiny bit of space before the button */
-    
-    /* Re-asserting the button style just in case it got overwritten */
-    height: 38px !important;
-    background: #8A5A3D !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-size: 0.75rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.05em !important;
-    text-transform: uppercase !important;
+    flex: 0 0 auto !important; 
+    margin: 0 0 0 0.5rem !important;
+    width: auto !important;
+    white-space: nowrap !important;
 }
