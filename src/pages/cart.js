@@ -6,72 +6,80 @@ export function CartPage() {
 
   if (items.length === 0) {
     return `
-      <div class="container section" style="text-align: center;">
-        <h1 style="margin-bottom: 2rem;">Your Cart is Empty</h1>
-        <p style="margin-bottom: 3rem; color: var(--text-secondary);">Start shopping to add items to your cart.</p>
-        <a href="#/shop" class="btn">Continue Shopping</a>
+      <div class="container section cart-empty-state">
+        <div class="cart-empty-content">
+          <h1>Your Cart is Empty</h1>
+          <p>Start shopping to add items to your cart.</p>
+          <a href="#/shop" class="btn btn-primary">Continue Shopping</a>
+        </div>
       </div>
     `;
   }
 
   const cartItemsHtml = items.map(item => `
-    <div class="cart-item-row">
-      <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+    <div class="cart-item-card">
+      <div class="cart-item-image-wrapper">
+        <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+      </div>
       
-      <div class="cart-item-meta">
+      <div class="cart-item-details">
         <h3 class="cart-item-name">${item.name}</h3>
         <p class="cart-item-category">${item.category}</p>
         <p class="cart-item-price">₹${item.price.toFixed(2)}</p>
       </div>
 
-      <div class="cart-item-controls-wrap">
-        <div class="cart-item-qty-controls">
-          <button class="qty-decrease" data-product-id="${item.id}" style="padding: 5px 10px; border: 1px solid var(--border-color); background: var(--bg-primary); cursor: pointer;">-</button>
-          <span class="cart-item-qty-value">${item.quantity}</span>
-          <button class="qty-increase" data-product-id="${item.id}" style="padding: 5px 10px; border: 1px solid var(--border-color); background: var(--bg-primary); cursor: pointer;">+</button>
+      <div class="cart-item-actions">
+        <div class="cart-quantity-selector">
+          <button class="qty-btn qty-decrease" data-product-id="${item.id}">-</button>
+          <span class="qty-value">${item.quantity}</span>
+          <button class="qty-btn qty-increase" data-product-id="${item.id}">+</button>
         </div>
-        <p class="cart-item-line-total">₹${(item.price * item.quantity).toFixed(2)}</p>
-        <button class="btn-remove" data-product-id="${item.id}" style="background: none; border: none; color: var(--accent-pink); cursor: pointer; text-decoration: underline;">Remove</button>
+        <p class="cart-item-total">₹${(item.price * item.quantity).toFixed(2)}</p>
+        <button class="cart-item-remove btn-remove" data-product-id="${item.id}">Remove</button>
       </div>
     </div>
   `).join('');
 
   return `
-    <div class="container section">
-      <h1 style="margin-bottom: 3rem;">Shopping Cart</h1>
+    <div class="container section cart-page-container">
+      <h1 class="cart-page-title">Shopping Cart</h1>
 
-      <div class="cart-layout-grid">
-        <div class="cart-items-panel">
+      <div class="cart-grid">
+        <div class="cart-items-column">
           ${cartItemsHtml}
         </div>
 
-        <div class="cart-summary-panel">
-          <h2 style="margin-bottom: 2rem; font-size: 1.3rem;">Order Summary</h2>
-          
-          <div style="margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-              <span>Subtotal:</span>
-              <span>₹${total.toFixed(2)}</span>
-            </div>
+        <div class="cart-summary-column">
+          <div class="cart-summary-card">
+            <h2>Order Summary</h2>
             
-            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-              <span>Shipping:</span>
-              <span>₹0.00</span>
+            <div class="cart-summary-lines">
+              <div class="summary-line">
+                <span>Subtotal</span>
+                <span>₹${total.toFixed(2)}</span>
+              </div>
+              
+              <div class="summary-line">
+                <span>Shipping</span>
+                <span>Free</span>
+              </div>
+              
+              <div class="summary-line">
+                <span>Tax (10%)</span>
+                <span>₹${(total * 0.1).toFixed(2)}</span>
+              </div>
             </div>
-            
-            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-              <span>Tax (10%):</span>
-              <span>₹${(total * 0.1).toFixed(2)}</span>
+
+            <div class="summary-total">
+              <span>Total</span>
+              <span>₹${(total * 1.1).toFixed(2)}</span>
+            </div>
+
+            <div class="cart-summary-actions">
+              <button class="btn btn-primary checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+              <a href="#/shop" class="btn btn-outline continue-shopping-btn">Continue Shopping</a>
             </div>
           </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; font-weight: 700; font-size: 1.2rem;">
-            <span>Total:</span>
-            <span>₹${(total * 1.1).toFixed(2)}</span>
-          </div>
-
-          <button class="btn" id="checkout-btn" style="width: 100%; margin-bottom: 1rem;">Proceed to Checkout</button>
-          <a href="#/shop" class="btn btn-outline" style="width: 100%; text-align: center;">Continue Shopping</a>
         </div>
       </div>
     </div>
